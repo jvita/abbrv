@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, jsonify
 import numpy as np
+import json
 from scipy.interpolate import CubicSpline, BSpline
 
 import matplotlib
@@ -11,41 +12,58 @@ import base64
 
 app = Flask(__name__)
 
-# Define spline knot points for each character
-char_splines = {
-    'a': np.array([(0, 0), (1, 0)]),
-    'b': np.array([(0.00, 0.00), (0.67, 0.31), (0.83, 0.77), (0.50, 1.00), (0.17, 0.77), (0.33, 0.31), (1.00, 0.00)]),
-    'c': np.array([(1, 2), (0, 1), (1, 0), (2, 1)]),
-    'd': np.array([(0, 0), (0, 2), (1, 3), (2, 2), (2, 0)]),
-    'e': np.array([(0, 0), (1, 0), (1, 1), (0, 1), (0, 2), (1, 2), (1, 1), (0, 1)]),
-    'f': np.array([(0, 0), (0, 2), (1, 2), (1, 1), (0, 1)]),
-    'g': np.array([(1, 2), (0, 1), (1, 0), (2, 1), (2, 2), (1, 1)]),
-    'h': np.array([(0, 0), (0, 2), (1, 2), (1, 1), (0, 1)]),
-    'i': np.array([(0, 0), (0, 2), (0, 1), (0, 1), (1, 1)]),
-    'j': np.array([(1, 2), (0, 0), (1, 0), (1, 1), (0, 1)]),
-    'k': np.array([(0, 0), (0, 2), (1, 2), (0, 1), (1, 1), (0, 0)]),
-    'l': np.array([(0, 0), (0, 2), (1, 2), (1, 0)]),
-    'm': np.array([(0, 0), (0, 2), (1, 1), (2, 2), (2, 0)]),
-    'n': np.array([(0, 0), (0, 2), (1, 2), (2, 0)]),
-    'o': np.array([(1, 2), (0, 1), (1, 0), (2, 1), (1, 2)]),
-    'p': np.array([(0, 0), (0, 2), (1, 2), (2, 1), (1, 0)]),
-    'q': np.array([(1, 2), (0, 1), (1, 0), (2, 1), (1, 3)]),
-    'r': np.array([(0, 0), (0, 2), (1, 2), (1, 1), (0, 1)]),
-    's': np.array([(1, 2), (0, 1), (1, 0), (0, 1), (1, 2)]),
-    't': np.array([(0, 2), (1, 2), (1, 0), (0, 0), (0, 2)]),
-    'u': np.array([(0, 0), (0, 2), (1, 2), (2, 2), (2, 0)]),
-    'v': np.array([(0, 2), (1, 0), (2, 2)]),
-    'w': np.array([(0, 2), (0, 0), (1, 2), (2, 0), (2, 2)]),
-    'x': np.array([(0, 0), (2, 2), (2, 0), (0, 2)]),
-    'y': np.array([(0, 2), (1, 1), (2, 2), (1, 0), (0, 0)]),
-    'z': np.array([(0, 2), (2, 2), (0, 0), (2, 0)])
-}
+# def load_char_splines(filename='char_splines.json'):
+#     with open(filename, 'r') as file:
+#         data = json.load(file)
 
+#     # Convert data to numpy arrays
+#     char_splines = {char: np.array(points, dtype=np.float32) for char, points in data.items()}
+#     return char_splines
+
+# # Load spline knot points from JSON file
+# char_splines = load_char_splines()
+
+data = {
+"a": [[0.00, 0.00], [0.29, 0.00]],
+"b": [[0.00, 0.00], [0.21, 0.21], [0.14, 0.64], [0.07, 0.21], [0.29, 0.00]],
+"c": [[0.21, 0.29], [0.07, 0.29], [0.00, 0.14], [0.07, 0.00], [0.29, 0.00]],
+"d": [[0.00, 0.29], [0.50, 0.00], [1.00, 0.29]],
+"e": [[0, 0], [1, 0], [1, 1], [0, 1], [0, 2], [1, 2], [1, 1], [0, 1]],
+"f": [[0, 0], [0, 2], [1, 2], [1, 1], [0, 1]],
+"g": [[1, 2], [0, 1], [1, 0], [2, 1], [2, 2], [1, 1]],
+"h": [[0, 0], [0, 2], [1, 2], [1, 1], [0, 1]],
+"i": [[0, 0], [0, 2], [0, 1], [0, 1], [1, 1]],
+"j": [[1, 2], [0, 0], [1, 0], [1, 1], [0, 1]],
+"k": [[0, 0], [0, 2], [1, 2], [0, 1], [1, 1], [0, 0]],
+"l": [[0, 0], [0, 2], [1, 2], [1, 0]],
+"m": [[0, 0], [0, 2], [1, 1], [2, 2], [2, 0]],
+"n": [[0, 0], [0, 2], [1, 2], [2, 0]],
+"o": [[1, 2], [0, 1], [1, 0], [2, 1], [1, 2]],
+"p": [[0, 0], [0, 2], [1, 2], [2, 1], [1, 0]],
+"q": [[1, 2], [0, 1], [1, 0], [2, 1], [1, 3]],
+"r": [[0, 0], [0, 2], [1, 2], [1, 1], [0, 1]],
+"s": [[1, 2], [0, 1], [1, 0], [0, 1], [1, 2]],
+"t": [[0, 2], [1, 2], [1, 0], [0, 0], [0, 2]],
+"u": [[0, 0], [0, 2], [1, 2], [2, 2], [2, 0]],
+"v": [[0, 2], [1, 0], [2, 2]],
+"w": [[0, 2], [0, 0], [1, 2], [2, 0], [2, 2]],
+"x": [[0, 0], [2, 2], [2, 0], [0, 2]],
+"y": [[0, 2], [1, 1], [2, 2], [1, 0], [0, 0]],
+"z": [[0, 2], [2, 2], [0, 0], [2, 0]]
+}
+# Convert data to numpy arrays
+char_splines = {char: np.array(points, dtype=np.float32) for char, points in data.items()}
+
+
+# Define spline knot points for each character
 def interpolate_points(points, method='linear', num_points=100):
     if len(points) < 2:
         return np.array([]), np.array([])  # Return empty arrays if there are not enough points
 
-    x, y = zip(*points)
+    # x, y = zip(*points)
+    print(f'{points=}')
+    x = points[:, 0]
+    y = points[:, 1]
     t = np.linspace(0, 1, len(points))
 
     # if (method == 'linear') or len(points) < 8:
@@ -53,10 +71,10 @@ def interpolate_points(points, method='linear', num_points=100):
         x_spline = np.interp(np.linspace(0, 1, num_points), t, x)
         y_spline = np.interp(np.linspace(0, 1, num_points), t, y)
     elif method == 'cubic':
-        # x_spline = CubicSpline(t, x, bc_type='not-a-knot')(np.linspace(0, 1, num_points))
-        # y_spline = CubicSpline(t, y, bc_type='not-a-knot')(np.linspace(0, 1, num_points))
-        x_spline = CubicSpline(t, x, bc_type=((1, 0), (1, 0)))(np.linspace(0, 1, num_points))
-        y_spline = CubicSpline(t, y, bc_type=((1, 0), (1, 0)))(np.linspace(0, 1, num_points))
+        x_spline = CubicSpline(t, x, bc_type='natural')(np.linspace(0, 1, num_points))
+        y_spline = CubicSpline(t, y, bc_type='natural')(np.linspace(0, 1, num_points))
+        # x_spline = CubicSpline(t, x, bc_type=((1, 0), (1, 0)))(np.linspace(0, 1, num_points))
+        # y_spline = CubicSpline(t, y, bc_type=((1, 0), (1, 0)))(np.linspace(0, 1, num_points))
     elif method == 'bspline':
         k = 4  # Cubic B-spline
         tck_x = BSpline(t, x, k, extrapolate=False)
@@ -66,7 +84,10 @@ def interpolate_points(points, method='linear', num_points=100):
 
     return x_spline, y_spline
 
-def text_to_splines(text, interpolation_method='linear', char_width=1, char_height=3):
+def text_to_splines(text, interpolation_method='linear'):
+    char_width = 0.29  # Default width
+    char_height = 3  # Default height
+
     lines = text.split('\n')
     splines = []
     knot_points = []
@@ -85,7 +106,6 @@ def text_to_splines(text, interpolation_method='linear', char_width=1, char_heig
                 total_width = 0  # To calculate the total width of the word
 
                 # Collect points for the entire word
-                print(word)
                 for char in word:
                     if char in char_splines:
                         if total_width > 0:  # not the first char
@@ -96,16 +116,18 @@ def text_to_splines(text, interpolation_method='linear', char_width=1, char_heig
                         # Adjust x-coordinates by shifting for the character's position within the word
                         adjusted_points = char_points.copy()
                         adjusted_points[:, 0] += total_width
-                        adjusted_points[:, 1] *= char_height
+                        # adjusted_points[:, 1] *= char_height
                         points.extend(adjusted_points)
                         total_width += char_width  # Move x_offset by character width for next character
-                        print(adjusted_points[0], adjusted_points[-1], total_width)
                     else:
                         raise RuntimeError(f"Char '{char}' does not exist in spline dict.")
 
                 # Rescale x-coordinates for the entire word
                 scale = char_width * len(word) / (total_width or 1)  # Avoid division by zero
-                rescaled_points = [(x * scale, y) for x, y in points]
+                # rescaled_points = [(x * scale, y) for x, y in points]
+                rescaled_points = np.array(points)
+                # rescaled_points[:, 1] *= char_height
+                # rescaled_points[:, 0] *= scale
 
                 # Interpolate for the entire word
                 x_spline, y_spline = interpolate_points(rescaled_points, method=interpolation_method)
@@ -126,6 +148,7 @@ def index():
 def generate_splines():
     text = request.form['text']
     interpolation_method = request.form['interpolation_method']
+    show_knot_points = 'show_knot_points' in request.form
     splines, knot_points = text_to_splines(text, interpolation_method)
 
     # Plotting
@@ -133,9 +156,11 @@ def generate_splines():
     for x_spline, y_spline in splines:
         plt.plot(x_spline, y_spline, 'k')
 
-    for points in knot_points:
-        x, y = zip(*points)
-        plt.plot(x, y, 'ro')  # Plot knot points as red dots
+    if show_knot_points:
+        end = 0
+        for points in knot_points:
+            x, y = zip(*points)
+            plt.plot(x, y, 'ro')  # Plot knot points as red dots
 
     plt.gca().set_aspect('equal', adjustable='box')
     plt.axis('off')
