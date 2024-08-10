@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request, jsonify
 import numpy as np
-from scipy.interpolate import CubicSpline
+from scipy.interpolate import CubicSpline, BSpline
 
 import matplotlib
 matplotlib.use('Agg')
@@ -14,7 +14,7 @@ app = Flask(__name__)
 # Define spline knot points for each character
 char_splines = {
     'a': [(0, 0), (1, 0)],
-    'b': [(0.00, 0.00), (0.09, 0.04), (0.18, 0.09), (0.27, 0.13), (0.36, 0.17), (0.45, 0.22), (0.55, 0.26), (0.64, 0.30), (0.73, 0.35), (0.82, 0.39), (0.91, 0.43), (0.91, 0.48), (0.91, 0.52), (0.91, 0.57), (0.91, 0.61), (0.91, 0.65), (0.91, 0.70), (0.91, 0.74), (0.91, 0.78), (0.91, 0.83), (0.91, 0.87), (0.91, 0.91), (0.82, 0.96), (0.73, 1.00), (0.64, 1.00), (0.55, 1.00), (0.45, 1.00), (0.36, 1.00), (0.27, 1.00), (0.18, 0.96), (0.09, 0.91), (0.09, 0.87), (0.09, 0.83), (0.09, 0.78), (0.09, 0.74), (0.09, 0.70), (0.09, 0.65), (0.09, 0.61), (0.09, 0.57), (0.09, 0.52), (0.09, 0.48), (0.09, 0.43), (0.18, 0.39), (0.27, 0.35), (0.36, 0.30), (0.45, 0.26), (0.55, 0.22), (0.64, 0.17), (0.73, 0.13), (0.82, 0.09), (0.91, 0.04), (1.00, 0.00)],
+    'b': [(0.00, 0.00), (0.33, 0.08), (0.67, 0.31), (0.83, 0.69), (0.50, 1.00), (0.17, 0.69), (0.33, 0.31), (0.67, 0.08), (1.00, 0.00)],
     'c': [(1, 2), (0, 1), (1, 0), (2, 1)],
     'd': [(0, 0), (0, 2), (1, 3), (2, 2), (2, 0)],
     'e': [(0, 0), (1, 0), (1, 1), (0, 1), (0, 2), (1, 2), (1, 1), (0, 1)],
@@ -59,24 +59,32 @@ def word_to_spline(word):
 
     return points
 
-def interpolate_points(points, num_points=1000):
+def interpolate_points(points, method='linear', num_points=1000):
     if len(points) < 2:
         return np.array([]), np.array([])  # Return empty arrays if there are not enough points
 
     x, y = zip(*points)
     t = np.linspace(0, 1, len(points))
 
-    # Use CubicSpline with natural boundary conditions
-    x_spline = CubicSpline(t, x, bc_type='not-a-knot')
-    y_spline = CubicSpline(t, y, bc_type='not-a-knot')
+    if method == 'linear':
+        x_spline = np.interp(np.linspace(0, 1, num_points), t, x)
+        y_spline = np.interp(np.linspace(0, 1, num_points), t, y)
+    elif method == 'cubic':
+        x_spline = CubicSpline(t, x)(np.linspace(0, 1, num_points))
+        y_spline = CubicSpline(t, y)(np.linspace(0, 1, num_points))
+    elif method == 'bspline':
+        k = 3  # Cubic B-spline
+        tck_x = BSpline(t, x, k, extrapolate=False)
+        tck_y = BSpline(t, y, k, extrapolate=False)
+        x_spline = tck_x(np.linspace(0, 1, num_points))
+        y_spline = tck_y(np.linspace(0, 1, num_points))
 
-    t_new = np.linspace(0, 1, num_points)
-    return x_spline(t_new), y_spline(t_new)
+    return x_spline, y_spline
 
-def text_to_splines(text):
+def text_to_splines(text, interpolation_method='linear'):
     lines = text.split('\n')  # Split by newlines to handle multiple lines
     splines = []
-    knot_points = []  # To store knot points for optional display
+    knot_points = []
     y_offset = 0
     max_width = 15  # Max width of the plot
     line_height = 4  # Fixed height for each line of text
@@ -87,57 +95,49 @@ def text_to_splines(text):
         x_offset_line = 0  # Reset x_offset for each new line
 
         for word in words:
-            if word:  # Ignore empty words (consecutive spaces)
+            if word:  # Only process non-empty words
                 points = word_to_spline(word)
-                if points:
-                    # Adjust x-coordinates and y-coordinates for line height
-                    adjusted_points = [(x + x_offset_line, y + y_offset) for x, y in points]
-                    x, y = interpolate_points(adjusted_points)
-                    if len(x) > 0 and len(y) > 0:  # Only plot if there are valid points
-                        splines.append((x, y))
-                        knot_points.extend(adjusted_points)  # Add knot points for display
-                        x_offset_line += max(x) + space_width  # Fixed space between words
+                # Adjust y-coordinates for each line and x-coordinates for each word
+                adjusted_points = [(x + x_offset_line, y + y_offset) for x, y in points]
+                x_offset_line += max(x for x, _ in points) + space_width  # Adjust x_offset for each word
 
-        # Move to next line if the current line exceeds max width
-        if x_offset_line > max_width:
-            x_offset_line = 0
-            y_offset -= line_height  # Move down for the next line
+                x_spline, y_spline = interpolate_points(adjusted_points, method=interpolation_method)
+                splines.append((x_spline, y_spline))
+                knot_points.append(adjusted_points)
 
-        # Update y_offset for each new line
-        y_offset -= line_height
+        y_offset -= line_height  # Fixed line height between lines of text
 
-    # Calculate the number of lines
-    num_lines = len(lines)
-    return splines, knot_points, num_lines
+    return splines, knot_points
 
-@app.route('/', methods=['GET', 'POST'])
+@app.route('/')
 def index():
-    if request.method == 'POST':
-        text = request.form.get('text', '')
-        show_knots = request.form.get('show_knots', 'false') == 'true'
-        splines, knot_points, num_lines = text_to_splines(text)
-
-        # Determine plot height based on the number of lines
-        plot_height = 2 + num_lines * 4  # Adjust the height based on the number of lines
-        plt.figure(figsize=(15, plot_height))  # Fixed width, dynamic height
-
-        for x, y in splines:
-            plt.plot(x, y, c='k')
-        
-        if show_knots:
-            knot_x, knot_y = zip(*knot_points) if knot_points else ([], [])
-            plt.scatter(knot_x, knot_y, c='r', s=10)  # Plot knot points as red dots
-
-        plt.axis('off')
-
-        img = io.BytesIO()
-        plt.savefig(img, format='png', bbox_inches='tight')
-        img.seek(0)
-        plot_url = base64.b64encode(img.getvalue()).decode()
-        plt.close()  # Close the figure to free up memory
-
-        return jsonify({'plot_url': plot_url})
     return render_template('index.html')
 
+@app.route('/generate_splines', methods=['POST'])
+def generate_splines():
+    text = request.form['text']
+    interpolation_method = request.form['interpolation_method']
+    splines, knot_points = text_to_splines(text, interpolation_method)
+
+    # Plotting
+    plt.figure(figsize=(15, 10))
+    for x_spline, y_spline in splines:
+        plt.plot(x_spline, y_spline, 'b-')
+
+    for points in knot_points:
+        x, y = zip(*points)
+        plt.plot(x, y, 'ro')  # Plot knot points as red dots
+
+    plt.gca().set_aspect('equal', adjustable='box')
+    plt.axis('off')
+
+    # Save plot to a PNG image in memory
+    img = io.BytesIO()
+    plt.savefig(img, format='png')
+    img.seek(0)
+    img_base64 = base64.b64encode(img.getvalue()).decode()
+
+    return jsonify({'image': img_base64})
+
 if __name__ == '__main__':
-    app.run(debug=True, port=5001)
+    app.run(debug=True)

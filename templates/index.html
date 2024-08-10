@@ -3,37 +3,39 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Orthic Shorthand Translator</title>
+    <title>Text to Splines</title>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <style>
-        body { font-family: Arial, sans-serif; }
-        #translation { margin-top: 20px; }
-    </style>
 </head>
 <body>
-    <h1>Orthic Shorthand Translator</h1>
-    <form id="textForm" method="post">
-        <textarea id="textInput" name="text" rows="10" cols="50" placeholder="Type your text here..."></textarea>
-        <div>
-            <input type="checkbox" id="showKnots" name="show_knots">
-            <label for="showKnots">Show Knot Points</label>
-        </div>
+    <h1>Text to Splines</h1>
+    <form id="textForm">
+        <label for="text">Enter text:</label><br>
+        <textarea id="text" name="text" rows="4" cols="50"></textarea><br><br>
+        <label for="interpolation_method">Choose interpolation method:</label><br>
+        <select id="interpolation_method" name="interpolation_method">
+            <option value="linear">Linear</option>
+            <option value="cubic">Cubic Spline</option>
+            <option value="bspline">B-Spline</option>
+        </select><br><br>
+        <button type="submit">Generate Splines</button>
     </form>
-    <div id="translation">
-        <img id="translationImage" src="" alt="Translation will appear here"/>
+    <div id="result" style="margin-top: 20px;">
+        <img id="splineImage" src="" alt="Generated spline will appear here." style="max-width: 100%; height: auto;">
     </div>
 
     <script>
         $(document).ready(function() {
-            $('#textInput, #showKnots').on('input change', function() {
-                $.post({
-                    url: '/',
-                    data: { 
-                        text: $('#textInput').val(),
-                        show_knots: $('#showKnots').is(':checked')
-                    },
+            $('#textForm').on('submit', function(event) {
+                event.preventDefault();
+                $.ajax({
+                    url: '/generate_splines',
+                    method: 'POST',
+                    data: $(this).serialize(),
                     success: function(response) {
-                        $('#translationImage').attr('src', 'data:image/png;base64,' + response.plot_url);
+                        $('#splineImage').attr('src', 'data:image/png;base64,' + response.image);
+                    },
+                    error: function(error) {
+                        console.error(error);
                     }
                 });
             });
