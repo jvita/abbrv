@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orthic Shorthand Translator</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        #translation { margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <h1>Orthic Shorthand Translator</h1>
+    <form id="textForm" method="post">
+        <textarea id="textInput" name="text" rows="10" cols="50" placeholder="Type your text here..."></textarea>
+    </form>
+    <div id="translation">
+        <img id="translationImage" src="" alt="Translation will appear here"/>
+    </div>
+
+    <script>
+        $(document).ready(function() {
+            $('#textInput').on('input', function() {
+                $.post({
+                    url: '/',
+                    data: { text: $('#textInput').val() },
+                    success: function(response) {
+                        $('#translationImage').attr('src', 'data:image/png;base64,' + response.plot_url);
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
