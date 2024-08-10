@@ -2,40 +2,40 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Text to Splines</title>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        textarea { width: 100%; height: 100px; }
+        select { margin: 10px 0; }
+        img { margin-top: 20px; max-width: 100%; }
+    </style>
 </head>
 <body>
     <h1>Text to Splines</h1>
-    <form id="textForm">
-        <label for="text">Enter text:</label><br>
-        <textarea id="text" name="text" rows="4" cols="50"></textarea><br><br>
-        <label for="interpolation_method">Choose interpolation method:</label><br>
+    <form id="text-form">
+        <textarea id="text" name="text" placeholder="Enter text here..."></textarea>
+        <br>
+        <label for="interpolation_method">Interpolation Method:</label>
         <select id="interpolation_method" name="interpolation_method">
             <option value="linear">Linear</option>
             <option value="cubic">Cubic Spline</option>
             <option value="bspline">B-Spline</option>
-        </select><br><br>
+        </select>
+        <br>
         <button type="submit">Generate Splines</button>
     </form>
-    <div id="result" style="margin-top: 20px;">
-        <img id="splineImage" src="" alt="Generated spline will appear here." style="max-width: 100%; height: auto;">
-    </div>
-
+    <div id="output"></div>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
         $(document).ready(function() {
-            $('#textForm').on('submit', function(event) {
+            $('#text-form').on('submit', function(event) {
                 event.preventDefault();
                 $.ajax({
+                    type: 'POST',
                     url: '/generate_splines',
-                    method: 'POST',
                     data: $(this).serialize(),
                     success: function(response) {
-                        $('#splineImage').attr('src', 'data:image/png;base64,' + response.image);
-                    },
-                    error: function(error) {
-                        console.error(error);
+                        $('#output').html('<img src="data:image/png;base64,' + response.image + '" />');
                     }
                 });
             });
