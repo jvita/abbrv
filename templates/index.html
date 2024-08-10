@@ -14,6 +14,10 @@
     <h1>Orthic Shorthand Translator</h1>
     <form id="textForm" method="post">
         <textarea id="textInput" name="text" rows="10" cols="50" placeholder="Type your text here..."></textarea>
+        <div>
+            <input type="checkbox" id="showKnots" name="show_knots">
+            <label for="showKnots">Show Knot Points</label>
+        </div>
     </form>
     <div id="translation">
         <img id="translationImage" src="" alt="Translation will appear here"/>
@@ -21,10 +25,13 @@
 
     <script>
         $(document).ready(function() {
-            $('#textInput').on('input', function() {
+            $('#textInput, #showKnots').on('input change', function() {
                 $.post({
                     url: '/',
-                    data: { text: $('#textInput').val() },
+                    data: { 
+                        text: $('#textInput').val(),
+                        show_knots: $('#showKnots').is(':checked')
+                    },
                     success: function(response) {
                         $('#translationImage').attr('src', 'data:image/png;base64,' + response.plot_url);
                     }
