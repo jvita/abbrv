@@ -37,13 +37,13 @@ data = {
 "k": [[0.0, 0.0], [0.29, -0.29000000000000004], [0.29, -0.71], [0.0, -1.0]],
 "l": [[0.0, 0.0], [0.13999999999999999, 0.0], [0.21999999999999997, -0.07999999999999999], [0.21999999999999997, -0.21999999999999997], [0.13999999999999999, -0.29], [0.0, -0.29], [-0.07, -0.21999999999999997], [-0.07, -0.07999999999999999], [0.0, 0.0], [0.21999999999999997, 0.0]],
 "m": [[0.0, 0.0], [0.5, 0.29], [1.0, 0.0]],
-"n": [[0.0, 0.0], [0.0, 0.21], [0.07, 0.29], [0.21, 0.29], [0.29, 0.21], [0.29, 0.0]],
+"n": [[0.00, 0.00], [0.07, 0.21], [0.21, 0.21], [0.29, 0.00]],
 "o": [[0.0, 0.0], [1.0, 0.0]],
 "p": [[0.0, 0.0], [-0.29, -1.0]],
 "q": [[0.0, 0.0], [-0.29, -0.5], [0.0, -1.0], [0.27999999999999997, -0.5], [0.0, 0.0]],
 "r": [[0.0, 0.0], [0.13999999999999999, 0.0], [0.21999999999999997, 0.07], [0.21999999999999997, 0.21], [0.13999999999999999, 0.29], [0.0, 0.29], [-0.07, 0.21], [-0.07, 0.07], [0.0, 0.0], [0.21999999999999997, 0.0]],
 "s": [[0.0, 0.0], [-0.14, -0.29]],
-"t": [[0.0, 0.0], [0.0, -0.21999999999999997], [0.07, -0.29], [0.21, -0.29], [0.29, -0.21999999999999997], [0.29, 0.0]],
+"t": [[0, 0], [0.07, -0.21], [0.21, -0.21], [0.29, 0]],
 "u": [[0.0, 0.0], [1.0, 0.29]],
 "v": [[0.0, 0.0], [0.29, -1.0], [0.57, 0.0]],
 "w": [[0.0, 0.0], [-0.13999999999999999, 0.0], [-0.21, 0.14], [-0.13999999999999999, 0.29], [0.07999999999999999, 0.29]],
@@ -82,7 +82,7 @@ def interpolate_points(points, method='linear', num_points=100):
 
     return x_spline, y_spline
 
-def text_to_splines(text, interpolation_method='linear'):
+def text_to_splines(text, interpolation_method='linear', separate_splines=False):
     char_width = 0.29  # Default width
 
     lines = text.split('\n')
@@ -103,43 +103,47 @@ def text_to_splines(text, interpolation_method='linear'):
                 points = []
                 total_width = 0  # To calculate the total width of the word
 
-                # Collect points for the entire word
                 for char in word:
                     if char not in char_splines:
                         raise RuntimeError(f"Char '{char}' does not exist in spline dict.")
 
-                    if total_width == 0:  # first char
+                    if separate_splines:
                         char_points = char_splines[char]
-                        currentY = char_points[-1, 1]  # for handling vertical shifts
                         adjusted_points = char_points.copy()
-                    else:
-                        # remove first knot of new char to avoid duplicates
-                        char_points = char_splines[char][1:]
-
-                        # Adjust x-coordinates by shifting for the character's position within the word
-                        adjusted_points = char_points.copy()
-                        adjusted_points[:, 0] += total_width
-
+                        adjusted_points[:, 0] += x_offset
                         adjusted_points[:, 1] += currentY
-                        currentY = adjusted_points[-1, 1]
+                        x_spline, y_spline = interpolate_points(adjusted_points, method=interpolation_method)
+                        splines.append((x_spline, y_spline))
+                        knot_points.append(adjusted_points)
+                        x_offset += char_points[-1, 0]
+                        currentY += char_points[-1, 1]
+                    else:
+                        if total_width == 0:  # first char
+                            char_points = char_splines[char]
+                            currentY = char_points[-1, 1]  # for handling vertical shifts
+                            adjusted_points = char_points.copy()
+                        else:
+                            char_points = char_splines[char][1:]
+                            adjusted_points = char_points.copy()
+                            adjusted_points[:, 0] += total_width
+                            adjusted_points[:, 1] += currentY
+                            currentY = adjusted_points[-1, 1]
 
-                    points.extend(adjusted_points)
-                    total_width += char_points[-1, 0]
+                        points.extend(adjusted_points)
+                        total_width += char_points[-1, 0]
 
-                # Rescale x-coordinates for the entire word
-                scale = char_width * len(word) / (total_width or 1)  # Avoid division by zero
-                rescaled_points = np.array(points)
-
-                # Interpolate for the entire word
-                x_spline, y_spline = interpolate_points(rescaled_points, method=interpolation_method)
-                splines.append((x_spline, y_spline))
-                knot_points.append(rescaled_points)
-
-                x_offset += total_width + word_space  # Adjust x_offset for each word
+                if not separate_splines:
+                    scale = char_width * len(word) / (total_width or 1)  # Avoid division by zero
+                    rescaled_points = np.array(points)
+                    x_spline, y_spline = interpolate_points(rescaled_points, method=interpolation_method)
+                    splines.append((x_spline, y_spline))
+                    knot_points.append(rescaled_points)
+                    x_offset += total_width + word_space  # Adjust x_offset for each word
 
         y_offset -= line_height  # Fixed line height between lines of text
 
     return splines, knot_points
+
 
 @app.route('/')
 def index():
@@ -150,10 +154,10 @@ def generate_splines():
     text = request.form['text']
     interpolation_method = request.form['interpolation_method']
     show_knot_points = 'show_knot_points' in request.form
-    splines, knot_points = text_to_splines(text, interpolation_method)
+    separate_splines = 'separate_splines' in request.form
+    splines, knot_points = text_to_splines(text, interpolation_method, separate_splines)
 
-    # Plotting
-    plt.figure(figsize=(9, 3))
+    plt.figure(figsize=(15, 5))
     for x_spline, y_spline in splines:
         plt.plot(x_spline, y_spline, 'k')
 
@@ -163,9 +167,8 @@ def generate_splines():
             plt.plot(x, y, 'ro')  # Plot knot points as red dots
 
     plt.gca().set_aspect('equal', adjustable='box')
-    # plt.axis('off')
+    plt.axis('off')
 
-    # Save plot to a PNG image in memory
     img = io.BytesIO()
     plt.savefig(img, format='png')
     img.seek(0)

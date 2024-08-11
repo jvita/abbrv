@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>English to Orthic</title>
+    <title>Text to Orthic</title>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap">
     <style>
         body {
@@ -86,7 +86,7 @@
     </style>
 </head>
 <body>
-    <h1>Text to Splines</h1>
+    <h1>Text to Orthic</h1>
     <form id="text-form">
         <textarea id="text" name="text" placeholder="Enter text here..."></textarea>
         <label for="interpolation_method">Interpolation Method:</label>
@@ -99,11 +99,17 @@
             <input type="checkbox" id="show_knot_points" name="show_knot_points">
             Display Knot Points
         </label>
+        <label for="separate_splines">
+            <input type="checkbox" id="separate_splines" name="separate_splines">
+            Treat Each Character as Separate Spline
+        </label>
     </form>
     <div id="output"></div>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
         $(document).ready(function() {
+            let debounceTimeout;
+
             function updatePlot() {
                 $.ajax({
                     type: 'POST',
@@ -111,13 +117,26 @@
                     data: $('#text-form').serialize(),
                     success: function(response) {
                         $('#output').html('<img src="data:image/png;base64,' + response.image + '" />');
+                    },
+                    error: function() {
+                        $('#output').html('<p>Error generating plot.</p>');
                     }
                 });
             }
 
+            function debounce(func, delay) {
+                return function(...args) {
+                    clearTimeout(debounceTimeout);
+                    debounceTimeout = setTimeout(() => func.apply(this, args), delay);
+                };
+            }
+
+            // Debounce the plot update to avoid too many requests
+            const debouncedUpdatePlot = debounce(updatePlot, 300);
+
             // Bind the input event on textarea and change event on checkbox/select
-            $('#text, #interpolation_method, #show_knot_points').on('input change', function() {
-                updatePlot();
+            $('#text, #interpolation_method, #show_knot_points, #separate_splines').on('input change', function() {
+                debouncedUpdatePlot();
             });
 
             // Initial plot update
