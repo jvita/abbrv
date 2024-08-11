@@ -24,32 +24,32 @@ app = Flask(__name__)
 # char_splines = load_char_splines()
 
 data = {
-"a": [[0.00, 0.00], [0.29, 0.00]],
-"b": [[0.00, 0.00], [0.21, 0.21], [0.14, 0.64], [0.07, 0.21], [0.29, 0.00]],
-"c": [[0.21, 0.29], [0.07, 0.29], [0.00, 0.14], [0.07, 0.00], [0.29, 0.00]],
-"d": [[0.00, 0.29], [0.50, 0.00], [1.00, 0.29]],
-"e": [[0.00, 0.00], [0.29, 0.29]],
-"f": [[0.07, 0.29], [0.21, 0.29], [0.29, 0.14], [0.21, 0.00], [0.00, 0.00]],
-"g": [[0.29, 1.00], [0.00, 0.71], [0.00, 0.29], [0.29, 0.00]],
-"h": [[0.21, 0.00], [0.36, 0.00], [0.50, 0.07], [0.57, 0.21], [0.57, 0.43], [0.50, 0.57], [0.36, 0.64], [0.21, 0.64], [0.07, 0.57], [0.00, 0.43], [0.00, 0.21], [0.07, 0.07], [0.21, 0.00], [0.50, 0.00]],
-"i": [[0.00, 0.00], [0.29, 0.29]],
-"j": [[0.14, 0.64], [0.14, 0.00], [0.00, 0.29], [0.21, 0.50]],
-"k": [[0.00, 1.00], [0.29, 0.71], [0.29, 0.29], [0.00, 0.00]],
-"l": [[0.07, 0.29], [0.21, 0.29], [0.29, 0.21], [0.29, 0.07], [0.21, 0.00], [0.07, 0.00], [0.00, 0.07], [0.00, 0.21], [0.07, 0.29], [0.29, 0.29]],
-"m": [[0.00, 0.00], [0.50, 0.29], [1.00, 0.00]],
-"n": [[0.00, 0.00], [0.00, 0.21], [0.07, 0.29], [0.21, 0.29], [0.29, 0.21], [0.29, 0.00]],
-"o": [[0.00, 0.00], [1.00, 0.00]],
-"p": [[0.29, 1.00], [0.00, 0.00]],
-"q": [[0.29, 1.00], [0.00, 0.50], [0.29, 0.00], [0.57, 0.50], [0.29, 1.00]],
-"r": [[0.07, 0.00], [0.21, 0.00], [0.29, 0.07], [0.29, 0.21], [0.21, 0.29], [0.07, 0.29], [0.00, 0.21], [0.00, 0.07], [0.07, 0.00], [0.29, 0.00]],
-"s": [[0.14, 0.29], [0.00, 0.00]],
-"t": [[0.00, 0.29], [0.00, 0.07], [0.07, 0.00], [0.21, 0.00], [0.29, 0.07], [0.29, 0.29]],
-"u": [[0.00, 0.00], [1.00, 0.29]],
-"v": [[0.00, 1.00], [0.29, 0.00], [0.57, 1.00]],
-"w": [[0.21, 0.00], [0.07, 0.00], [0.00, 0.14], [0.07, 0.29], [0.29, 0.29]],
-"x": [[0.29, 0.43], [0.00, 0.29], [0.29, 0.14], [0.00, 0.00]],
-"y": [[0.00, 0.29], [0.29, 0.00]],
-"z": [[0.29, 0.29], [0.21, 0.07], [0.00, 0.00]],
+"a": [[0.0, 0.0], [0.29, 0.0]],
+"b": [[0.0, 0.0], [0.21, 0.21], [0.14, 0.64], [0.07, 0.21], [0.29, 0.0]],
+"c": [[0.0, 0.0], [-0.13999999999999999, 0.0], [-0.21, -0.14999999999999997], [-0.13999999999999999, -0.29], [0.07999999999999999, -0.29]],
+"d": [[0.0, 0.0], [0.5, -0.29], [1.0, 0.0]],
+"e": [[0.0, 0.0], [0.29, 0.29]],
+"f": [[0.0, 0.0], [0.13999999999999999, 0.0], [0.21999999999999997, -0.14999999999999997], [0.13999999999999999, -0.29], [-0.07, -0.29]],
+"g": [[0.0, 0.0], [-0.29, -0.29000000000000004], [-0.29, -0.71], [0.0, -1.0]],
+"h": [[0.0, 0.0], [0.15, 0.0], [0.29000000000000004, 0.07], [0.36, 0.21], [0.36, 0.43], [0.29000000000000004, 0.57], [0.15, 0.64], [0.0, 0.64], [-0.13999999999999999, 0.57], [-0.21, 0.43], [-0.21, 0.21], [-0.13999999999999999, 0.07], [0.0, 0.0], [0.29000000000000004, 0.0]],
+"i": [[0.0, 0.0], [0.29, 0.29]],
+"j": [[0.0, 0.0], [0.0, -0.64], [-0.14, -0.35000000000000003], [0.06999999999999998, -0.14]],
+"k": [[0.0, 0.0], [0.29, -0.29000000000000004], [0.29, -0.71], [0.0, -1.0]],
+"l": [[0.0, 0.0], [0.13999999999999999, 0.0], [0.21999999999999997, -0.07999999999999999], [0.21999999999999997, -0.21999999999999997], [0.13999999999999999, -0.29], [0.0, -0.29], [-0.07, -0.21999999999999997], [-0.07, -0.07999999999999999], [0.0, 0.0], [0.21999999999999997, 0.0]],
+"m": [[0.0, 0.0], [0.5, 0.29], [1.0, 0.0]],
+"n": [[0.0, 0.0], [0.0, 0.21], [0.07, 0.29], [0.21, 0.29], [0.29, 0.21], [0.29, 0.0]],
+"o": [[0.0, 0.0], [1.0, 0.0]],
+"p": [[0.0, 0.0], [-0.29, -1.0]],
+"q": [[0.0, 0.0], [-0.29, -0.5], [0.0, -1.0], [0.27999999999999997, -0.5], [0.0, 0.0]],
+"r": [[0.0, 0.0], [0.13999999999999999, 0.0], [0.21999999999999997, 0.07], [0.21999999999999997, 0.21], [0.13999999999999999, 0.29], [0.0, 0.29], [-0.07, 0.21], [-0.07, 0.07], [0.0, 0.0], [0.21999999999999997, 0.0]],
+"s": [[0.0, 0.0], [-0.14, -0.29]],
+"t": [[0.0, 0.0], [0.0, -0.21999999999999997], [0.07, -0.29], [0.21, -0.29], [0.29, -0.21999999999999997], [0.29, 0.0]],
+"u": [[0.0, 0.0], [1.0, 0.29]],
+"v": [[0.0, 0.0], [0.29, -1.0], [0.57, 0.0]],
+"w": [[0.0, 0.0], [-0.13999999999999999, 0.0], [-0.21, 0.14], [-0.13999999999999999, 0.29], [0.07999999999999999, 0.29]],
+"x": [[0.0, 0.0], [-0.29, -0.14], [0.0, -0.29], [-0.29, -0.43]],
+"y": [[0.0, 0.0], [0.29, -0.29]],
+"z": [[0.0, 0.0], [-0.07999999999999999, -0.21999999999999997], [-0.29, -0.29]],
 }
 # Convert data to numpy arrays
 char_splines = {char: np.array(points, dtype=np.float32) for char, points in data.items()}
@@ -60,8 +60,6 @@ def interpolate_points(points, method='linear', num_points=100):
     if len(points) < 2:
         return np.array([]), np.array([])  # Return empty arrays if there are not enough points
 
-    # x, y = zip(*points)
-    print(f'{points=}')
     x = points[:, 0]
     y = points[:, 1]
     t = np.linspace(0, 1, len(points))
@@ -86,7 +84,6 @@ def interpolate_points(points, method='linear', num_points=100):
 
 def text_to_splines(text, interpolation_method='linear'):
     char_width = 0.29  # Default width
-    char_height = 3  # Default height
 
     lines = text.split('\n')
     splines = []
@@ -95,6 +92,7 @@ def text_to_splines(text, interpolation_method='linear'):
     max_width = 15
     line_height = 2
     word_space = 2  # Space between words
+    currentY = 0
 
     for line_index, line in enumerate(lines):
         x_offset = 0
@@ -107,27 +105,30 @@ def text_to_splines(text, interpolation_method='linear'):
 
                 # Collect points for the entire word
                 for char in word:
-                    if char in char_splines:
-                        if total_width > 0:  # not the first char
-                            # remove first knot of new char to avoid duplicates
-                            char_points = char_splines[char][1:]
-                        else:
-                            char_points = char_splines[char]
+                    if char not in char_splines:
+                        raise RuntimeError(f"Char '{char}' does not exist in spline dict.")
+
+                    if total_width == 0:  # first char
+                        char_points = char_splines[char]
+                        currentY = char_points[-1, 1]  # for handling vertical shifts
+                        adjusted_points = char_points.copy()
+                    else:
+                        # remove first knot of new char to avoid duplicates
+                        char_points = char_splines[char][1:]
+
                         # Adjust x-coordinates by shifting for the character's position within the word
                         adjusted_points = char_points.copy()
                         adjusted_points[:, 0] += total_width
-                        # adjusted_points[:, 1] *= char_height
-                        points.extend(adjusted_points)
-                        total_width += char_width  # Move x_offset by character width for next character
-                    else:
-                        raise RuntimeError(f"Char '{char}' does not exist in spline dict.")
+
+                        adjusted_points[:, 1] += currentY
+                        currentY = adjusted_points[-1, 1]
+
+                    points.extend(adjusted_points)
+                    total_width += char_points[-1, 0]
 
                 # Rescale x-coordinates for the entire word
                 scale = char_width * len(word) / (total_width or 1)  # Avoid division by zero
-                # rescaled_points = [(x * scale, y) for x, y in points]
                 rescaled_points = np.array(points)
-                # rescaled_points[:, 1] *= char_height
-                # rescaled_points[:, 0] *= scale
 
                 # Interpolate for the entire word
                 x_spline, y_spline = interpolate_points(rescaled_points, method=interpolation_method)
@@ -162,7 +163,7 @@ def generate_splines():
             plt.plot(x, y, 'ro')  # Plot knot points as red dots
 
     plt.gca().set_aspect('equal', adjustable='box')
-    plt.axis('off')
+    # plt.axis('off')
 
     # Save plot to a PNG image in memory
     img = io.BytesIO()
