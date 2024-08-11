@@ -27,7 +27,7 @@ join_remap = {
     'sh': '1',
 }
 join_data = {
-    '1': [[0, 0], [-0.07, -0.27999999999999997], [-0.07, -0.49999999999999994], [0.07, -0.57], [0.21999999999999997, -0.42999999999999994], [0.07, -0.27999999999999997], [-0.07, -0.27999999999999997]],
+    '1': [[0, 0], [-0.07, -0.21000000000000002], [-0.07, -0.43], [0.07, -0.5], [0.21999999999999997, -0.36], [0.07, -0.21000000000000002], [-0.07, -0.21000000000000002]],
 }
 
 char_data = {
@@ -101,10 +101,10 @@ def text_to_splines(text, interpolation_method='linear', separate_splines=False)
     max_width = 15
     line_height = 2
     word_space = 2  # Space between words
-    currentY = 0
+    y_offset = 0
+    x_offset = 0
 
-    for line_index, line in enumerate(lines):
-        x_offset = 0
+    for line in lines:
 
         words = line.split(' ')
         for word in words:
@@ -120,29 +120,29 @@ def text_to_splines(text, interpolation_method='linear', separate_splines=False)
                         char_points = char_splines[char]
                         adjusted_points = char_points.copy()
                         adjusted_points[:, 0] += x_offset
-                        adjusted_points[:, 1] += currentY
+                        adjusted_points[:, 1] += y_offset
                         x_spline, y_spline = interpolate_points(adjusted_points, method=interpolation_method)
                         splines.append((x_spline, y_spline))
                         knot_points.append(adjusted_points)
                         x_offset += char_points[-1, 0]
-                        currentY += char_points[-1, 1]
+                        y_offset += char_points[-1, 1]
                     else:
                         if total_width == 0:  # first char
                             char_points = char_splines[char]
-                            currentY = char_points[-1, 1]  # for handling vertical shifts
+                            y_offset = char_points[-1, 1]  # for handling vertical shifts
                             adjusted_points = char_points.copy()
                         else:
                             char_points = char_splines[char][1:]
                             adjusted_points = char_points.copy()
                             adjusted_points[:, 0] += total_width
-                            adjusted_points[:, 1] += currentY
-                            currentY = adjusted_points[-1, 1]
+                            adjusted_points[:, 1] += y_offset
+                            y_offset = adjusted_points[-1, 1]
 
                         points.extend(adjusted_points)
                         total_width += char_points[-1, 0]
 
                 if not separate_splines:
-                    scale = char_width * len(word) / (total_width or 1)  # Avoid division by zero
+                    # scale = char_width * len(word) / (total_width or 1)  # Avoid division by zero
                     rescaled_points = np.array(points)
                     x_spline, y_spline = interpolate_points(rescaled_points, method=interpolation_method)
                     splines.append((x_spline, y_spline))
