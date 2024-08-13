@@ -26,6 +26,7 @@ app = Flask(__name__)
 joins = {
     'ea': [[0.00, 0.00], [0.07, 0.21], [0.29, 0.29]],
     "ll": [[0, 0], [0.07999999999999999, -0.07999999999999999], [0.07999999999999999, -0.21999999999999997], [0, -0.29], [-0.13999999999999999, -0.29], [-0.21, -0.21999999999999997], [-0.21, -0.07999999999999999], [-0.13999999999999999, 0], [0, 0]],
+    'ph': [[0, 0], [-0.14, -0.79], [-0.14, -0.9299999999999999], [-0.07, -1], [0, -1], [0.06999999999999998, -0.9299999999999999], [0.06999999999999998, -0.86], [0, -0.79], [-0.14, -0.79]],
     'rr': [[0.0, 0.0], [0.13999999999999999, 0.0], [0.21999999999999997, 0.07], [0.21999999999999997, 0.21], [0.13999999999999999, 0.29], [0.0, 0.29], [-0.07, 0.21], [-0.07, 0.07], [0.0, 0.0], [0.21999999999999997, 0.0]],
     'sh': [[0, 0], [-0.07, -0.21000000000000002], [-0.07, -0.43], [0.07, -0.5], [0.21999999999999997, -0.36], [0.07, -0.21000000000000002], [-0.07, -0.21000000000000002]],
     'sp': [[0, 0], [-0.21999999999999997, -0.20999999999999996], [-0.29, -1]],
@@ -35,7 +36,8 @@ join_remap = {k: str(i) for i,k in enumerate(join_keys)}  # {'join': "1"}
 join_data = {i: joins[join_keys[int(i)]] for i in join_remap.values()}  # "1": [[...], [...], ...]
 
 char_data = {
-    "a": [[0.0, 0.0], [0.29, 0.0]],
+    # "a": [[0.0, 0.0], [0.29, 0.0]],
+    "a": [[0.0, 0.0], [0.4, 0.0]],  # extra-wide to avoid overlap
     "b": [[0.0, 0.0], [0.21, 0.21], [0.14, 0.64], [0.07, 0.21], [0.29, 0.0]],
     "c": [[0.0, 0.0], [-0.13999999999999999, 0.0], [-0.21, -0.14999999999999997], [-0.13999999999999999, -0.29], [0.07999999999999999, -0.29]],
     "d": [[0.0, 0.0], [0.5, -0.29], [1.0, 0.0]],
@@ -145,7 +147,11 @@ def text_to_splines(text, interpolation_method='linear', separate_splines=False)
                         points.extend(adjusted_points)
                         total_width += char_points[-1, 0]
 
-                x_offset += char_width  # space between words
+                # TODO need to x-shift new words based on left side of char, even if not origin (e.g., "l")
+                x_offset += 2*char_width  # space between words
+                y_offset = 0  # reset to baseline for new words
+
+                # TODO: words should be set to END on the baseline, not start
 
                 if not separate_splines:
                     # scale = char_width * len(word) / (total_width or 1)  # Avoid division by zero
@@ -182,7 +188,7 @@ def generate_splines():
     separate_splines = 'separate_splines' in request.form
     splines, knot_points = text_to_splines(text, interpolation_method, separate_splines)
 
-    plt.figure(figsize=(15, 5))
+    plt.figure(figsize=(9, 3))
     for x_spline, y_spline in splines:
         plt.plot(x_spline, y_spline, 'k')
 
