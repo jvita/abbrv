@@ -1,7 +1,7 @@
 from flask import Flask, render_template, request, jsonify
 import numpy as np
 import json
-from scipy.interpolate import CubicSpline, BSpline
+from scipy.interpolate import CubicSpline
 
 import matplotlib
 matplotlib.use('Agg')
@@ -12,93 +12,48 @@ import base64
 
 app = Flask(__name__)
 
-# def load_char_splines(filename='char_splines.json'):
-#     with open(filename, 'r') as file:
-#         data = json.load(file)
+def load_json_file(filename):
+    with open(filename, 'r') as file:
+        return json.load(file)
 
-#     # Convert data to numpy arrays
-#     char_splines = {char: np.array(points, dtype=np.float32) for char, points in data.items()}
-#     return char_splines
+def get_data():
+    joins = load_json_file('data/multi_char_splines.json')
+    char_data = load_json_file('data/single_char_splines.json')
 
-# # Load spline knot points from JSON file
-# char_splines = load_char_splines()
+    join_keys = list(joins.keys())
+    join_remap = {k: str(i) for i, k in enumerate(join_keys)}
+    join_data = {i: joins[join_keys[int(i)]] for i in join_remap.values()}
 
-joins = {
-    'ea': [[0.00, 0.00], [0.07, 0.21], [0.29, 0.29]],
-    "ll": [[0, 0], [0.07999999999999999, -0.07999999999999999], [0.07999999999999999, -0.21999999999999997], [0, -0.29], [-0.13999999999999999, -0.29], [-0.21, -0.21999999999999997], [-0.21, -0.07999999999999999], [-0.13999999999999999, 0], [0, 0]],
-    'ph': [[0, 0], [-0.14, -0.79], [-0.14, -0.9299999999999999], [-0.07, -1], [0, -1], [0.06999999999999998, -0.9299999999999999], [0.06999999999999998, -0.86], [0, -0.79], [-0.14, -0.79]],
-    'rr': [[0.0, 0.0], [0.13999999999999999, 0.0], [0.21999999999999997, 0.07], [0.21999999999999997, 0.21], [0.13999999999999999, 0.29], [0.0, 0.29], [-0.07, 0.21], [-0.07, 0.07], [0.0, 0.0], [0.21999999999999997, 0.0]],
-    'sh': [[0, 0], [-0.07, -0.21000000000000002], [-0.07, -0.43], [0.07, -0.5], [0.21999999999999997, -0.36], [0.07, -0.21000000000000002], [-0.07, -0.21000000000000002]],
-    'sp': [[0, 0], [-0.21999999999999997, -0.20999999999999996], [-0.29, -1]],
-}
-join_keys = list(joins.keys())
-join_remap = {k: str(i) for i,k in enumerate(join_keys)}  # {'join': "1"}
-join_data = {i: joins[join_keys[int(i)]] for i in join_remap.values()}  # "1": [[...], [...], ...]
-
-char_data = {
-    # "a": [[0.0, 0.0], [0.29, 0.0]],
-    "a": [[0.0, 0.0], [0.4, 0.0]],  # extra-wide to avoid overlap
-    "b": [[0.0, 0.0], [0.21, 0.21], [0.14, 0.64], [0.07, 0.21], [0.29, 0.0]],
-    "c": [[0.0, 0.0], [-0.13999999999999999, 0.0], [-0.21, -0.14999999999999997], [-0.13999999999999999, -0.29], [0.07999999999999999, -0.29]],
-    "d": [[0.0, 0.0], [0.5, -0.29], [1.0, 0.0]],
-    "e": [[0.0, 0.0], [0.29, 0.29]],
-    "f": [[0.0, 0.0], [0.13999999999999999, 0.0], [0.21999999999999997, -0.14999999999999997], [0.13999999999999999, -0.29], [-0.07, -0.29]],
-    "g": [[0.0, 0.0], [-0.29, -0.29000000000000004], [-0.29, -0.71], [0.0, -1.0]],
-    "h": [[0.0, 0.0], [0.15, 0.0], [0.29000000000000004, 0.07], [0.36, 0.21], [0.36, 0.43], [0.29000000000000004, 0.57], [0.15, 0.64], [0.0, 0.64], [-0.13999999999999999, 0.57], [-0.21, 0.43], [-0.21, 0.21], [-0.13999999999999999, 0.07], [0.0, 0.0], [0.29000000000000004, 0.0]],
-    "i": [[0.0, 0.0], [0.29, 0.29]],
-    "j": [[0.0, 0.0], [0.0, -0.64], [-0.14, -0.35000000000000003], [0.06999999999999998, -0.14]],
-    "k": [[0.0, 0.0], [0.29, -0.29000000000000004], [0.29, -0.71], [0.0, -1.0]],
-    "l": [[0, 0], [0.07999999999999999, -0.07999999999999999], [0.07999999999999999, -0.21999999999999997], [0, -0.29], [-0.13999999999999999, -0.29], [-0.21, -0.21999999999999997], [-0.21, -0.07999999999999999], [-0.13999999999999999, 0], [0, 0]],
-    "m": [[0.0, 0.0], [0.5, 0.29], [1.0, 0.0]],
-    "n": [[0.00, 0.00], [0.07, 0.21], [0.21, 0.21], [0.29, 0.00]],
-    "o": [[0.0, 0.0], [1.0, 0.0]],
-    "p": [[0.0, 0.0], [-0.29, -1.0]],
-    "q": [[0.0, 0.0], [-0.29, -0.5], [0.0, -1.0], [0.27999999999999997, -0.5], [0.0, 0.0]],
-    "r": [[0.0, 0.0], [0.13999999999999999, 0.0], [0.21999999999999997, 0.07], [0.21999999999999997, 0.21], [0.13999999999999999, 0.29], [0.0, 0.29], [-0.07, 0.21], [-0.07, 0.07], [0.0, 0.0], [0.21999999999999997, 0.0]],
-    "s": [[0, 0], [0, -0.29]],
-    "t": [[0, 0], [0.07, -0.29], [0.21, -0.29], [0.29, 0]],
-    "u": [[0.0, 0.0], [1.0, 0.29]],
-    "v": [[0.0, 0.0], [0.29, -1.0], [0.57, 0.0]],
-    "w": [[0.0, 0.0], [-0.13999999999999999, 0.0], [-0.21, 0.14], [-0.13999999999999999, 0.29], [0.07999999999999999, 0.29]],
-    "x": [[0.0, 0.0], [-0.29, -0.14], [0.0, -0.29], [-0.29, -0.43]],
-    "y": [[0.0, 0.0], [0.29, -0.29]],
-    "z": [[0.0, 0.0], [-0.07999999999999999, -0.21999999999999997], [-0.29, -0.29]],
-}
-# Convert data to numpy arrays
-char_splines = {
-    char: np.array(points, dtype=np.float32)
-    for char, points in {**char_data, **join_data}.items()
+    char_splines = {
+        char: np.array(points, dtype=np.float32)
+        for char, points in {**char_data, **join_data}.items()
     }
 
-# Define spline knot points for each character
+    return char_splines, join_remap
+
+# Load the data when the Flask app starts
+char_splines, join_remap = get_data()
+
 def interpolate_points(points, method='linear', num_points=100):
     if len(points) < 2:
-        return np.array([]), np.array([])  # Return empty arrays if there are not enough points
+        return np.array([]), np.array([])
 
     x = points[:, 0]
     y = points[:, 1]
     t = np.linspace(0, 1, len(points))
 
-    # if (method == 'linear') or len(points) < 8:
     if method == 'linear':
         x_spline = np.interp(np.linspace(0, 1, num_points), t, x)
         y_spline = np.interp(np.linspace(0, 1, num_points), t, y)
     elif method == 'cubic':
         x_spline = CubicSpline(t, x, bc_type='natural')(np.linspace(0, 1, num_points))
         y_spline = CubicSpline(t, y, bc_type='natural')(np.linspace(0, 1, num_points))
-        # x_spline = CubicSpline(t, x, bc_type=((1, 0), (1, 0)))(np.linspace(0, 1, num_points))
-        # y_spline = CubicSpline(t, y, bc_type=((1, 0), (1, 0)))(np.linspace(0, 1, num_points))
-    elif method == 'bspline':
-        k = 4  # Cubic B-spline
-        tck_x = BSpline(t, x, k, extrapolate=False)
-        tck_y = BSpline(t, y, k, extrapolate=False)
-        x_spline = tck_x(np.linspace(0, 1, num_points))
-        y_spline = tck_y(np.linspace(0, 1, num_points))
 
     return x_spline, y_spline
 
 def text_to_splines(text, interpolation_method='linear', separate_splines=False):
-    char_width = 0.29  # Default width
+    global char_splines, join_remap
+    char_width = 0.17
 
     lines = text.split('\n')
     splines = []
@@ -106,17 +61,19 @@ def text_to_splines(text, interpolation_method='linear', separate_splines=False)
     y_offset = 0
     max_width = 15
     line_height = 2
-    word_space = 2  # Space between words
+    word_space = 0.29
     y_offset = 0
     x_offset = 0
+    total_width = 0
+    x_word_offset = 0
 
     for line in lines:
-
         words = line.split(' ')
         for word in words:
+            word_width = 0
+
             if word:
                 points = []
-                total_width = 0  # To calculate the total width of the word
 
                 for char in word:
                     if char not in char_splines:
@@ -130,12 +87,16 @@ def text_to_splines(text, interpolation_method='linear', separate_splines=False)
                         x_spline, y_spline = interpolate_points(adjusted_points, method=interpolation_method)
                         splines.append((x_spline, y_spline))
                         knot_points.append(adjusted_points)
+
+                        char_width = char_points[:, 0] + char_points[:, 0].min()
+                        char_width = abs(char_width[0] - char_width[-1])
+                        word_width += char_width
                         x_offset += char_points[-1, 0]
                         y_offset += char_points[-1, 1]
                     else:
-                        if total_width == 0:  # first char
+                        if total_width == 0:
                             char_points = char_splines[char]
-                            y_offset = char_points[-1, 1]  # for handling vertical shifts
+                            y_offset = char_points[-1, 1]
                             adjusted_points = char_points.copy()
                         else:
                             char_points = char_splines[char][1:]
@@ -147,30 +108,30 @@ def text_to_splines(text, interpolation_method='linear', separate_splines=False)
                         points.extend(adjusted_points)
                         total_width += char_points[-1, 0]
 
-                # TODO need to x-shift new words based on left side of char, even if not origin (e.g., "l")
-                x_offset += 2*char_width  # space between words
-                y_offset = 0  # reset to baseline for new words
+                # Calculate the width of the word and adjust x_offset for the next word
+                if points:
+                    word_width = np.max(np.array(points)[:, 0]) - np.min(np.array(points)[:, 0])
 
-                # TODO: words should be set to END on the baseline, not start
+                x_word_offset += word_width + word_space
+                x_offset = x_word_offset
+                y_offset = 0
 
                 if not separate_splines:
-                    # scale = char_width * len(word) / (total_width or 1)  # Avoid division by zero
                     rescaled_points = np.array(points)
                     x_spline, y_spline = interpolate_points(rescaled_points, method=interpolation_method)
                     splines.append((x_spline, y_spline))
                     knot_points.append(rescaled_points)
-                    x_offset += total_width + word_space  # Adjust x_offset for each word
 
-        y_offset -= line_height  # Fixed line height between lines of text
+        y_offset -= line_height
+        x_word_offset = 0  # Reset word offset for the next line
 
     return splines, knot_points
 
 def process_text(text):
-    new_text = str(text)  # make a copy
-
-    for k,v in join_remap.items():
+    new_text = str(text)
+    global join_remap
+    for k, v in join_remap.items():
         new_text = new_text.replace(k, v)
-
     return new_text
 
 @app.route('/')
@@ -181,7 +142,6 @@ def index():
 def generate_splines():
     text = request.form['text']
     text = process_text(text)
-    print(f'{text=}')
 
     interpolation_method = request.form['interpolation_method']
     show_knot_points = 'show_knot_points' in request.form
@@ -195,7 +155,7 @@ def generate_splines():
     if show_knot_points:
         for points in knot_points:
             x, y = zip(*points)
-            plt.plot(x, y, 'ro')  # Plot knot points as red dots
+            plt.plot(x, y, 'ro')
 
     plt.gca().set_aspect('equal', adjustable='box')
     plt.axis('off')
