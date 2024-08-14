@@ -1,0 +1,276 @@
+{% extends "index.html" %}
+
+{% block content %}
+<div class="app2-container">
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Drafter</title>
+        <!-- <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap"> -->
+        <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    </head>
+    <body>
+        <div class="container">
+            <!-- <h1>Spline Editor</h1> -->
+            <div class="main-content">
+                <div class="controls">
+                    <h2>Character</h2>
+                    <input type="text" id="character" placeholder="Enter character(s)">
+                    <div class="button-container">
+                        <button id="saveButton">Save</button>
+                        <button id="clearButton">Clear Points</button>
+                    </div>
+                    <h2>Saved Splines</h2>
+                    <div id="splineList" class="spline-list"></div>
+                    <button id="deleteButton" class="delete-button" style="display:none;">Delete Selected Spline</button>
+                </div>
+                <div class="grid-container">
+                    <canvas id="splineCanvas" width="580" height="580"></canvas>
+                    <canvas id="gridCanvas" width="580" height="580"></canvas>
+                </div>
+                <div class="side-panel">
+                    <h2>Selected Points</h2>
+                    <textarea id="points" readonly></textarea>
+                </div>
+            </div>
+        </div>
+        <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+        <script>
+            const gridCanvas = document.getElementById('gridCanvas');
+            const gridCtx = gridCanvas.getContext('2d');
+            const splineCanvas = document.getElementById('splineCanvas');
+            const splineCtx = splineCanvas.getContext('2d');
+            const pointsField = document.getElementById('points');
+            const characterField = document.getElementById('character');
+            const saveButton = document.getElementById('saveButton');
+            const clearButton = document.getElementById('clearButton');
+            const deleteButton = document.getElementById('deleteButton');
+            const splineList = document.getElementById('splineList');
+
+            let selectedPoints = [];
+            let currentCharacter = null;
+            const gridSize = 29;
+            const cellSize = 20;
+            const centerOffset = Math.floor(gridSize / 2) * cellSize;
+
+            function drawGrid() {
+                gridCtx.clearRect(0, 0, gridCanvas.width, gridCanvas.height);
+
+                // Draw the lighter grid lines
+                gridCtx.beginPath();
+                gridCtx.strokeStyle = 'rgba(0, 0, 0, 0.1)'; // Very light gray
+                gridCtx.lineWidth = 1; // Thin line width
+                for (let i = 0; i <= gridSize; i++) {
+                    gridCtx.moveTo(i * cellSize, 0);
+                    gridCtx.lineTo(i * cellSize, gridCanvas.height);
+                    gridCtx.moveTo(0, i * cellSize);
+                    gridCtx.lineTo(gridCanvas.width, i * cellSize);
+                }
+                gridCtx.stroke();
+
+                // Draw the darker center lines
+                gridCtx.beginPath();
+                gridCtx.strokeStyle = '#000'; // Dark color for center lines
+                gridCtx.lineWidth = 1; // Thinner line width for center lines
+                const centerX = centerOffset;
+                const centerY = centerOffset;
+
+                // Vertical center line
+                gridCtx.moveTo(centerX, 0);
+                gridCtx.lineTo(centerX, gridCanvas.height);
+
+                // Horizontal center line
+                gridCtx.moveTo(0, centerY);
+                gridCtx.lineTo(gridCanvas.width, centerY);
+
+                gridCtx.stroke();
+
+                // Draw the dark center squares
+                gridCtx.beginPath();
+                gridCtx.strokeStyle = '#000';
+                gridCtx.lineWidth = 1;
+                gridCtx.strokeRect(centerX - 100, centerY - 100, 200, 200);
+                gridCtx.strokeRect(centerX - 200, centerY - 200, 400, 400);
+                gridCtx.strokeRect(centerX - 400, centerY - 400, 800, 800);
+                gridCtx.stroke();
+            }
+
+            function drawPoints() {
+                gridCtx.clearRect(0, 0, gridCanvas.width, gridCanvas.height); // Clear the grid canvas before redrawing
+                drawGrid(); // Redraw the grid
+                gridCtx.fillStyle = 'red'; // Color for knot points
+                selectedPoints.forEach(([x, y]) => {
+                    gridCtx.beginPath();
+                    gridCtx.arc(centerOffset + x * cellSize, centerOffset - y * cellSize, 5, 0, Math.PI * 2);
+                    gridCtx.fill();
+                });
+            }
+
+            function updatePointsField() {
+                const normalizedPoints = selectedPoints.map(([x, y]) => [(x + gridSize / 2) / gridSize, (y + gridSize / 2) / gridSize]);
+                pointsField.value = JSON.stringify(normalizedPoints);
+                plotSpline(normalizedPoints);
+            }
+
+            function plotSpline(points) {
+                if (points.length < 2) {
+                    splineCtx.clearRect(0, 0, splineCanvas.width, splineCanvas.height);
+                    return;
+                }
+
+                splineCtx.clearRect(0, 0, splineCanvas.width, splineCanvas.height);
+                splineCtx.beginPath();
+                splineCtx.strokeStyle = 'blue'; // Color for spline
+                splineCtx.lineWidth = 2; // Thicker line width for spline
+
+                axios.post('/spline', { points })
+                    .then(response => {
+                        const spline = response.data.spline;
+                        spline.forEach(([x, y], index) => {
+                            const plotX = (x + 15) * (splineCanvas.width / 30) - (cellSize / 2);
+                            const plotY = splineCanvas.height - (y + 15) * (splineCanvas.height / 30) - (cellSize / 2);
+                            if (index === 0) {
+                                splineCtx.moveTo(plotX, plotY);
+                            } else {
+                                splineCtx.lineTo(plotX, plotY);
+                            }
+                        });
+                        splineCtx.stroke();
+                    });
+            }
+
+            gridCanvas.addEventListener('click', (event) => {
+                const rect = gridCanvas.getBoundingClientRect();
+                const x = event.clientX - rect.left - centerOffset;
+                const y = rect.top + centerOffset - event.clientY;
+                const gridX = Math.round(x / cellSize);
+                const gridY = Math.round(y / cellSize);
+
+                // Check if Ctrl key is pressed
+                const isCtrlPressed = event.ctrlKey;
+
+                // Find if the point is already selected
+                const pointIndex = selectedPoints.findIndex(([px, py]) => px === gridX && py === gridY);
+
+                if (isCtrlPressed) {
+                    // Ctrl+click: Remove the point if it exists
+                    if (pointIndex !== -1) {
+                        selectedPoints.splice(pointIndex, 1);
+                    }
+                } else {
+                    // Left click: Add the point if not already present
+                    if (pointIndex === -1) {
+                        selectedPoints.push([gridX, gridY]);
+                    } else {
+                        // If point already exists, add another
+                        selectedPoints.push([gridX, gridY]);
+                    }
+                }
+
+                drawGrid();
+                drawPoints();
+                updatePointsField();
+            });
+
+            saveButton.addEventListener('click', () => {
+                const character = characterField.value.trim();
+                if (character && selectedPoints.length) {
+                    const data = {
+                        character: character,
+                        points: selectedPoints.map(([x, y]) => [(x + gridSize / 2) / gridSize, (y + gridSize / 2) / gridSize])
+                    };
+                    axios.post('/save', data)
+                        .then(response => {
+                            if (response.data.status === 'success') {
+                                loadSplines();
+                                characterField.value = '';
+                                selectedPoints = [];
+                                pointsField.value = ''; // Clear the selected points field
+                                drawPoints(); // Ensure points are cleared
+                                updatePointsField();
+                            }
+                        });
+                }
+            });
+
+            clearButton.addEventListener('click', () => {
+                selectedPoints = [];
+                pointsField.value = ''; // Clear the selected points field
+                drawPoints(); // Ensure points are cleared
+                updatePointsField();
+            });
+
+            deleteButton.addEventListener('click', () => {
+                if (currentCharacter) {
+                    axios.post('/delete', { character: currentCharacter })
+                        .then(response => {
+                            if (response.data.status === 'success') {
+                                loadSplines();
+                                characterField.value = '';
+                                selectedPoints = [];
+                                pointsField.value = ''; // Clear the selected points field
+                                drawPoints(); // Ensure points are cleared
+                                updatePointsField();
+                                deleteButton.style.display = 'none'; // Hide delete button after deleting
+                            }
+                        });
+                }
+            });
+
+            function loadSplines() {
+                axios.get('/load')
+                    .then(response => {
+                        const data = response.data;
+                        splineList.innerHTML = '';
+                        currentCharacter = null;
+                        deleteButton.style.display = 'none'; // Hide delete button initially
+
+                        for (const [character, points] of Object.entries(data)) {
+                            const listItem = document.createElement('div');
+                            listItem.className = 'spline-item';
+                            listItem.textContent = character;
+
+                            listItem.addEventListener('click', () => {
+                                // Check if the clicked spline is already selected
+                                if (currentCharacter === character) {
+                                    // Deselect the spline
+                                    selectedPoints = [];
+                                    currentCharacter = null;
+                                    characterField.value = ''; // Clear the character field
+                                    pointsField.value = ''; // Clear the selected points field
+                                    deleteButton.style.display = 'none'; // Hide delete button
+                                    splineCtx.clearRect(0, 0, splineCanvas.width, splineCanvas.height); // Clear spline visualization
+                                    drawPoints(); // Ensure points are cleared
+
+                                    // Remove the selected class from the clicked item
+                                    listItem.classList.remove('selected');
+                                } else {
+                                    // Remove selected class from all items
+                                    document.querySelectorAll('.spline-item').forEach(item => item.classList.remove('selected'));
+
+                                    selectedPoints = points.map(([x, y]) => [x * gridSize - gridSize / 2, y * gridSize - gridSize / 2]);
+                                    characterField.value = character;
+                                    currentCharacter = character;
+                                    deleteButton.style.display = 'inline-block'; // Show delete button
+
+                                    // Update the display for the selected spline
+                                    drawPoints(); // Draw new points
+                                    updatePointsField();
+                                    plotSpline(points);
+                                    listItem.classList.add('selected'); // Add selected class to the clicked item
+                                }
+                            });
+
+                            splineList.appendChild(listItem);
+                        }
+                    });
+            }
+
+            drawGrid();
+            loadSplines();
+        </script>
+    </body>
+    </html>
+</div>
+{% endblock %}

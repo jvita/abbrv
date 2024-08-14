@@ -12,6 +12,123 @@ import base64
 
 app = Flask(__name__)
 
+# File paths for single-character and multi-character splines
+SINGLE_CHAR_FILE = 'data/single_char_splines.json'
+MULTI_CHAR_FILE = 'data/multi_char_splines.json'
+
+def adjust_points(points, adjustment):
+    """Adjust points by adding or subtracting a constant."""
+    points = np.array(points)
+    return (points + adjustment).tolist()
+
+@app.route('/spline', methods=['POST'])
+def spline():
+    points = request.json['points']
+    if not points:
+        return jsonify({'spline': []})
+
+    points = np.array(points)
+    x = points[:, 0] * 30 - 15
+    y = points[:, 1] * 30 - 15
+    t = np.linspace(0, 1, len(points))
+
+    num_plot_points = 100
+
+    x_dense = CubicSpline(t, x, bc_type='natural')(np.linspace(0, 1, num_plot_points))
+    y_dense = CubicSpline(t, y, bc_type='natural')(np.linspace(0, 1, num_plot_points))
+
+    if len(x_dense) < 2:
+        return jsonify({'spline': []})
+
+    try:
+        spline_points = list(zip(x_dense.tolist(), y_dense.tolist()))
+        return jsonify({'spline': spline_points})
+    except Exception as e:
+        print(f"Error in spline calculation: {e}")
+        return jsonify({'spline': []})
+
+@app.route('/save', methods=['POST'])
+def save():
+    data = request.json
+    character = data['character']
+    points = data['points']
+
+    adjusted_points = adjust_points(points, np.array([-0.5, -0.5]))
+
+    # Determine file based on character length
+    if len(character) == 1:
+        file_path = SINGLE_CHAR_FILE
+    else:
+        file_path = MULTI_CHAR_FILE
+
+    # Load existing data
+    try:
+        with open(file_path, 'r') as f:
+            existing_data = json.load(f)
+    except FileNotFoundError:
+        existing_data = {}
+
+    # Update or add new entry
+    existing_data[character] = adjusted_points
+
+    # Save updated data
+    with open(file_path, 'w') as f:
+        json.dump(existing_data, f, indent=4)
+
+    return jsonify({'status': 'success'})
+
+@app.route('/load')
+def load():
+    all_data = {}
+
+    # Load single-character splines
+    try:
+        with open(SINGLE_CHAR_FILE, 'r') as f:
+            single_char_data = json.load(f)
+            all_data.update({k: adjust_points(v, np.array([0.5, 0.5])) for k, v in single_char_data.items()})
+    except FileNotFoundError:
+        pass
+
+    # Load multi-character splines
+    try:
+        with open(MULTI_CHAR_FILE, 'r') as f:
+            multi_char_data = json.load(f)
+            all_data.update({k: adjust_points(v, np.array([0.5, 0.5])) for k, v in multi_char_data.items()})
+    except FileNotFoundError:
+        pass
+
+    return jsonify(all_data)
+
+@app.route('/delete', methods=['POST'])
+def delete():
+    data = request.json
+    character = data['character']
+
+    if len(character) == 1:
+        file_path = SINGLE_CHAR_FILE
+    else:
+        file_path = MULTI_CHAR_FILE
+
+    # Load existing data
+    try:
+        with open(file_path, 'r') as f:
+            existing_data = json.load(f)
+    except FileNotFoundError:
+        existing_data = {}
+
+    # Remove the specified character
+    if character in existing_data:
+        del existing_data[character]
+
+        # Save updated data
+        with open(file_path, 'w') as f:
+            json.dump(existing_data, f, indent=4)
+
+        return jsonify({'status': 'success'})
+    else:
+        return jsonify({'status': 'error', 'message': 'Character not found'})
+
+# Writer code
 def load_json_file(filename):
     with open(filename, 'r') as file:
         return json.load(file)
@@ -167,5 +284,19 @@ def generate_splines():
 
     return jsonify({'image': img_base64})
 
+@app.route('/writer')
+def writer():
+
+    # Make sure to re-load the data, in case the drafter changed anything
+    global char_splines
+    global join_remap
+    char_splines, join_remap = get_data()
+
+    return render_template('writer.html')
+
+@app.route('/drafter')
+def drafter():
+    return render_template('drafter.html')
+
 if __name__ == '__main__':
-    app.run(debug=True, port=5001)
+    app.run(debug=True)
