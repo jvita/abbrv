@@ -204,8 +204,7 @@ def text_to_splines(text, interpolation_method='linear'):
                     splines.append((x_spline, y_spline))
                     knot_points.append(adjusted_points)
 
-                    char_width = char_points[:, 0] + char_points[:, 0].min()
-                    char_width = abs(char_width[0] - char_width[-1])
+                    char_width = char_points[:, 0].max() - char_points[:, 0].min()
                     word_width += char_width
                     x_offset += char_points[-1, 0]
                     y_offset += char_points[-1, 1]
