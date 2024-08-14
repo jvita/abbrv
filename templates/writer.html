@@ -102,10 +102,10 @@
                 <input type="checkbox" id="show_knot_points" name="show_knot_points">
                 Display Knot Points
             </label>
-            <label for="separate_splines">
+            <!-- <label for="separate_splines">
                 <input type="checkbox" id="separate_splines" name="separate_splines">
                 Treat Each Character as Separate Spline
-            </label>
+            </label> -->
         </form>
         <div id="output"></div>
     </body>
@@ -144,7 +144,8 @@
         const debouncedUpdatePlot = debounce(updatePlot, 300);
 
         // Bind the input event on textarea and change event on checkbox/select
-        $('#text, #interpolation_method, #show_knot_points, #separate_splines').on('input change', function() {
+        // $('#text, #interpolation_method, #show_knot_points, #separate_splines').on('input change', function() {
+        $('#text, #interpolation_method, #show_knot_points').on('input change', function() {
             debouncedUpdatePlot();
         });
 

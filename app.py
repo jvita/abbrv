@@ -168,7 +168,7 @@ def interpolate_points(points, method='linear', num_points=100):
 
     return x_spline, y_spline
 
-def text_to_splines(text, interpolation_method='linear', separate_splines=False):
+def text_to_splines(text, interpolation_method='linear'):
     global char_splines, join_remap
     char_width = 0.17
 
@@ -196,34 +196,19 @@ def text_to_splines(text, interpolation_method='linear', separate_splines=False)
                     if char not in char_splines:
                         raise RuntimeError(f"Char '{char}' does not exist in spline dict.")
 
-                    if separate_splines:
-                        char_points = char_splines[char]
-                        adjusted_points = char_points.copy()
-                        adjusted_points[:, 0] += x_offset
-                        adjusted_points[:, 1] += y_offset
-                        x_spline, y_spline = interpolate_points(adjusted_points, method=interpolation_method)
-                        splines.append((x_spline, y_spline))
-                        knot_points.append(adjusted_points)
+                    char_points = char_splines[char]
+                    adjusted_points = char_points.copy()
+                    adjusted_points[:, 0] += x_offset
+                    adjusted_points[:, 1] += y_offset
+                    x_spline, y_spline = interpolate_points(adjusted_points, method=interpolation_method)
+                    splines.append((x_spline, y_spline))
+                    knot_points.append(adjusted_points)
 
-                        char_width = char_points[:, 0] + char_points[:, 0].min()
-                        char_width = abs(char_width[0] - char_width[-1])
-                        word_width += char_width
-                        x_offset += char_points[-1, 0]
-                        y_offset += char_points[-1, 1]
-                    else:
-                        if total_width == 0:
-                            char_points = char_splines[char]
-                            y_offset = char_points[-1, 1]
-                            adjusted_points = char_points.copy()
-                        else:
-                            char_points = char_splines[char][1:]
-                            adjusted_points = char_points.copy()
-                            adjusted_points[:, 0] += total_width
-                            adjusted_points[:, 1] += y_offset
-                            y_offset = adjusted_points[-1, 1]
-
-                        points.extend(adjusted_points)
-                        total_width += char_points[-1, 0]
+                    char_width = char_points[:, 0] + char_points[:, 0].min()
+                    char_width = abs(char_width[0] - char_width[-1])
+                    word_width += char_width
+                    x_offset += char_points[-1, 0]
+                    y_offset += char_points[-1, 1]
 
                 # Calculate the width of the word and adjust x_offset for the next word
                 if points:
@@ -232,12 +217,6 @@ def text_to_splines(text, interpolation_method='linear', separate_splines=False)
                 x_word_offset += word_width + word_space
                 x_offset = x_word_offset
                 y_offset = 0
-
-                if not separate_splines:
-                    rescaled_points = np.array(points)
-                    x_spline, y_spline = interpolate_points(rescaled_points, method=interpolation_method)
-                    splines.append((x_spline, y_spline))
-                    knot_points.append(rescaled_points)
 
         y_offset -= line_height
         x_word_offset = 0  # Reset word offset for the next line
@@ -262,8 +241,7 @@ def generate_splines():
 
     interpolation_method = request.form['interpolation_method']
     show_knot_points = 'show_knot_points' in request.form
-    separate_splines = 'separate_splines' in request.form
-    splines, knot_points = text_to_splines(text, interpolation_method, separate_splines)
+    splines, knot_points = text_to_splines(text, interpolation_method)
 
     plt.figure(figsize=(9, 3))
     for x_spline, y_spline in splines:
