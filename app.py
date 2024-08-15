@@ -232,11 +232,8 @@ def process_text(text):
     for i in range(n):
         j = min(i + 2, n)
         k = text[i:j]
-        print(f'{(i,j)=}, {k=}, {k in join_remap}')
         if k in join_remap:
             new_text = new_text.replace(k, join_remap[k])
-    # for k, v in join_remap.items():
-    #     new_text = new_text.replace(k, v)
     return new_text
 
 @app.route('/')
