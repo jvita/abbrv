@@ -168,7 +168,7 @@ def interpolate_points(points, method='linear', num_points=100):
 
     return x_spline, y_spline
 
-def text_to_splines(text, interpolation_method='linear'):
+def text_to_splines(text):
     global char_splines, join_remap
     char_width = 0.17
 
@@ -200,7 +200,7 @@ def text_to_splines(text, interpolation_method='linear'):
                     adjusted_points = char_points.copy()
                     adjusted_points[:, 0] += x_offset
                     adjusted_points[:, 1] += y_offset
-                    x_spline, y_spline = interpolate_points(adjusted_points, method=interpolation_method)
+                    x_spline, y_spline = interpolate_points(adjusted_points)
                     splines.append((x_spline, y_spline))
                     knot_points.append(adjusted_points)
 
@@ -238,9 +238,8 @@ def generate_splines():
     text = request.form['text']
     text = process_text(text)
 
-    interpolation_method = request.form['interpolation_method']
     show_knot_points = 'show_knot_points' in request.form
-    splines, knot_points = text_to_splines(text, interpolation_method)
+    splines, knot_points = text_to_splines(text)
 
     plt.figure(figsize=(9, 3))
     for x_spline, y_spline in splines:
