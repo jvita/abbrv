@@ -165,6 +165,10 @@ def interpolate_points(points, num_points=100):
     return x_spline, y_spline
 
 def text_to_splines(text):
+    '''A version of `text_to_splines` that treates entire words as a single spline'''
+    raise NotImplementedError
+
+def text_to_separate_splines(text):
     global char_splines, join_remap
     char_width = 0.17
 
@@ -245,8 +249,13 @@ def generate_splines():
     text = request.form['text']
     text = process_text(text)
 
+    separate_splines = 'separate_splines' in request.form
     show_knot_points = 'show_knot_points' in request.form
-    splines, knot_points = text_to_splines(text)
+
+    if separate_splines:
+        splines, knot_points = text_to_separate_splines(text)
+    else:
+        splines, knot_points = text_to_splines(text)
 
     plt.figure(figsize=(9, 3))
     for x_spline, y_spline in splines:
