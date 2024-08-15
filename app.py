@@ -151,7 +151,7 @@ def get_data():
 # Load the data when the Flask app starts
 char_splines, join_remap = get_data()
 
-def interpolate_points(points, method='linear', num_points=100):
+def interpolate_points(points, num_points=100):
     if len(points) < 2:
         return np.array([]), np.array([])
 
@@ -159,12 +159,8 @@ def interpolate_points(points, method='linear', num_points=100):
     y = points[:, 1]
     t = np.linspace(0, 1, len(points))
 
-    if method == 'linear':
-        x_spline = np.interp(np.linspace(0, 1, num_points), t, x)
-        y_spline = np.interp(np.linspace(0, 1, num_points), t, y)
-    elif method == 'cubic':
-        x_spline = CubicSpline(t, x, bc_type='natural')(np.linspace(0, 1, num_points))
-        y_spline = CubicSpline(t, y, bc_type='natural')(np.linspace(0, 1, num_points))
+    x_spline = CubicSpline(t, x, bc_type='natural')(np.linspace(0, 1, num_points))
+    y_spline = CubicSpline(t, y, bc_type='natural')(np.linspace(0, 1, num_points))
 
     return x_spline, y_spline
 
