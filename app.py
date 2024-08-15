@@ -219,10 +219,24 @@ def text_to_splines(text):
     return splines, knot_points
 
 def process_text(text):
+    """Processes text in the following manner:
+
+    - moving left to right
+    - TODO: check for special starting characters ("th")
+    - TODO: removes 'o' and 'a' before 'm' an 'n' if not at start of word
+    - check for 2-character special joins
+    """
     new_text = str(text)
     global join_remap
-    for k, v in join_remap.items():
-        new_text = new_text.replace(k, v)
+    n = len(text)
+    for i in range(n):
+        j = min(i + 2, n)
+        k = text[i:j]
+        print(f'{(i,j)=}, {k=}, {k in join_remap}')
+        if k in join_remap:
+            new_text = new_text.replace(k, join_remap[k])
+    # for k, v in join_remap.items():
+    #     new_text = new_text.replace(k, v)
     return new_text
 
 @app.route('/')
@@ -263,6 +277,8 @@ def writer():
     global char_splines
     global join_remap
     char_splines, join_remap = get_data()
+
+    # TODO: get_data should also be done on webpage reload
 
     return render_template('writer.html')
 
