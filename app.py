@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, jsonify
 import numpy as np
 import json
 from scipy.interpolate import CubicSpline, BSpline
+import os
 
 import matplotlib
 matplotlib.use('Agg')
@@ -30,7 +31,6 @@ def spline():
     points = np.array(points)
     x = points[:, 0] * 32 - 16
     y = points[:, 1] * 32 - 16
-    print(x)
     t = np.linspace(0, 1, len(points))
 
     num_plot_points = 100
@@ -137,8 +137,12 @@ def execute_on_refresh():
 
 # Writer code
 def load_json_file(filename):
-    with open(filename, 'r') as file:
-        return json.load(file)
+    if not os.path.isfile(filename):
+        with open(filename, 'w') as f:
+            f.write(json.dumps({}))
+
+    with open(filename, 'r') as f:
+        return json.load(f)
 
 def get_data():
     joins = load_json_file('data/multi_char_splines.json')
