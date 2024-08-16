@@ -255,12 +255,10 @@ def text_to_splines(text):
 def join_to_spline(join, ci, cursor_pos):
     global joins
 
-    print(join, ci)
-
     # Shift points to cursor position
     join_points = joins[join].copy()
 
-    if ci == 0: # first character
+    if ci == 0:
         # shift to properly respect spaces b/w words
         join_width = join_points[:, 0].max() - join_points[:, 0].min()
         join_points[:, 0] += join_width
@@ -307,7 +305,8 @@ def text_to_separate_splines(text):
                     else:
                         if join:  # non-empty
                             # build spline
-                            returns = join_to_spline(join, ci, cursor_pos)
+                            # ci-1 because char hasn't been added yet
+                            returns = join_to_spline(join, ci-1, cursor_pos)
 
                             splines.append(returns[0])
                             red_dot_points.append(returns[1])
@@ -327,6 +326,7 @@ def text_to_separate_splines(text):
 
                 if join: # still something left
                     # build spline
+                    print(f'fourth {ci=} {char=}')
                     returns = join_to_spline(join, ci, cursor_pos)
 
                     splines.append(returns[0])
