@@ -30,9 +30,9 @@ html, body {
 
 .grid-container {
     position: relative;
-    width: 640px; /* Match canvas size */
-    height: 640px; /* Match canvas size */
-    overflow: hidden;
+    width: 620px; /* View window size */
+    height: 620px; /* View window size */
+    overflow: scroll; /* Enable scrolling */
     margin-left: 20px; /* Spacing from controls */
 }
 

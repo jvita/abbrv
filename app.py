@@ -31,11 +31,13 @@ def spline():
         return jsonify({'spline': []})
 
     points = np.array(points)
-    x = points[:, 0] * 32 - 16
-    y = points[:, 1] * 32 - 16
+    x = points[:, 0] * 62 - 31
+    y = points[:, 1] * 62 - 31
     t = np.linspace(0, 1, len(points))
 
     num_plot_points = 100
+
+    print(x, y)
 
     x_dense = CubicSpline(t, x, bc_type='natural')(np.linspace(0, 1, num_plot_points))
     y_dense = CubicSpline(t, y, bc_type='natural')(np.linspace(0, 1, num_plot_points))
@@ -201,7 +203,7 @@ def text_to_splines(text):
     lines = text.split('\n')
     splines = []
     red_dot_points = []
-    word_space = 0.29
+    word_space = 0.1
     cursor_pos = np.array([0, 0], dtype=np.float32)
     rightmost_x = 0 # for adding spaces between words
     y_offset = 0  # for adding newlines
@@ -260,8 +262,7 @@ def join_to_spline(join, ci, cursor_pos):
 
     if ci == 0:
         # shift to properly respect spaces b/w words
-        join_width = join_points[:, 0].max() - join_points[:, 0].min()
-        join_points[:, 0] += join_width
+        join_points[:, 0] += abs(join_points[:, 0].min())
     else:
         # shift to align with cursor position
         join_points -= join_points[0]
@@ -286,7 +287,7 @@ def text_to_separate_splines(text):
     lines = text.split('\n')
     splines = []
     red_dot_points = []
-    word_space = 0.29
+    word_space = 0.1
     cursor_pos = np.array([0, 0], dtype=np.float32)
     rightmost_x = 0 # for adding spaces between words
     y_offset = 0  # for adding newlines
@@ -312,10 +313,11 @@ def text_to_separate_splines(text):
                             red_dot_points.append(returns[1])
                             rightmost_x = returns[2]
                             cursor_pos = returns[3]
-                        join = ''
-                        if char in joins:
-                            join = char
-                        else:
+                        join = char
+                        if char not in joins:
+                        #     join = char
+                        # else:
+                        #     join = char
                             # build spline
                             returns = join_to_spline(join, ci, cursor_pos)
 
@@ -326,7 +328,6 @@ def text_to_separate_splines(text):
 
                 if join: # still something left
                     # build spline
-                    print(f'fourth {ci=} {char=}')
                     returns = join_to_spline(join, ci, cursor_pos)
 
                     splines.append(returns[0])
@@ -369,9 +370,14 @@ def generate_splines():
     else:
         splines, red_dot_points = text_to_splines(text)
 
-    plt.figure(figsize=(9, 3))
+    plt.figure(figsize=(15, 3))
     for x_spline, y_spline in splines:
-        plt.plot(x_spline, y_spline, 'k')
+        plt.plot(
+            x_spline, y_spline,
+            'k',
+            linewidth=3,
+            solid_capstyle='round'
+            )
 
     if show_knot_points:
         for points in red_dot_points:
