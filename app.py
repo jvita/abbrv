@@ -14,8 +14,10 @@ import base64
 app = Flask(__name__)
 
 # File paths for single-character and multi-character splines
-SINGLE_CHAR_FILE = 'data/single_char_splines.json'
-MULTI_CHAR_FILE = 'data/multi_char_splines.json'
+# SINGLE_CHAR_FILE = 'data/single_char_splines.json'
+# MULTI_CHAR_FILE = 'data/multi_char_splines.json'
+JOIN_FILE = 'data/joins.json'
+joins = {}
 
 def adjust_points(points, adjustment):
     """Adjust points by adding or subtracting a constant."""
@@ -56,15 +58,15 @@ def save():
 
     adjusted_points = adjust_points(points, np.array([-0.5, -0.5]))
 
-    # Determine file based on character length
-    if len(character) == 1:
-        file_path = SINGLE_CHAR_FILE
-    else:
-        file_path = MULTI_CHAR_FILE
+    # # Determine file based on character length
+    # if len(character) == 1:
+    #     file_path = SINGLE_CHAR_FILE
+    # else:
+    #     file_path = MULTI_CHAR_FILE
 
     # Load existing data
     try:
-        with open(file_path, 'r') as f:
+        with open(JOIN_FILE, 'r') as f:
             existing_data = json.load(f)
     except FileNotFoundError:
         existing_data = {}
@@ -73,7 +75,7 @@ def save():
     existing_data[character] = adjusted_points
 
     # Save updated data
-    with open(file_path, 'w') as f:
+    with open(JOIN_FILE, 'w') as f:
         json.dump(existing_data, f, indent=4)
 
     return jsonify({'status': 'success'})
@@ -82,19 +84,27 @@ def save():
 def load():
     all_data = {}
 
+    # # Load single-character splines
+    # try:
+    #     with open(SINGLE_CHAR_FILE, 'r') as f:
+    #         single_char_data = json.load(f)
+    #         all_data.update({k: adjust_points(v, np.array([0.5, 0.5])) for k, v in single_char_data.items()})
+    # except FileNotFoundError:
+    #     pass
+
+    # # Load multi-character splines
+    # try:
+    #     with open(MULTI_CHAR_FILE, 'r') as f:
+    #         multi_char_data = json.load(f)
+    #         all_data.update({k: adjust_points(v, np.array([0.5, 0.5])) for k, v in multi_char_data.items()})
+    # except FileNotFoundError:
+    #     pass
+
     # Load single-character splines
     try:
-        with open(SINGLE_CHAR_FILE, 'r') as f:
-            single_char_data = json.load(f)
-            all_data.update({k: adjust_points(v, np.array([0.5, 0.5])) for k, v in single_char_data.items()})
-    except FileNotFoundError:
-        pass
-
-    # Load multi-character splines
-    try:
-        with open(MULTI_CHAR_FILE, 'r') as f:
-            multi_char_data = json.load(f)
-            all_data.update({k: adjust_points(v, np.array([0.5, 0.5])) for k, v in multi_char_data.items()})
+        with open(JOIN_FILE, 'r') as f:
+            join_data = json.load(f)
+            all_data.update({k: adjust_points(v, np.array([0.5, 0.5])) for k, v in join_data.items()})
     except FileNotFoundError:
         pass
 
@@ -105,10 +115,11 @@ def delete():
     data = request.json
     character = data['character']
 
-    if len(character) == 1:
-        file_path = SINGLE_CHAR_FILE
-    else:
-        file_path = MULTI_CHAR_FILE
+    # if len(character) == 1:
+    #     file_path = SINGLE_CHAR_FILE
+    # else:
+    #     file_path = MULTI_CHAR_FILE
+    file_path = JOIN_FILE
 
     # Load existing data
     try:
@@ -130,10 +141,11 @@ def delete():
         return jsonify({'status': 'error', 'message': 'Character not found'})
 
 def execute_on_refresh():
+    get_data()
     # Make sure to re-load the data, in case the drafter changed anything
-    global char_splines
-    global join_remap
-    char_splines, join_remap = get_data()
+    # global char_splines
+    # global join_remap
+    # char_splines, join_remap = get_data()
 
 # Writer code
 def load_json_file(filename):
@@ -145,22 +157,28 @@ def load_json_file(filename):
         return json.load(f)
 
 def get_data():
-    joins = load_json_file('data/multi_char_splines.json')
-    char_data = load_json_file('data/single_char_splines.json')
-
-    join_keys = list(joins.keys())
-    join_remap = {k: str(i) for i, k in enumerate(join_keys)}
-    join_data = {i: joins[join_keys[int(i)]] for i in join_remap.values()}
-
-    char_splines = {
+    global joins
+    _joins = load_json_file(JOIN_FILE)
+    joins = {
         char: np.array(points, dtype=np.float32)
-        for char, points in {**char_data, **join_data}.items()
+        for char, points in _joins.items()
     }
 
-    return char_splines, join_remap
+    # char_data = load_json_file('data/single_char_splines.json')
 
-char_splines = None
-join_remap = None
+    # join_keys = list(joins.keys())
+    # join_remap = {k: str(i) for i, k in enumerate(join_keys)}
+    # join_data = {i: joins[join_keys[int(i)]] for i in join_remap.values()}
+
+    # char_splines = {
+    #     char: np.array(points, dtype=np.float32)
+    #     for char, points in {**char_data, **join_data}.items()
+    # }
+
+    # return char_splines, join_remap
+
+# char_splines = None
+# join_remap = None
 
 def interpolate_points(points, num_points=100):
     if len(points) < 2:
@@ -177,7 +195,8 @@ def interpolate_points(points, num_points=100):
 
 def text_to_splines(text):
     '''A version of `text_to_splines` that treates entire words as a single spline'''
-    global char_splines, join_remap
+    # global char_splines, join_remap
+    global joins
 
     lines = text.split('\n')
     splines = []
@@ -233,9 +252,38 @@ def text_to_splines(text):
 
     return splines, red_dot_points
 
+def join_to_spline(join, ci, cursor_pos):
+    global joins
+
+    print(join, ci)
+
+    # Shift points to cursor position
+    join_points = joins[join].copy()
+
+    if ci == 0: # first character
+        # shift to properly respect spaces b/w words
+        join_width = join_points[:, 0].max() - join_points[:, 0].min()
+        join_points[:, 0] += join_width
+    else:
+        # shift to align with cursor position
+        join_points -= join_points[0]
+
+    join_points += cursor_pos  # move to cursor pos
+
+    x_spline, y_spline = interpolate_points(join_points)
+    splines = (x_spline, y_spline)
+    red_dot_points = join_points  # for optionally plotting red dots
+
+    # move cursor and word endpoint tracker
+    rightmost_x = join_points[:, 0].max()
+    cursor_pos = join_points[-1].copy()
+
+    return splines, red_dot_points, rightmost_x, cursor_pos
+
 
 def text_to_separate_splines(text):
-    global char_splines, join_remap
+    # global char_splines, join_remap
+    global joins
 
     lines = text.split('\n')
     splines = []
@@ -250,48 +298,59 @@ def text_to_separate_splines(text):
         words = line.split(' ')
         for word in words:
             if word:
+                join = ''
+
                 for ci, char in enumerate(word):
-                    if char not in char_splines:
-                        raise RuntimeError(f"Char '{char}' does not exist in spline dict.")
-
-                    # Shift points to cursor position
-                    char_points = char_splines[char].copy()
-
-                    if ci == 0: # first character
-                        char_width = char_points[:, 0].max() - char_points[:, 0].min()
-                        char_points[:, 0] += char_width
+                    test_join = join + char
+                    if test_join in joins:
+                        join = test_join
                     else:
-                        # shift first point to (0, 0)
-                        char_points -= char_points[0]
+                        if join:  # non-empty
+                            # build spline
+                            returns = join_to_spline(join, ci, cursor_pos)
 
-                    char_points += cursor_pos  # move to cursor pos
+                            splines.append(returns[0])
+                            red_dot_points.append(returns[1])
+                            rightmost_x = returns[2]
+                            cursor_pos = returns[3]
+                        join = ''
+                        if char in joins:
+                            join = char
+                        else:
+                            # build spline
+                            returns = join_to_spline(join, ci, cursor_pos)
 
-                    x_spline, y_spline = interpolate_points(char_points)
-                    splines.append((x_spline, y_spline))
-                    red_dot_points.append(char_points)  # for optionally plotting red dots
+                            splines.append(returns[0])
+                            red_dot_points.append(returns[1])
+                            rightmost_x = returns[2]
+                            cursor_pos = returns[3]
 
-                    # move cursor and word endpoint tracker
-                    rightmost_x = char_points[:, 0].max()
-                    cursor_pos = char_points[-1].copy()
+                if join: # still something left
+                    # build spline
+                    returns = join_to_spline(join, ci, cursor_pos)
 
-                # reset cursor
+                    splines.append(returns[0])
+                    red_dot_points.append(returns[1])
+                    rightmost_x = returns[2]
+                    cursor_pos = returns[3]
+
                 cursor_pos[0] = rightmost_x + word_space
-                cursor_pos[1] = 0  # return to baseline height
+                cursor_pos[1] = 0
 
         y_offset -= line_height
 
     return splines, red_dot_points
 
-def process_text(text):
-    new_text = str(text)
-    global join_remap
-    n = len(text)
-    for i in range(n):
-        j = min(i + 2, n)
-        k = text[i:j]
-        if k in join_remap:
-            new_text = new_text.replace(k, join_remap[k])
-    return new_text
+# def process_text(text):
+#     new_text = str(text)
+#     global join_remap
+#     n = len(text)
+#     for i in range(n):
+#         j = min(i + 2, n)
+#         k = text[i:j]
+#         if k in join_remap:
+#             new_text = new_text.replace(k, join_remap[k])
+#     return new_text
 
 @app.route('/')
 def index():
@@ -300,7 +359,7 @@ def index():
 @app.route('/generate_splines', methods=['POST'])
 def generate_splines():
     text = request.form['text']
-    text = process_text(text)
+    # text = process_text(text)
 
     separate_splines = 'separate_splines' in request.form
     show_knot_points = 'show_knot_points' in request.form

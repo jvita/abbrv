@@ -11,7 +11,7 @@
         <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
     </head>
     <body>
-        <h1>Writer</h1>
+        <!-- <h1>Writer</h1> -->
         <form id="text-form">
             <textarea id="text" name="text" placeholder="Enter text here..."></textarea>
             <label for="show_knot_points">
@@ -19,7 +19,7 @@
                 Display Knot Points
             </label>
             <label for="separate_splines">
-                <input type="checkbox" id="separate_splines" name="separate_splines">
+                <input type="checkbox" id="separate_splines" name="separate_splines" checked>
                 Use separate splines for each character
             </label>
         </form>
