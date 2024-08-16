@@ -201,13 +201,16 @@ def text_to_splines(text):
                     # Shift points to cursor position
                     char_points = char_splines[char].copy()
 
-                    if ci > 0: # not first character
+                    if ci == 0: # first character
+                        char_width = char_points[:, 0].max() - char_points[:, 0].min()
+                        char_points[:, 0] += char_width
+                    else:
                         # shift first point to (0, 0)
                         char_points -= char_points[0]
-                        char_points = char_points[1:] # since it will connect to prev char
+                        # remove first point for smoother join
+                        char_points = char_points[1:]
 
                     char_points += cursor_pos  # move to cursor pos
-                    # char_points[:, 0] += char_buffer_width
 
                     word_points.append(char_points)
 
@@ -255,11 +258,11 @@ def text_to_separate_splines(text):
                     char_points = char_splines[char].copy()
 
                     if ci == 0: # first character
-                        char_points[:, 0] -= char_points[:, 0].min()  # shift to space properly if negative values
+                        char_width = char_points[:, 0].max() - char_points[:, 0].min()
+                        char_points[:, 0] += char_width
                     else:
                         # shift first point to (0, 0)
                         char_points -= char_points[0]
-                    
 
                     char_points += cursor_pos  # move to cursor pos
 
