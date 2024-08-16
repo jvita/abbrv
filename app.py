@@ -159,21 +159,8 @@ def get_data():
 
     return char_splines, join_remap
 
-# Load the data when the Flask app starts
-char_splines, join_remap = get_data()
-
-# def create_bspline(t, x, y, k=3):
-#     n = len(x)  # Number of control points
-#     m = n + k + 1  # Number of knots
-
-#     # Create a knot vector with m knots
-#     t_knots = np.concatenate(([0] * k, np.linspace(0, 1, n - k + 1), [1] * k))
-
-#     # Create B-splines for x and y coordinates
-#     spl_x = BSpline(t_knots, x, k)
-#     spl_y = BSpline(t_knots, y, k)
-
-#     return spl_x, spl_y
+char_splines = None
+join_remap = None
 
 def interpolate_points(points, num_points=100):
     if len(points) < 2:
@@ -183,19 +170,8 @@ def interpolate_points(points, num_points=100):
     y = points[:, 1]
     t = np.linspace(0, 1, len(points))
 
-    # t_new = np.linspace(0, 1, num_points)
-    # tck_x, tck_y = create_bspline(t, x, y, k=3)
-    # x_spline = tck_x(t_new)
-    # y_spline = tck_y(t_new)
-
-    # num_knots = len(x)
-    # print(f'{num_knots=}')
-    # if num_knots <= 3:
     x_spline = CubicSpline(t, x, bc_type='natural')(np.linspace(0, 1, num_points))
     y_spline = CubicSpline(t, y, bc_type='natural')(np.linspace(0, 1, num_points))
-    # else:
-    #     x_spline = BSpline(t, x, k=num_points-1)(np.linspace(0, 1, num_points))
-    #     y_spline = BSpline(t, y, k=num_points-1)(np.linspace(0, 1, num_points))
 
     return x_spline, y_spline
 
@@ -278,9 +254,12 @@ def text_to_separate_splines(text):
                     # Shift points to cursor position
                     char_points = char_splines[char].copy()
 
-                    if ci > 0: # not first character
+                    if ci == 0: # first character
+                        char_points[:, 0] -= char_points[:, 0].min()  # shift to space properly if negative values
+                    else:
                         # shift first point to (0, 0)
                         char_points -= char_points[0]
+                    
 
                     char_points += cursor_pos  # move to cursor pos
 
@@ -301,13 +280,6 @@ def text_to_separate_splines(text):
     return splines, red_dot_points
 
 def process_text(text):
-    """Processes text in the following manner:
-
-    - moving left to right
-    - TODO: check for special starting characters ("th")
-    - TODO: removes 'o' and 'a' before 'm' an 'n' if not at start of word
-    - check for 2-character special joins
-    """
     new_text = str(text)
     global join_remap
     n = len(text)
