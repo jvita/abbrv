@@ -109,7 +109,6 @@
                 plotSpline(normalizedPoints);
             }
 
-
             function plotSpline(points) {
                 if (points.length < 2) {
                     splineCtx.clearRect(0, 0, splineCanvas.width, splineCanvas.height);
@@ -121,12 +120,14 @@
                 splineCtx.strokeStyle = 'blue'; // Color for spline
                 splineCtx.lineWidth = 2; // Thicker line width for spline
 
+                console.log(points)
+
                 axios.post('/spline', { points })
                     .then(response => {
                         const spline = response.data.spline;
                         spline.forEach(([x, y], index) => {
-                            const plotX = centerOffset + x * cellSize;
-                            const plotY = centerOffset - y * cellSize;
+                            const plotX = (x + (gridSize / 2)) * (splineCanvas.width / gridSize);
+                            const plotY = splineCanvas.height - ((y + (gridSize / 2)) * (splineCanvas.height / gridSize));
                             if (index === 0) {
                                 splineCtx.moveTo(plotX, plotY);
                             } else {
