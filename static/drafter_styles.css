@@ -1,0 +1,43 @@
+/* Ensure body and html take full height */
+html, body {
+    height: 100%;
+    margin: 0;
+    font-family: 'Roboto', sans-serif; /* Ensure consistent font */
+}
+
+.app2-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.container {
+    display: flex;
+    flex: 1;
+}
+
+.main-content {
+    display: flex;
+    flex: 1;
+    position: relative;
+}
+
+.controls {
+    width: 200px;
+    padding: 10px;
+    box-sizing: border-box;
+}
+
+.grid-container {
+    position: relative;
+    width: 640px; /* Match canvas size */
+    height: 640px; /* Match canvas size */
+    overflow: hidden;
+    margin-left: 20px; /* Spacing from controls */
+}
+
+#splineCanvas, #gridCanvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+}

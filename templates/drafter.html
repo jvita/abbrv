@@ -7,8 +7,8 @@
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Drafter</title>
-        <!-- <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap"> -->
-        <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap">
+        <link rel="stylesheet" href="{{ url_for('static', filename='drafter_styles.css') }}">
     </head>
     <body>
         <h1>Drafter</h1>
@@ -26,12 +26,8 @@
                     <button id="deleteButton" class="delete-button" style="display:none;">Delete Selected Spline</button>
                 </div>
                 <div class="grid-container">
-                    <canvas id="splineCanvas" width="580" height="580"></canvas>
-                    <canvas id="gridCanvas" width="580" height="580"></canvas>
-                </div>
-                <div class="side-panel">
-                    <h2>Selected Points</h2>
-                    <textarea id="points" readonly></textarea>
+                    <canvas id="splineCanvas" width="640" height="640"></canvas>
+                    <canvas id="gridCanvas" width="640" height="640"></canvas>
                 </div>
             </div>
         </div>
@@ -41,7 +37,6 @@
             const gridCtx = gridCanvas.getContext('2d');
             const splineCanvas = document.getElementById('splineCanvas');
             const splineCtx = splineCanvas.getContext('2d');
-            const pointsField = document.getElementById('points');
             const characterField = document.getElementById('character');
             const saveButton = document.getElementById('saveButton');
             const clearButton = document.getElementById('clearButton');
@@ -50,7 +45,7 @@
 
             let selectedPoints = [];
             let currentCharacter = null;
-            const gridSize = 29;
+            const gridSize = 32;
             const cellSize = 20;
             const centerOffset = Math.floor(gridSize / 2) * cellSize;
 
@@ -109,7 +104,6 @@
 
             function updatePointsField() {
                 const normalizedPoints = selectedPoints.map(([x, y]) => [(x + gridSize / 2) / gridSize, (y + gridSize / 2) / gridSize]);
-                pointsField.value = JSON.stringify(normalizedPoints);
                 plotSpline(normalizedPoints);
             }
 
@@ -118,6 +112,9 @@
                     splineCtx.clearRect(0, 0, splineCanvas.width, splineCanvas.height);
                     return;
                 }
+
+                console.log(points)
+                console.log(splineCanvas.width, gridSize)
 
                 splineCtx.clearRect(0, 0, splineCanvas.width, splineCanvas.height);
                 splineCtx.beginPath();
@@ -128,8 +125,8 @@
                     .then(response => {
                         const spline = response.data.spline;
                         spline.forEach(([x, y], index) => {
-                            const plotX = (x + 15) * (splineCanvas.width / 30) - (cellSize / 2);
-                            const plotY = splineCanvas.height - (y + 15) * (splineCanvas.height / 30) - (cellSize / 2);
+                            const plotX = (x + (gridSize / 2)) * (splineCanvas.width / gridSize);
+                            const plotY = splineCanvas.height - ((y + (gridSize / 2)) * (splineCanvas.height / gridSize));
                             if (index === 0) {
                                 splineCtx.moveTo(plotX, plotY);
                             } else {
@@ -186,7 +183,6 @@
                                 loadSplines();
                                 characterField.value = '';
                                 selectedPoints = [];
-                                pointsField.value = ''; // Clear the selected points field
                                 drawPoints(); // Ensure points are cleared
                                 updatePointsField();
                             }
@@ -196,7 +192,6 @@
 
             clearButton.addEventListener('click', () => {
                 selectedPoints = [];
-                pointsField.value = ''; // Clear the selected points field
                 drawPoints(); // Ensure points are cleared
                 updatePointsField();
             });
@@ -209,7 +204,6 @@
                                 loadSplines();
                                 characterField.value = '';
                                 selectedPoints = [];
-                                pointsField.value = ''; // Clear the selected points field
                                 drawPoints(); // Ensure points are cleared
                                 updatePointsField();
                                 deleteButton.style.display = 'none'; // Hide delete button after deleting
@@ -238,7 +232,6 @@
                                     selectedPoints = [];
                                     currentCharacter = null;
                                     characterField.value = ''; // Clear the character field
-                                    pointsField.value = ''; // Clear the selected points field
                                     deleteButton.style.display = 'none'; // Hide delete button
                                     splineCtx.clearRect(0, 0, splineCanvas.width, splineCanvas.height); // Clear spline visualization
                                     drawPoints(); // Ensure points are cleared

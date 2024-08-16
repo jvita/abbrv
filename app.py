@@ -1,7 +1,7 @@
 from flask import Flask, render_template, request, jsonify
 import numpy as np
 import json
-from scipy.interpolate import CubicSpline
+from scipy.interpolate import CubicSpline, BSpline
 
 import matplotlib
 matplotlib.use('Agg')
@@ -28,8 +28,9 @@ def spline():
         return jsonify({'spline': []})
 
     points = np.array(points)
-    x = points[:, 0] * 30 - 15
-    y = points[:, 1] * 30 - 15
+    x = points[:, 0] * 32 - 16
+    y = points[:, 1] * 32 - 16
+    print(x)
     t = np.linspace(0, 1, len(points))
 
     num_plot_points = 100
@@ -128,6 +129,12 @@ def delete():
     else:
         return jsonify({'status': 'error', 'message': 'Character not found'})
 
+def execute_on_refresh():
+    # Make sure to re-load the data, in case the drafter changed anything
+    global char_splines
+    global join_remap
+    char_splines, join_remap = get_data()
+
 # Writer code
 def load_json_file(filename):
     with open(filename, 'r') as file:
@@ -151,6 +158,19 @@ def get_data():
 # Load the data when the Flask app starts
 char_splines, join_remap = get_data()
 
+# def create_bspline(t, x, y, k=3):
+#     n = len(x)  # Number of control points
+#     m = n + k + 1  # Number of knots
+
+#     # Create a knot vector with m knots
+#     t_knots = np.concatenate(([0] * k, np.linspace(0, 1, n - k + 1), [1] * k))
+
+#     # Create B-splines for x and y coordinates
+#     spl_x = BSpline(t_knots, x, k)
+#     spl_y = BSpline(t_knots, y, k)
+
+#     return spl_x, spl_y
+
 def interpolate_points(points, num_points=100):
     if len(points) < 2:
         return np.array([]), np.array([])
@@ -159,68 +179,122 @@ def interpolate_points(points, num_points=100):
     y = points[:, 1]
     t = np.linspace(0, 1, len(points))
 
+    # t_new = np.linspace(0, 1, num_points)
+    # tck_x, tck_y = create_bspline(t, x, y, k=3)
+    # x_spline = tck_x(t_new)
+    # y_spline = tck_y(t_new)
+
+    # num_knots = len(x)
+    # print(f'{num_knots=}')
+    # if num_knots <= 3:
     x_spline = CubicSpline(t, x, bc_type='natural')(np.linspace(0, 1, num_points))
     y_spline = CubicSpline(t, y, bc_type='natural')(np.linspace(0, 1, num_points))
+    # else:
+    #     x_spline = BSpline(t, x, k=num_points-1)(np.linspace(0, 1, num_points))
+    #     y_spline = BSpline(t, y, k=num_points-1)(np.linspace(0, 1, num_points))
 
     return x_spline, y_spline
 
 def text_to_splines(text):
     '''A version of `text_to_splines` that treates entire words as a single spline'''
-    raise NotImplementedError
-
-def text_to_separate_splines(text):
     global char_splines, join_remap
-    char_width = 0.17
 
     lines = text.split('\n')
     splines = []
-    knot_points = []
-    y_offset = 0
-    max_width = 15
-    line_height = 2
+    red_dot_points = []
     word_space = 0.29
-    y_offset = 0
-    x_offset = 0
-    total_width = 0
-    x_word_offset = 0
+    cursor_pos = np.array([0, 0], dtype=np.float32)
+    rightmost_x = 0 # for adding spaces between words
+    y_offset = 0  # for adding newlines
+    line_height = 2
+    # char_buffer_width = 0.05
 
     for line in lines:
         words = line.split(' ')
         for word in words:
-            word_width = 0
-
+            word_points = []
             if word:
-                points = []
-
-                for char in word:
+                for ci, char in enumerate(word):
                     if char not in char_splines:
                         raise RuntimeError(f"Char '{char}' does not exist in spline dict.")
 
-                    char_points = char_splines[char]
-                    adjusted_points = char_points.copy()
-                    adjusted_points[:, 0] += x_offset
-                    adjusted_points[:, 1] += y_offset
-                    x_spline, y_spline = interpolate_points(adjusted_points)
-                    splines.append((x_spline, y_spline))
-                    knot_points.append(adjusted_points)
+                    # Shift points to cursor position
+                    char_points = char_splines[char].copy()
 
-                    char_width = char_points[:, 0].max() - char_points[:, 0].min()
-                    word_width += char_width
-                    x_offset += char_points[-1, 0]
-                    y_offset += char_points[-1, 1]
+                    if ci > 0: # not first character
+                        # shift first point to (0, 0)
+                        char_points -= char_points[0]
+                        char_points = char_points[1:] # since it will connect to prev char
 
-                # Calculate the width of the word and adjust x_offset for the next word
-                if points:
-                    word_width = np.max(np.array(points)[:, 0]) - np.min(np.array(points)[:, 0])
+                    char_points += cursor_pos  # move to cursor pos
+                    # char_points[:, 0] += char_buffer_width
 
-                x_word_offset += word_width + word_space
-                x_offset = x_word_offset
-                y_offset = 0
+                    word_points.append(char_points)
+
+                    # move cursor and word endpoint tracker
+                    rightmost_x = char_points[:, 0].max()
+                    cursor_pos = char_points[-1].copy()
+
+                    red_dot_points.append(char_points)  # for optionally plotting red dots
+
+                # draw spline points
+                word_points = np.concatenate(word_points)
+                x_spline, y_spline = interpolate_points(word_points)
+                splines.append((x_spline, y_spline))
+
+                # reset cursor
+                cursor_pos[0] = rightmost_x + word_space
+                cursor_pos[1] = 0  # return to baseline height
 
         y_offset -= line_height
-        x_word_offset = 0  # Reset word offset for the next line
 
-    return splines, knot_points
+    return splines, red_dot_points
+
+
+def text_to_separate_splines(text):
+    global char_splines, join_remap
+
+    lines = text.split('\n')
+    splines = []
+    red_dot_points = []
+    word_space = 0.29
+    cursor_pos = np.array([0, 0], dtype=np.float32)
+    rightmost_x = 0 # for adding spaces between words
+    y_offset = 0  # for adding newlines
+    line_height = 2
+
+    for line in lines:
+        words = line.split(' ')
+        for word in words:
+            if word:
+                for ci, char in enumerate(word):
+                    if char not in char_splines:
+                        raise RuntimeError(f"Char '{char}' does not exist in spline dict.")
+
+                    # Shift points to cursor position
+                    char_points = char_splines[char].copy()
+
+                    if ci > 0: # not first character
+                        # shift first point to (0, 0)
+                        char_points -= char_points[0]
+
+                    char_points += cursor_pos  # move to cursor pos
+
+                    x_spline, y_spline = interpolate_points(char_points)
+                    splines.append((x_spline, y_spline))
+                    red_dot_points.append(char_points)  # for optionally plotting red dots
+
+                    # move cursor and word endpoint tracker
+                    rightmost_x = char_points[:, 0].max()
+                    cursor_pos = char_points[-1].copy()
+
+                # reset cursor
+                cursor_pos[0] = rightmost_x + word_space
+                cursor_pos[1] = 0  # return to baseline height
+
+        y_offset -= line_height
+
+    return splines, red_dot_points
 
 def process_text(text):
     """Processes text in the following manner:
@@ -253,19 +327,21 @@ def generate_splines():
     show_knot_points = 'show_knot_points' in request.form
 
     if separate_splines:
-        splines, knot_points = text_to_separate_splines(text)
+        splines, red_dot_points = text_to_separate_splines(text)
     else:
-        splines, knot_points = text_to_splines(text)
+        splines, red_dot_points = text_to_splines(text)
 
     plt.figure(figsize=(9, 3))
     for x_spline, y_spline in splines:
         plt.plot(x_spline, y_spline, 'k')
 
     if show_knot_points:
-        for points in knot_points:
+        for points in red_dot_points:
             x, y = zip(*points)
             plt.plot(x, y, 'ro')
 
+    xlims = plt.gca().get_xlim()
+    plt.plot(xlims, [0, 0], '--', color='lightgrey', zorder=0)
     plt.gca().set_aspect('equal', adjustable='box')
     plt.axis('off')
 
@@ -278,18 +354,12 @@ def generate_splines():
 
 @app.route('/writer')
 def writer():
-
-    # Make sure to re-load the data, in case the drafter changed anything
-    global char_splines
-    global join_remap
-    char_splines, join_remap = get_data()
-
-    # TODO: get_data should also be done on webpage reload
-
+    execute_on_refresh()
     return render_template('writer.html')
 
 @app.route('/drafter')
 def drafter():
+    # execute_on_refresh()
     return render_template('drafter.html')
 
 if __name__ == '__main__':
