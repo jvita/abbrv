@@ -67,7 +67,7 @@ html, body {
     color: white;
 }
 
-.spline-item.frozen {
+.spline-item.joining {
     background-color: gray;
     color: white;
 }

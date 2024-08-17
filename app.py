@@ -246,6 +246,8 @@ def text_to_separate_splines(text):
 @app.route('/generate_splines', methods=['POST'])
 def generate_splines():
     text = request.form['text']
+    if text == '':
+        text = 'a b c d e f g h i j k l m n o p q r s t u v w x y z'
     # text = process_text(text)
 
     separate_splines = 'separate_splines' in request.form
