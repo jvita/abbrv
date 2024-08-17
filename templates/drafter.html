@@ -229,9 +229,7 @@
 
                         splineData = response.data; // Store the data in the global variable
                         splineList.innerHTML = '';
-                        selectedCharacter = null;
                         deleteButton.style.display = 'none'; // Hide delete button initially
-                        // freezeButton.style.display = 'none'; // Hide freeze button initially
 
                         splineCtx.clearRect(0, 0, splineCanvas.width, splineCanvas.height);
 
@@ -282,10 +280,16 @@
 
                             });
 
+                            // Make sure selected character is always highlighted
+                            if (character === selectedCharacter) {
+                                listItem.classList.add('selected');
+                            }
+
                             // Apply frozen class if this spline is frozen
                             if (frozenCharacter === character) {
                                 listItem.classList.add('frozen');
                                 listItem.classList.remove('selected');
+
                                 // Record frozen points for plotting spline later
                                 frozenPoints = points.map(([x, y]) => [x * gridSize - gridSize / 2, y * gridSize - gridSize / 2]);
                             }
