@@ -35,8 +35,6 @@ def spline():
 
     num_plot_points = 100
 
-    print(x, y)
-
     x_dense = CubicSpline(t, x, bc_type='natural')(np.linspace(0, 1, num_plot_points))
     y_dense = CubicSpline(t, y, bc_type='natural')(np.linspace(0, 1, num_plot_points))
 

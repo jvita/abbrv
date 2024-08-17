@@ -61,3 +61,13 @@ html, body {
 .spline-item:hover {
     background-color: #f0f0f0;
 }
+
+.spline-item.selected {
+    background-color: blue;
+    color: white;
+}
+
+.spline-item.frozen {
+    background-color: gray;
+    color: white;
+}
