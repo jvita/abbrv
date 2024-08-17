@@ -116,12 +116,17 @@
 
                 drawPoints(); // Draw new points
 
-                const normalizedPointsFrozen = frozenPoints.map(([x, y]) => [(x + gridSize / 2) / gridSize, (y + gridSize / 2) / gridSize]);
-                plotSpline(normalizedPointsFrozen, true);
+                // Calculate the shift required to center the last point of the frozen spline
+                if (frozenPoints.length > 0) {
+                    const [lastX, lastY] = frozenPoints[frozenPoints.length - 1];
+
+                    const shiftedFrozenPoints = frozenPoints.map(([x, y]) => [x - lastX, y - lastY]);
+                    const normalizedPointsFrozen = shiftedFrozenPoints.map(([x, y]) => [(x + gridSize / 2) / gridSize, (y + gridSize / 2) / gridSize]);
+                    plotSpline(normalizedPointsFrozen, true);
+                }
 
                 const normalizedPointsSelected = selectedPoints.map(([x, y]) => [(x + gridSize / 2) / gridSize, (y + gridSize / 2) / gridSize]);
                 plotSpline(normalizedPointsSelected, false);
-
             }
 
             function plotSpline(points, isFrozen = false) {
