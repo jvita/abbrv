@@ -243,6 +243,24 @@ def text_to_separate_splines(text):
 #             new_text = new_text.replace(k, join_remap[k])
 #     return new_text
 
+# def points_to_svg(points, stroke_color='black', stroke_width=2, width=100, height=100):
+#     # Start the SVG string
+#     svg = f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}">\n'
+
+#     # Generate the path data
+#     if points:
+#         d = f'M {points[0][0]},{points[0][1]} '
+#         d += ' '.join(f'L {x},{y}' for x, y in points[1:])
+        
+#         # Create the path element
+#         svg += f'    <path d="{d}" stroke="{stroke_color}" stroke-width="{stroke_width}" fill="none" />\n'
+
+#     # Close the SVG string
+#     svg += '</svg>'
+
+#     return svg
+
+
 @app.route('/generate_splines', methods=['POST'])
 def generate_splines():
     text = request.form['text']

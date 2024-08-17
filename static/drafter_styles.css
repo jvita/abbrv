@@ -19,7 +19,7 @@ html, body {
 .main-content {
     display: flex;
     flex: 1;
-    position: relative;
+    /* position: relative; */
 }
 
 .delete-button, .join-button {
@@ -27,6 +27,8 @@ html, body {
 }
 
 .controls {
+    display: flex;
+    flex-direction: column;
     width: 200px;
     padding: 0px;
     box-sizing: border-box;
@@ -49,6 +51,7 @@ html, body {
 .spline-list {
     display: flex;
     flex-direction: column;
+    flex-grow: 1;
     gap: 5px;
 }
 
