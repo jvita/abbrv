@@ -2,7 +2,7 @@
 html, body {
     height: 100%;
     margin: 0;
-    font-family: 'Roboto', sans-serif; /* Ensure consistent font */
+    font-family: Arial, sans-serif;
 }
 
 .app2-container {
@@ -24,16 +24,16 @@ html, body {
 
 .controls {
     width: 200px;
-    padding: 10px;
+    padding: 0px;
     box-sizing: border-box;
 }
 
 .grid-container {
     position: relative;
-    width: 620px; /* View window size */
-    height: 620px; /* View window size */
-    overflow: scroll; /* Enable scrolling */
-    margin-left: 20px; /* Spacing from controls */
+    width: 730px; /* Match canvas size */
+    height: 730px; /* Match canvas size */
+    overflow: hidden;
+    margin-left: 0px; /* Spacing from controls */
 }
 
 #splineCanvas, #gridCanvas {
