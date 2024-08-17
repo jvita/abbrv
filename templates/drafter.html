@@ -228,7 +228,7 @@
                         splineList.innerHTML = '';
                         currentCharacter = null;
                         deleteButton.style.display = 'none'; // Hide delete button initially
-                        freezeButton.style.display = 'none'; // Hide freeze button initially
+                        // freezeButton.style.display = 'none'; // Hide freeze button initially
 
                         for (const [character, points] of Object.entries(splineData)) {
                             const listItem = document.createElement('div');
@@ -242,7 +242,7 @@
                                     currentCharacter = null;
                                     characterField.value = ''; // Clear the character field
                                     deleteButton.style.display = 'none'; // Hide delete button
-                                    freezeButton.style.display = 'none'; // Hide freeze button
+                                    // freezeButton.style.display = 'none'; // Hide freeze button
                                     if (frozenSpline === character) {
                                         frozenSpline = null; // Unfreeze if this was the frozen spline
                                         freezeButton.textContent = 'Freeze';
@@ -256,7 +256,7 @@
                                     // Remove selected class from all items
                                     document.querySelectorAll('.spline-item').forEach(item => {
                                         item.classList.remove('selected');
-                                        item.classList.remove('frozen'); // Remove frozen class from all items
+                                        // item.classList.remove('frozen'); // Remove frozen class from all items
                                     });
 
                                     selectedPoints = points.map(([x, y]) => [x * gridSize - gridSize / 2, y * gridSize - gridSize / 2]);
