@@ -35,6 +35,8 @@ html, body {
     box-sizing: border-box;
     flex: 1;
     margin-right: 20px;
+    display: flex;
+    flex-direction: column;
 }
 
 .controls h2 {
@@ -71,7 +73,7 @@ button:hover {
     background-color: #0056b3;
 }
 
-.delete-button, .freeze-button {
+.delete-button, .freeze-button, .join-button {
     margin-top: 10px;
 }
 
@@ -85,10 +87,10 @@ button:hover {
 
 .grid-container {
     position: relative;
-    width: 740px; /* Match canvas size */
-    height: 740px; /* Match canvas size */
+    width: 750px; /* Match canvas size */
+    height: 750px; /* Match canvas size */
     overflow: scroll;
-    /* margin-left: 0px; Spacing from controls */
+    margin-left: 0px; /* Spacing from controls */
     flex: 2;
     display: flex;
     align-items: center;
@@ -133,6 +135,7 @@ button:hover {
     background-color: #fff;
     padding: 10px;
     list-style-type: none;
+    flex-grow: 1;
 }
 
 .spline-item {
@@ -150,7 +153,7 @@ button:hover {
     color: white;
 }
 
-.spline-item.frozen {
+.spline-item.frozen, .spline-item.joining {
     background-color: gray;
     color: white;
 }
