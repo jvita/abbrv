@@ -48,9 +48,10 @@
             const freezeButton = document.getElementById('freezeButton');
             const splineList = document.getElementById('splineList');
 
+            let frozenPoints = [];
             let selectedPoints = [];
-            let currentCharacter = null;
-            let frozenSpline = null; // Track the currently frozen spline
+            let selectedCharacter = null;
+            let frozenCharacter = null; // Track the currently frozen spline
             const gridSize = 62;
             const cellSize = 20;
             const centerOffset = Math.floor(gridSize / 2) * cellSize;
@@ -111,8 +112,16 @@
             }
 
             function updatePointsField() {
-                const normalizedPoints = selectedPoints.map(([x, y]) => [(x + gridSize / 2) / gridSize, (y + gridSize / 2) / gridSize]);
-                plotSpline(normalizedPoints);
+                splineCtx.clearRect(0, 0, splineCanvas.width, splineCanvas.height); // Clear spline visualization
+
+                drawPoints(); // Draw new points
+
+                const normalizedPointsFrozen = frozenPoints.map(([x, y]) => [(x + gridSize / 2) / gridSize, (y + gridSize / 2) / gridSize]);
+                plotSpline(normalizedPointsFrozen, true);
+
+                const normalizedPointsSelected = selectedPoints.map(([x, y]) => [(x + gridSize / 2) / gridSize, (y + gridSize / 2) / gridSize]);
+                plotSpline(normalizedPointsSelected, false);
+
             }
 
             function plotSpline(points, isFrozen = false) {
@@ -121,14 +130,11 @@
                     return;
                 }
 
-                splineCtx.clearRect(0, 0, splineCanvas.width, splineCanvas.height);
-                splineCtx.beginPath();
-                // splineCtx.strokeStyle = 'blue'; // Color for spline
-                splineCtx.strokeStyle = isFrozen ? 'gray' : 'blue'; // Use gray for frozen spline
-                splineCtx.lineWidth = 2; // Thicker line width for spline
-
                 axios.post('/spline', { points })
                     .then(response => {
+                        splineCtx.beginPath();
+                        splineCtx.lineWidth = 2; // Thicker line width for spline
+                        splineCtx.strokeStyle = isFrozen ? 'gray' : 'blue'; // Use gray for frozen spline
                         const spline = response.data.spline;
                         spline.forEach(([x, y], index) => {
                             const plotX = (x + (gridSize / 2)) * (splineCanvas.width / gridSize);
@@ -144,7 +150,7 @@
             }
 
             gridCanvas.addEventListener('click', (event) => {
-                if (frozenSpline) return; // Prevent point selection if a spline is frozen
+                if (frozenCharacter) return; // Prevent point selection if a spline is frozen
 
                 const rect = gridCanvas.getBoundingClientRect();
                 const x = event.clientX - rect.left - centerOffset;
@@ -156,7 +162,7 @@
                 const isCtrlPressed = event.ctrlKey;
 
                 // Find if the point is already selected
-                const pointIndex = selectedPoints.findIndex(([px, py]) => px === gridX && py === gridY);
+                const pointIndex = selectedPoints.findLastIndex(([px, py]) => px === gridX && py === gridY);
 
                 if (isCtrlPressed) {
                     // Ctrl+click: Remove the point if it exists
@@ -170,7 +176,6 @@
                     }
                 }
 
-                drawPoints();
                 updatePointsField();
             });
 
@@ -187,7 +192,6 @@
                                 loadSplines();
                                 characterField.value = '';
                                 selectedPoints = [];
-                                drawPoints(); // Ensure points are cleared
                                 updatePointsField();
                             }
                         });
@@ -196,24 +200,22 @@
 
             clearButton.addEventListener('click', () => {
                 selectedPoints = [];
-                drawPoints(); // Ensure points are cleared
                 updatePointsField();
             });
 
             deleteButton.addEventListener('click', () => {
-                if (currentCharacter) {
-                    axios.post('/delete', { character: currentCharacter })
+                if (selectedCharacter) {
+                    axios.post('/delete', { character: selectedCharacter })
                         .then(response => {
                             if (response.data.status === 'success') {
                                 loadSplines();
                                 characterField.value = '';
                                 selectedPoints = [];
-                                drawPoints(); // Ensure points are cleared
                                 updatePointsField();
                                 deleteButton.style.display = 'none'; // Hide delete button after deleting
                                 freezeButton.style.display = 'none'; // Hide freeze button after deleting
-                                if (frozenSpline === currentCharacter) {
-                                    frozenSpline = null; // Unfreeze if the deleted spline was frozen
+                                if (frozenCharacter === selectedCharacter) {
+                                    frozenCharacter = null; // Unfreeze if the deleted spline was frozen
                                     freezeButton.textContent = 'Freeze';
                                 }
                             }
@@ -224,11 +226,14 @@
             function loadSplines() {
                 axios.get('/load')
                     .then(response => {
+
                         splineData = response.data; // Store the data in the global variable
                         splineList.innerHTML = '';
-                        currentCharacter = null;
+                        selectedCharacter = null;
                         deleteButton.style.display = 'none'; // Hide delete button initially
                         // freezeButton.style.display = 'none'; // Hide freeze button initially
+
+                        splineCtx.clearRect(0, 0, splineCanvas.width, splineCanvas.height);
 
                         for (const [character, points] of Object.entries(splineData)) {
                             const listItem = document.createElement('div');
@@ -236,90 +241,91 @@
                             listItem.textContent = character;
 
                             listItem.addEventListener('click', () => {
-                                if (currentCharacter === character) {
-                                    // Deselect the spline
-                                    selectedPoints = [];
-                                    currentCharacter = null;
-                                    characterField.value = ''; // Clear the character field
-                                    deleteButton.style.display = 'none'; // Hide delete button
-                                    // freezeButton.style.display = 'none'; // Hide freeze button
-                                    if (frozenSpline === character) {
-                                        frozenSpline = null; // Unfreeze if this was the frozen spline
-                                        freezeButton.textContent = 'Freeze';
-                                    }
-                                    splineCtx.clearRect(0, 0, splineCanvas.width, splineCanvas.height); // Clear spline visualization
-                                    drawPoints(); // Ensure points are cleared
+                                if ((selectedCharacter === character) || (frozenCharacter === character)){
+                                    if (frozenCharacter !== character) {
+                                        // Deselect the spline
+                                        selectedPoints = [];
+                                        selectedCharacter = null;
+                                        characterField.value = ''; // Clear the character field
+                                        deleteButton.style.display = 'none'; // Hide delete button
+                                        // freezeButton.style.display = 'none'; // Hide freeze button
+                                        if (frozenCharacter === character) {
+                                            frozenCharacter = null; // Unfreeze if this was the frozen spline
+                                            freezeButton.textContent = 'Freeze';
+                                        }
 
-                                    // Remove the selected class from the clicked item
-                                    listItem.classList.remove('selected');
+                                        // Remove the selected class from the clicked item
+                                        listItem.classList.remove('selected');
+                                    }
                                 } else {
                                     // Remove selected class from all items
                                     document.querySelectorAll('.spline-item').forEach(item => {
                                         item.classList.remove('selected');
-                                        // item.classList.remove('frozen'); // Remove frozen class from all items
                                     });
 
                                     selectedPoints = points.map(([x, y]) => [x * gridSize - gridSize / 2, y * gridSize - gridSize / 2]);
                                     characterField.value = character;
-                                    currentCharacter = character;
+                                    selectedCharacter = character;
                                     deleteButton.style.display = 'inline-block'; // Show delete button
-                                    freezeButton.style.display = frozenSpline || currentCharacter ? 'inline-block' : 'none'; // Show freeze button if spline is selected or frozen
-
-                                    // Update the display for the selected spline
-                                    drawPoints(); // Draw new points
-                                    updatePointsField();
-                                    plotSpline(points, frozenSpline === character); // Pass whether the spline is frozen
+                                    freezeButton.style.display = frozenCharacter || selectedCharacter ? 'inline-block' : 'none'; // Show freeze button if spline is selected or frozen
 
                                     // Add selected class to the clicked item
                                     listItem.classList.add('selected');
 
                                     // Check if this spline is the currently frozen one
-                                    if (frozenSpline === character) {
+                                    if (frozenCharacter === character) {
                                         freezeButton.textContent = 'Unfreeze';
                                     }
                                 }
+
+                                updatePointsField();
+
                             });
 
                             // Apply frozen class if this spline is frozen
-                            if (frozenSpline === character) {
+                            if (frozenCharacter === character) {
                                 listItem.classList.add('frozen');
+                                listItem.classList.remove('selected');
+                                // Record frozen points for plotting spline later
+                                frozenPoints = points.map(([x, y]) => [x * gridSize - gridSize / 2, y * gridSize - gridSize / 2]);
                             }
 
                             splineList.appendChild(listItem);
                         }
 
                         // Update freeze button visibility after loading splines
-                        freezeButton.style.display = frozenSpline || currentCharacter ? 'inline-block' : 'none';
+                        freezeButton.style.display = frozenCharacter || selectedCharacter ? 'inline-block' : 'none';
+
+                        updatePointsField();
                     });
             }
 
             freezeButton.addEventListener('click', () => {
-                if (frozenSpline) {
+                if (frozenCharacter) {
                     // Unfreeze the currently frozen spline
-                    frozenSpline = null;
+                    frozenPoints = []
+                    frozenCharacter = null;
                     freezeButton.textContent = 'Freeze';
                 } else {
-                    if (currentCharacter) {
+                    if (selectedCharacter) {
                         // Freeze the currently selected spline
-                        frozenSpline = currentCharacter;
+                        frozenCharacter = selectedCharacter;
                         freezeButton.textContent = 'Unfreeze';
+
+                        // Unselect it now that it's been frozen
+                        selectedPoints = [];
+                        selectedCharacter = null;
+                        characterField.value = ''; // Clear the character field
+                        deleteButton.style.display = 'none'; // Hide delete button
                     }
                 }
                 
                 // Reload splines to apply the frozen class
                 loadSplines(); 
-
-                // If a spline is frozen or selected, redraw it with the correct color
-                if (currentCharacter) {
-                    const points = splineData[currentCharacter] || [];
-                    plotSpline(points, frozenSpline === currentCharacter);
-                }
             });
 
-            loadSplines();
             drawGrid();
-            drawPoints();
-            updatePointsField();
+            loadSplines();
 
             document.addEventListener("DOMContentLoaded", function() {
                 const gridContainer = document.querySelector('.grid-container');
