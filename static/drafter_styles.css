@@ -34,9 +34,9 @@ html, body {
 
 .grid-container {
     position: relative;
-    width: 730px; /* Match canvas size */
-    height: 730px; /* Match canvas size */
-    overflow: hidden;
+    width: 750px; /* Match canvas size */
+    height: 750px; /* Match canvas size */
+    overflow: scroll;
     margin-left: 0px; /* Spacing from controls */
 }
 
