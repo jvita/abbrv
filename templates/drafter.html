@@ -6,12 +6,12 @@
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Drafter</title>
+        <title>Draft</title>
         <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap">
         <link rel="stylesheet" href="{{ url_for('static', filename='drafter_styles.css') }}">
     </head>
     <body>
-        <!-- <h1>Drafter</h1> -->
+        <!-- <h1>Draft</h1> -->
         <div class="container">
             <div class="main-content">
                 <div class="controls">
@@ -23,7 +23,10 @@
                     </div>
                     <h2>Saved Splines</h2>
                     <div id="splineList" class="spline-list"></div>
-                    <button id="deleteButton" class="delete-button" style="display:none;">Delete Selected Spline</button>
+                    <div class="button-container">
+                        <button id="deleteButton" class="delete-button" style="display:none;">Delete Selected Spline</button>
+                        <button id="freezeButton" class="freeze-button" style="display:none;">Freeze</button>
+                    </div>
                 </div>
                 <div class="grid-container">
                     <canvas id="splineCanvas" width="1240" height="1240"></canvas>
@@ -41,10 +44,12 @@
             const saveButton = document.getElementById('saveButton');
             const clearButton = document.getElementById('clearButton');
             const deleteButton = document.getElementById('deleteButton');
+            const freezeButton = document.getElementById('freezeButton');
             const splineList = document.getElementById('splineList');
 
             let selectedPoints = [];
             let currentCharacter = null;
+            let isFrozen = false;
             const gridSize = 62;
             const cellSize = 20;
             const centerOffset = Math.floor(gridSize / 2) * cellSize;
@@ -139,6 +144,8 @@
             }
 
             gridCanvas.addEventListener('click', (event) => {
+                if (isFrozen) return; // Prevent point selection if frozen
+
                 const rect = gridCanvas.getBoundingClientRect();
                 const x = event.clientX - rect.left - centerOffset;
                 const y = rect.top + centerOffset - event.clientY;
@@ -157,16 +164,12 @@
                         selectedPoints.splice(pointIndex, 1);
                     }
                 } else {
-                    // Left click: Add the point if not already present
+                    // Regular click: Add the point if it's not already selected
                     if (pointIndex === -1) {
-                        selectedPoints.push([gridX, gridY]);
-                    } else {
-                        // If point already exists, add another
                         selectedPoints.push([gridX, gridY]);
                     }
                 }
 
-                drawGrid();
                 drawPoints();
                 updatePointsField();
             });
@@ -208,48 +211,16 @@
                                 drawPoints(); // Ensure points are cleared
                                 updatePointsField();
                                 deleteButton.style.display = 'none'; // Hide delete button after deleting
+                                freezeButton.style.display = 'none'; // Hide freeze button after deleting
                             }
                         });
                 }
             });
 
-            // function loadSplines() {
-            //     axios.get('/load')
-            //         .then(response => {
-            //             const data = response.data;
-            //             console.log('before')
-            //             console.log(data)
-            //             console.log('after')
-            //             splineList.innerHTML = '';
-            //             data.forEach((item, index) => {
-            //                 const listItem = document.createElement('div');
-            //                 listItem.className = 'spline-list-item';
-            //                 listItem.textContent = item.character;
-            //                 listItem.addEventListener('click', () => {
-            //                     // Remove 'selected' class from all list items
-            //                     const allItems = document.querySelectorAll('.spline-list-item');
-            //                     allItems.forEach(el => el.classList.remove('selected'));
-
-            //                     // Add 'selected' class to clicked item
-            //                     listItem.classList.add('selected');
-
-            //                     // Load selected spline points
-            //                     selectedPoints = item.points.map(([x, y]) => [
-            //                         x * gridSize - gridSize / 2,
-            //                         y * gridSize - gridSize / 2
-            //                     ]);
-            //                     drawPoints();
-            //                     updatePointsField();
-
-            //                     // Set currentCharacter for deletion
-            //                     currentCharacter = item.character;
-            //                     deleteButton.style.display = 'block'; // Show delete button
-            //                 });
-            //                 splineList.appendChild(listItem);
-            //             });
-            //         });
-            // }
-
+            freezeButton.addEventListener('click', () => {
+                isFrozen = !isFrozen;
+                freezeButton.textContent = isFrozen ? 'Unfreeze' : 'Freeze';
+            });
 
             function loadSplines() {
                 axios.get('/load')
@@ -258,6 +229,7 @@
                         splineList.innerHTML = '';
                         currentCharacter = null;
                         deleteButton.style.display = 'none'; // Hide delete button initially
+                        freezeButton.style.display = 'none'; // Hide freeze button initially
 
                         for (const [character, points] of Object.entries(data)) {
                             const listItem = document.createElement('div');
@@ -272,6 +244,7 @@
                                     currentCharacter = null;
                                     characterField.value = ''; // Clear the character field
                                     deleteButton.style.display = 'none'; // Hide delete button
+                                    freezeButton.style.display = 'none'; // Hide freeze button
                                     splineCtx.clearRect(0, 0, splineCanvas.width, splineCanvas.height); // Clear spline visualization
                                     drawPoints(); // Ensure points are cleared
 
@@ -285,6 +258,7 @@
                                     characterField.value = character;
                                     currentCharacter = character;
                                     deleteButton.style.display = 'inline-block'; // Show delete button
+                                    freezeButton.style.display = 'inline-block'; // Show freeze button
 
                                     // Update the display for the selected spline
                                     drawPoints(); // Draw new points
