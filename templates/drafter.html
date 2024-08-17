@@ -28,8 +28,8 @@
                     </div>
                 </div>
                 <div class="grid-container">
-                    <canvas id="splineCanvas" width="1240" height="1240"></canvas>
-                    <canvas id="gridCanvas" width="1240" height="1240"></canvas>
+                    <canvas id="splineCanvas" width="1440" height="1440"></canvas>
+                    <canvas id="gridCanvas" width="1440" height="1440"></canvas>
                 </div>
             </div>
         </div>
@@ -51,7 +51,7 @@
             let selectedPoints = [];
             let selectedCharacter = null;
             let joiningCharacter = null; // Track the currently joining spline
-            const gridSize = 62;
+            const gridSize = 72;
             const cellSize = 20;
             const centerOffset = Math.floor(gridSize / 2) * cellSize;
 
@@ -125,7 +125,7 @@
                         console.log('selected exists', lastX, lastY)
                     }
 
-                    const [firstX, firstY] = joiningPoints[0]
+                    const [firstX, firstY] = joiningPoints[joiningPoints.length - 1]
                     const shiftedJoinPoints = joiningPoints.map(([x, y]) => [x - firstX + lastX, y - firstY + lastY]);
                     const normalizedPointsJoining = shiftedJoinPoints.map(([x, y]) => [(x + gridSize / 2) / gridSize, (y + gridSize / 2) / gridSize]);
                     plotSpline(normalizedPointsJoining, true);
@@ -145,7 +145,7 @@
                     .then(response => {
                         splineCtx.beginPath();
                         splineCtx.lineWidth = 2; // Thicker line width for spline
-                        splineCtx.strokeStyle = isJoining ? 'gray' : 'blue'; // Use gray for join spline
+                        splineCtx.strokeStyle = isJoining ? 'red' : 'blue';
                         const spline = response.data.spline;
                         spline.forEach(([x, y], index) => {
                             const plotX = (x + (gridSize / 2)) * (splineCanvas.width / gridSize);
@@ -344,8 +344,8 @@
                 const gridContainer = document.querySelector('.grid-container');
                 const containerWidth = gridContainer.clientWidth;
                 const containerHeight = gridContainer.clientHeight;
-                const gridWidth = 1240;
-                const gridHeight = 1240;
+                const gridWidth = 1440;
+                const gridHeight = 1440;
 
                 gridContainer.scrollLeft = (gridWidth - containerWidth) / 2;
                 gridContainer.scrollTop = (gridHeight - containerHeight) / 2;
