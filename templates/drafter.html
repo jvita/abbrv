@@ -7,7 +7,7 @@
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Draft</title>
-        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap">
+        <!-- <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap"> -->
         <link rel="stylesheet" href="{{ url_for('static', filename='drafter_styles.css') }}">
     </head>
     <body>
@@ -24,7 +24,7 @@
                     <h2>Saved Splines</h2>
                     <div id="splineList" class="spline-list"></div>
                     <div class="button-container">
-                        <button id="freezeButton" class="freeze-button" style="display:none;">Freeze</button>
+                        <button id="joinButton" class="join-button" style="display:none;">Join</button>
                         <button id="deleteButton" class="delete-button" style="display:none;">Delete</button>
                     </div>
                 </div>
@@ -45,13 +45,13 @@
             const saveButton = document.getElementById('saveButton');
             const clearButton = document.getElementById('clearButton');
             const deleteButton = document.getElementById('deleteButton');
-            const freezeButton = document.getElementById('freezeButton');
+            const joinButton = document.getElementById('joinButton');
             const splineList = document.getElementById('splineList');
 
-            let frozenPoints = [];
+            let joiningPoints = [];
             let selectedPoints = [];
             let selectedCharacter = null;
-            let frozenCharacter = null; // Track the currently frozen spline
+            let joiningCharacter = null; // Track the currently joining spline
             const gridSize = 62;
             const cellSize = 20;
             const centerOffset = Math.floor(gridSize / 2) * cellSize;
@@ -116,20 +116,20 @@
 
                 drawPoints(); // Draw new points
 
-                // Calculate the shift required to center the last point of the frozen spline
-                if (frozenPoints.length > 0) {
-                    const [lastX, lastY] = frozenPoints[frozenPoints.length - 1];
+                // Calculate the shift required to center the last point of the joining spline
+                if (joiningPoints.length > 0) {
+                    const [lastX, lastY] = joiningPoints[joiningPoints.length - 1];
 
-                    const shiftedFrozenPoints = frozenPoints.map(([x, y]) => [x - lastX, y - lastY]);
-                    const normalizedPointsFrozen = shiftedFrozenPoints.map(([x, y]) => [(x + gridSize / 2) / gridSize, (y + gridSize / 2) / gridSize]);
-                    plotSpline(normalizedPointsFrozen, true);
+                    const shiftedJoinPoints = joiningPoints.map(([x, y]) => [x - lastX, y - lastY]);
+                    const normalizedPointsJoining = shiftedJoinPoints.map(([x, y]) => [(x + gridSize / 2) / gridSize, (y + gridSize / 2) / gridSize]);
+                    plotSpline(normalizedPointsJoining, true);
                 }
 
                 const normalizedPointsSelected = selectedPoints.map(([x, y]) => [(x + gridSize / 2) / gridSize, (y + gridSize / 2) / gridSize]);
                 plotSpline(normalizedPointsSelected, false);
             }
 
-            function plotSpline(points, isFrozen = false) {
+            function plotSpline(points, isJoining = false) {
                 if (points.length < 2) {
                     splineCtx.clearRect(0, 0, splineCanvas.width, splineCanvas.height);
                     return;
@@ -139,7 +139,7 @@
                     .then(response => {
                         splineCtx.beginPath();
                         splineCtx.lineWidth = 2; // Thicker line width for spline
-                        splineCtx.strokeStyle = isFrozen ? 'gray' : 'blue'; // Use gray for frozen spline
+                        splineCtx.strokeStyle = isJoining ? 'gray' : 'blue'; // Use gray for join spline
                         const spline = response.data.spline;
                         spline.forEach(([x, y], index) => {
                             const plotX = (x + (gridSize / 2)) * (splineCanvas.width / gridSize);
@@ -155,7 +155,7 @@
             }
 
             gridCanvas.addEventListener('click', (event) => {
-                if (frozenCharacter) return; // Prevent point selection if a spline is frozen
+                if (joiningCharacter) return; // Prevent point selection if a spline is joining
 
                 const rect = gridCanvas.getBoundingClientRect();
                 const x = event.clientX - rect.left - centerOffset;
@@ -218,10 +218,10 @@
                                 selectedPoints = [];
                                 updatePointsField();
                                 deleteButton.style.display = 'none'; // Hide delete button after deleting
-                                freezeButton.style.display = 'none'; // Hide freeze button after deleting
-                                if (frozenCharacter === selectedCharacter) {
-                                    frozenCharacter = null; // Unfreeze if the deleted spline was frozen
-                                    freezeButton.textContent = 'Freeze';
+                                joinButton.style.display = 'none'; // Hide join button after deleting
+                                if (joiningCharacter === selectedCharacter) {
+                                    joiningCharacter = null; // Stop joining if spline was deleted
+                                    joinButton.textContent = 'Join';
                                 }
                             }
                         });
@@ -244,17 +244,16 @@
                             listItem.textContent = character;
 
                             listItem.addEventListener('click', () => {
-                                if ((selectedCharacter === character) || (frozenCharacter === character)){
-                                    if (frozenCharacter !== character) {
+                                if ((selectedCharacter === character) || (joiningCharacter === character)){
+                                    if (joiningCharacter !== character) {
                                         // Deselect the spline
                                         selectedPoints = [];
                                         selectedCharacter = null;
                                         characterField.value = ''; // Clear the character field
                                         deleteButton.style.display = 'none'; // Hide delete button
-                                        // freezeButton.style.display = 'none'; // Hide freeze button
-                                        if (frozenCharacter === character) {
-                                            frozenCharacter = null; // Unfreeze if this was the frozen spline
-                                            freezeButton.textContent = 'Freeze';
+                                        if (joiningCharacter === character) {
+                                            joiningCharacter = null;
+                                            joinButton.textContent = 'Join';
                                         }
 
                                         // Remove the selected class from the clicked item
@@ -270,14 +269,14 @@
                                     characterField.value = character;
                                     selectedCharacter = character;
                                     deleteButton.style.display = 'inline-block'; // Show delete button
-                                    freezeButton.style.display = frozenCharacter || selectedCharacter ? 'inline-block' : 'none'; // Show freeze button if spline is selected or frozen
+                                    joinButton.style.display = joiningCharacter || selectedCharacter ? 'inline-block' : 'none'; // Show jion button if spline is selected or joining
 
                                     // Add selected class to the clicked item
                                     listItem.classList.add('selected');
 
-                                    // Check if this spline is the currently frozen one
-                                    if (frozenCharacter === character) {
-                                        freezeButton.textContent = 'Unfreeze';
+                                    // Check if this spline is the currently joining one
+                                    if (joiningCharacter === character) {
+                                        joinButton.textContent = 'Unjoin';
                                     }
                                 }
 
@@ -290,38 +289,38 @@
                                 listItem.classList.add('selected');
                             }
 
-                            // Apply frozen class if this spline is frozen
-                            if (frozenCharacter === character) {
-                                listItem.classList.add('frozen');
+                            // Apply join class if this spline is joining
+                            if (joiningCharacter === character) {
+                                listItem.classList.add('joining');
                                 listItem.classList.remove('selected');
 
-                                // Record frozen points for plotting spline later
-                                frozenPoints = points.map(([x, y]) => [x * gridSize - gridSize / 2, y * gridSize - gridSize / 2]);
+                                // Record joining points for plotting spline later
+                                joiningPoints = points.map(([x, y]) => [x * gridSize - gridSize / 2, y * gridSize - gridSize / 2]);
                             }
 
                             splineList.appendChild(listItem);
                         }
 
-                        // Update freeze button visibility after loading splines
-                        freezeButton.style.display = frozenCharacter || selectedCharacter ? 'inline-block' : 'none';
+                        // Update join button visibility after loading splines
+                        joinButton.style.display = joiningCharacter || selectedCharacter ? 'inline-block' : 'none';
 
                         updatePointsField();
                     });
             }
 
-            freezeButton.addEventListener('click', () => {
-                if (frozenCharacter) {
-                    // Unfreeze the currently frozen spline
-                    frozenPoints = []
-                    frozenCharacter = null;
-                    freezeButton.textContent = 'Freeze';
+            joinButton.addEventListener('click', () => {
+                if (joiningCharacter) {
+                    // Unjoin the currently joining spline
+                    joiningPoints = []
+                    joiningCharacter = null;
+                    joinButton.textContent = 'Join';
                 } else {
                     if (selectedCharacter) {
-                        // Freeze the currently selected spline
-                        frozenCharacter = selectedCharacter;
-                        freezeButton.textContent = 'Unfreeze';
+                        // Join the currently selected spline
+                        joiningCharacter = selectedCharacter;
+                        joinButton.textContent = 'Unjoin';
 
-                        // Unselect it now that it's been frozen
+                        // Unselect it now that it's been joined
                         selectedPoints = [];
                         selectedCharacter = null;
                         characterField.value = ''; // Clear the character field
@@ -329,7 +328,6 @@
                     }
                 }
                 
-                // Reload splines to apply the frozen class
                 loadSplines(); 
             });
 

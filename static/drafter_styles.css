@@ -22,7 +22,7 @@ html, body {
     position: relative;
 }
 
-.delete-button, .freeze-button {
+.delete-button, .join-button {
     margin-top: 10px;
 }
 
