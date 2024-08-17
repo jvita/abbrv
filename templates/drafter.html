@@ -115,11 +115,18 @@
 
                 drawPoints(); // Draw new points
 
-                // Calculate the shift required to center the last point of the joining spline
+                // Calculate the shift required to align the joining char to the selected char
                 if (joiningPoints.length > 0) {
-                    const [lastX, lastY] = joiningPoints[joiningPoints.length - 1];
+                    let lastX = 0;
+                    let lastY = 0;
+                    
+                    if (selectedPoints.length > 0) {
+                        [lastX, lastY] = selectedPoints[0];
+                        console.log('selected exists', lastX, lastY)
+                    }
 
-                    const shiftedJoinPoints = joiningPoints.map(([x, y]) => [x - lastX, y - lastY]);
+                    const [firstX, firstY] = joiningPoints[0]
+                    const shiftedJoinPoints = joiningPoints.map(([x, y]) => [x - firstX + lastX, y - firstY + lastY]);
                     const normalizedPointsJoining = shiftedJoinPoints.map(([x, y]) => [(x + gridSize / 2) / gridSize, (y + gridSize / 2) / gridSize]);
                     plotSpline(normalizedPointsJoining, true);
                 }
