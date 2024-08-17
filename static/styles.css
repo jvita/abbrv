@@ -73,9 +73,9 @@ button:hover {
     background-color: #0056b3;
 }
 
-.delete-button, .freeze-button, .join-button {
+/* .delete-button, .basic-button {
     margin-top: 10px;
-}
+} */
 
 .delete-button {
     background-color: #dc3545;
@@ -128,7 +128,7 @@ button:hover {
     display: flex;
     flex-direction: column;
     gap: 5px;
-    max-height: 470px;
+    max-height: 550px;
     overflow-y: auto;
     border: 1px solid #ddd;
     border-radius: 4px;
