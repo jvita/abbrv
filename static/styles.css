@@ -15,13 +15,6 @@ html, body {
     padding: 20px;
 }
 
-/* body {
-    font-family: Arial, sans-serif;
-    background-color: #f4f4f4;
-    color: #333;
-    padding: 20px;
-} */
-
 .container {
     display: flex;
     flex: 1;
@@ -56,6 +49,8 @@ html, body {
 
 .button-container {
     margin-bottom: 20px;
+    display: flex;
+    flex-direction: row;
 }
 
 button {
