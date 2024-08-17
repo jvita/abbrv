@@ -5,6 +5,16 @@
     box-sizing: border-box;
 }
 
+/* Ensure body and html take full height */
+html, body {
+    height: 100%;
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f4;
+    color: #333;
+    padding: 20px;
+}
+
 body {
     font-family: Arial, sans-serif;
     background-color: #f4f4f4;
@@ -13,16 +23,23 @@ body {
 }
 
 .container {
+    display: flex;
+    flex: 1;
     max-width: 1200px;
     margin: 0 auto;
 }
 
 .main-content {
     display: flex;
+    flex: 1;
+    position: relative;
     justify-content: space-between;
 }
 
 .controls {
+    width: 200px;
+    padding: 0px;
+    box-sizing: border-box;
     flex: 1;
     margin-right: 20px;
 }
@@ -59,6 +76,10 @@ button:hover {
     background-color: #0056b3;
 }
 
+.delete-button, .freeze-button {
+    margin-top: 10px;
+}
+
 .delete-button {
     background-color: #dc3545;
 }
@@ -69,6 +90,10 @@ button:hover {
 
 .grid-container {
     position: relative;
+    width: 730px; /* Match canvas size */
+    height: 730px; /* Match canvas size */
+    overflow: hidden;
+    margin-left: 0px; /* Spacing from controls */
     flex: 2;
     display: flex;
     align-items: center;
@@ -103,6 +128,9 @@ button:hover {
 }
 
 .spline-list {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
     max-height: 400px;
     overflow-y: auto;
     border: 1px solid #ddd;
@@ -124,6 +152,11 @@ button:hover {
 
 .spline-item.selected {
     background-color: #007bff;
+    color: white;
+}
+
+.spline-item.frozen {
+    background-color: gray;
     color: white;
 }
 
