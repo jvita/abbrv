@@ -14,10 +14,19 @@
         <div class="container">
             <div class="main-content">
                 <div class="controls">
-                    <h2>Character</h2>
-                    <input type="text" id="character" placeholder="Enter character(s)">
-                    <h2>Saved Splines</h2>
-                    <div id="splineList" class="spline-list"></div>
+                    <h2>Editing character</h2>
+                    <input type="text" id="character" placeholder="Enter character(s)" autocomplete="off">
+                    <!-- <h2>Saved splines</h2> -->
+                    <div class="d-flex flex-row">
+                        <div class="d-flex flex-column flex-grow-1">
+                            <h4 style="margin-left: 5px;">Characters</h4>
+                            <div id="charactersList" class="spline-list"></div>
+                        </div>
+                        <div class="d-flex flex-column flex-grow-1">
+                            <h4 style="margin-left: 5px">Joins</h4>
+                            <div id="joinsList" class="spline-list"></div>
+                        </div>
+                    </div>
                     <div class="d-flex flex-row justify-content-between">
                         <div>
                             <button id="saveButton">Save</button>
@@ -37,7 +46,8 @@
         </div>
         <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
         <script>
-            let splineData = {}; // Global variable to store spline data
+            let charSplineData = {}; // Global variable to store spline data
+            let joinsSplineData = {}; // Global variable to store spline data
             const gridCanvas = document.getElementById('gridCanvas');
             const gridCtx = gridCanvas.getContext('2d');
             const splineCanvas = document.getElementById('splineCanvas');
@@ -47,7 +57,8 @@
             const clearButton = document.getElementById('clearButton');
             const deleteButton = document.getElementById('deleteButton');
             const joinButton = document.getElementById('joinButton');
-            const splineList = document.getElementById('splineList');
+            const charactersList = document.getElementById('charactersList');
+            const joinsList = document.getElementById('joinsList');
 
             let joiningPoints = [];
             let selectedPoints = [];
@@ -124,7 +135,6 @@
                     
                     if (selectedPoints.length > 0) {
                         [lastX, lastY] = selectedPoints[0];
-                        console.log('selected exists', lastX, lastY)
                     }
 
                     const [firstX, firstY] = joiningPoints[joiningPoints.length - 1]
@@ -175,9 +185,7 @@
                 const isCtrlPressed = event.ctrlKey;
 
                 // Find if the point is already selected
-                const pointIndex = selectedPoints.findLastIndex(([px, py]) => px === gridX && py === gridY);
-
-                console.log(pointIndex, isCtrlPressed)
+                const pointIndex = selectedPoints.findLastIndex(([px, py]) => Math.round(px) === gridX && Math.round(py) === gridY);
 
                 if (isCtrlPressed) {
                     // Ctrl+click: Remove the point if it exists
@@ -199,13 +207,14 @@
                 if (character && selectedPoints.length) {
                     const data = {
                         character: character,
-                        joiningCharacter: joiningCharacter,
-                        points: selectedPoints.map(([x, y]) => [(x + gridSize / 2) / gridSize, (y + gridSize / 2) / gridSize])
+                        joinchar: joiningCharacter,
+                        points: selectedPoints.map(([x, y]) => [(x + gridSize / 2) / gridSize, (y + gridSize / 2) / gridSize]),
                     };
                     axios.post('/save', data)
                         .then(response => {
                             if (response.data.status === 'success') {
-                                loadSplines();
+                                loadJoins();
+                                loadCharacters();
                                 characterField.value = '';
                                 selectedPoints = [];
                                 updatePointsField();
@@ -224,7 +233,7 @@
                     axios.post('/delete', { character: selectedCharacter })
                         .then(response => {
                             if (response.data.status === 'success') {
-                                loadSplines();
+                                loadCharacters();
                                 characterField.value = '';
                                 selectedPoints = [];
                                 updatePointsField();
@@ -239,17 +248,17 @@
                 }
             });
 
-            function loadSplines() {
-                axios.get('/load')
+            function loadCharacters() {
+                axios.get('/load_characters')
                     .then(response => {
 
-                        splineData = response.data; // Store the data in the global variable
-                        splineList.innerHTML = '';
+                        charSplineData = response.data; // Store the data in the global variable
+                        charactersList.innerHTML = '';
                         deleteButton.style.display = 'none'; // Hide delete button initially
 
                         splineCtx.clearRect(0, 0, splineCanvas.width, splineCanvas.height);
 
-                        for (const [character, points] of Object.entries(splineData)) {
+                        for (const [character, points] of Object.entries(charSplineData)) {
                             const listItem = document.createElement('div');
                             listItem.className = 'spline-item';
                             listItem.textContent = character;
@@ -263,11 +272,10 @@
                                         characterField.value = ''; // Clear the character field
                                         deleteButton.style.display = 'none'; // Hide delete button
                                         if (!joiningCharacter) {
-                                            joinButton.style.display = 'none'; // Hide delete button
+                                            joinButton.style.display = 'none';
                                         }
                                         if (joiningCharacter === character) {
                                             joiningCharacter = null;
-                                            joinButton.textContent = 'Join';
                                         }
 
                                         // Remove the selected class from the clicked item
@@ -312,12 +320,81 @@
                                 joiningPoints = points.map(([x, y]) => [x * gridSize - gridSize / 2, y * gridSize - gridSize / 2]);
                             }
 
-                            splineList.appendChild(listItem);
+                            charactersList.appendChild(listItem);
                         }
 
                         // Update join button visibility after loading splines
                         joinButton.style.display = joiningCharacter || selectedCharacter ? 'inline-block' : 'none';
+                        deleteButton.style.display = joiningCharacter || selectedCharacter ? 'inline-block' : 'none';
 
+                        updatePointsField();
+                    });
+            }
+
+            function loadJoins() {
+                axios.get('/load_joins')
+                    .then(response => {
+
+                        charSplineData = response.data['chars'];
+                        joinsSplineData = response.data['joins'];
+                        joinsList.innerHTML = '';
+                        deleteButton.style.display = 'none'; // Hide delete button initially
+                        joinButton.style.display = 'none'; // Hide delete button initially
+
+                        splineCtx.clearRect(0, 0, splineCanvas.width, splineCanvas.height);
+
+                        for (const [character, charPoints] of Object.entries(charSplineData)) {
+                            if (!(character in joinsSplineData)) {
+                                continue
+                            }
+
+                            for (const [joinchar, joinPoints] of Object.entries(joinsSplineData[character])) {
+                                const listItem = document.createElement('div');
+                                listItem.className = 'spline-item';
+                                listItem.textContent = joinchar+character;
+                                listItem.addEventListener('click', () => {
+                                    if ((selectedCharacter === joinchar) || (joiningCharacter === joinchar)){
+                                        if (joiningCharacter !== joinchar) {
+                                            // Deselect the spline
+                                            selectedPoints = [];
+                                            selectedCharacter = null;
+                                            characterField.value = ''; // Clear the character field
+                                            // deleteButton.style.display = 'none'; // Hide delete button
+
+                                            // Remove the selected class from the clicked item
+                                            listItem.classList.remove('selected');
+                                        }
+                                    } else {
+                                        // Remove selected class from all items
+                                        document.querySelectorAll('.spline-item').forEach(item => {
+                                            item.classList.remove('selected');
+                                        });
+
+                                        selectedPoints = joinPoints.map(([x, y]) => [x * gridSize - gridSize / 2, y * gridSize - gridSize / 2]);
+                                        characterField.value = joinchar;
+                                        selectedCharacter = character;
+                                        characterField.value = character;
+                                        // deleteButton.style.display = 'inline-block'; // Show delete button
+
+                                        // Add selected class to the clicked item
+                                        // listItem.classList.add('selected');
+                                    }
+
+                                    joiningPoints = charSplineData[joinchar].map(([x, y]) => [x * gridSize - gridSize / 2, y * gridSize - gridSize / 2]);
+                                    joiningCharacter = joinchar
+                                    joinButton.style.display = 'inline-block';
+                                    joinButton.textContent = 'Unjoin';
+                                    updatePointsField();
+                                    loadCharacters();
+                                });
+
+                                // Make sure selected character is always highlighted
+                                if (joinchar === selectedCharacter) {
+                                    listItem.classList.add('selected');
+                                }
+                                joinsList.appendChild(listItem);
+                            }
+                        }
                         updatePointsField();
                     });
             }
@@ -331,6 +408,7 @@
                 } else {
                     if (selectedCharacter) {
                         // Join the currently selected spline
+                        joinButton.style.display = 'none'; // Hide delete button
                         joiningCharacter = selectedCharacter;
                         joinButton.textContent = 'Unjoin';
 
@@ -342,11 +420,12 @@
                     }
                 }
                 
-                loadSplines(); 
+                loadCharacters(); 
             });
 
             drawGrid();
-            loadSplines();
+            loadJoins();
+            loadCharacters();
 
             document.addEventListener("DOMContentLoaded", function() {
                 const gridContainer = document.querySelector('.grid-container');

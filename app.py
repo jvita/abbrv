@@ -54,10 +54,10 @@ def spline():
 def save():
     data = request.json
     character = data['character']
-    joiningCharacter = data['joiningCharacter']
+    joinchar = data['joinchar']
     points = data['points']
 
-    if joiningCharacter is None: # save as individual character
+    if joinchar is None: # save as individual character
         adjusted_points = adjust_points(points, np.array([-0.5, -0.5]))
 
         # Load existing data
@@ -87,7 +87,11 @@ def save():
 
         # Update or add new entry
         # data[character][join] is the array of points used when "character" is preceded by "join"
-        existing_data[character] = {joiningCharacter: adjusted_points}
+        if character not in existing_data:
+            existing_data[character] = {joinchar: adjusted_points}
+        else:
+            # existing_data[character] = existing_data[character].update({joiningCharacter: adjusted_points})
+            existing_data[character].update({joinchar: adjusted_points})
 
         # Save updated data
         with open(JOINS_FILE, 'w') as f:
@@ -96,8 +100,37 @@ def save():
         return jsonify({'status': 'success'})
 
 
-@app.route('/load')
-def load():
+@app.route('/load_joins')
+def load_joins():
+    # Load single-character splines
+    chars = {}
+    try:
+        with open(CHAR_FILE, 'r') as f:
+            join_data = json.load(f)
+            chars.update({k: adjust_points(v, np.array([0.5, 0.5])) for k, v in join_data.items()})
+    except FileNotFoundError:
+        pass
+
+    # Load join splines
+    joins = {}
+    try:
+        with open(JOINS_FILE, 'r') as f:
+            join_data = json.load(f)
+            joins.update({
+                k: {
+                    j: adjust_points(v, np.array([0.5, 0.5]))
+                    for j, v in dct.items()
+                    }
+                for k, dct in join_data.items()
+                })
+    except FileNotFoundError:
+        pass
+
+    return jsonify({'chars': chars, 'joins': joins})
+
+
+@app.route('/load_characters')
+def load_characters():
     all_data = {}
 
     # Load single-character splines
@@ -109,6 +142,7 @@ def load():
         pass
 
     return jsonify(all_data)
+
 
 @app.route('/delete', methods=['POST'])
 def delete():
@@ -162,9 +196,6 @@ def get_data():
         char: {j: np.array(points, dtype=np.float32) for j, points in join_dict.items()}
         for char, join_dict in _joins.items()
     }
-
-    print(joins)
-    print('hello?', flush=True)
 
 def interpolate_points(points, num_points=100):
     if len(points) < 2:
@@ -241,7 +272,7 @@ def text_to_separate_splines(text):
                             # build spline
                             # ci-1 because char hasn't been added yet
                             returns = join_to_spline(join, cursor_pos, prev)
-                            prev = join[-1]
+                            prev = join
 
                             splines.append(returns[0])
                             red_dot_points.append(returns[1])
@@ -251,7 +282,7 @@ def text_to_separate_splines(text):
                         if char not in characters:
                             # build spline
                             returns = join_to_spline(join, cursor_pos, prev)
-                            prev = join[-1]
+                            prev = join
 
                             splines.append(returns[0])
                             red_dot_points.append(returns[1])
