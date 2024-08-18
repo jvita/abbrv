@@ -426,6 +426,49 @@
                 loadJoins();
             });
 
+            document.getElementById('character').addEventListener('input', sortAndDisplayList);
+
+    document.getElementById('character').addEventListener('input', sortAndDisplayList);
+
+    function sortAndDisplayList() {
+        sortOneList(charactersList);
+        sortOneList(joinsList);
+    }
+
+    function sortOneList(listToSort) {
+        // Get the value from the character input field
+        const searchTerm = document.getElementById('character').value.toLowerCase();
+
+        // Get current list items
+        let listItems = Array.from(listToSort.children);
+
+        // Function to check if an item contains the search term
+        const containsSearchTerm = text => text.toLowerCase().includes(searchTerm);
+        const startsWithSearchTerm = text => text.toLowerCase().startsWith(searchTerm);
+
+        // Separate items into those that start with the search term, those that contain it elsewhere, and those that do not contain it
+        let startsWithItems = listItems.filter(item => startsWithSearchTerm(item.textContent));
+        let containsItems = listItems.filter(item => containsSearchTerm(item.textContent) && !startsWithSearchTerm(item.textContent));
+        let nonMatchingItems = listItems.filter(item => !containsSearchTerm(item.textContent));
+
+        // Sort each array alphabetically
+        startsWithItems.sort((a, b) => a.textContent.toLowerCase().localeCompare(b.textContent.toLowerCase()));
+        containsItems.sort((a, b) => a.textContent.toLowerCase().localeCompare(b.textContent.toLowerCase()));
+        nonMatchingItems.sort((a, b) => a.textContent.toLowerCase().localeCompare(b.textContent.toLowerCase()));
+
+        // Combine the arrays: items starting with the search term first, then items containing it elsewhere, then non-matching items
+        let sortedItems = startsWithItems.concat(containsItems, nonMatchingItems);
+
+        // Clear the current list and re-append sorted items
+        listToSort.innerHTML = '';
+        sortedItems.forEach(item => {
+            listToSort.appendChild(item);
+        });
+    }
+
+// Initial load (if needed)
+loadJoins(); // Ensure this function populates the 'charactersList' div
+
             drawGrid();
             loadJoins();
             loadCharacters();
