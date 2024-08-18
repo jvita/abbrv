@@ -198,6 +198,8 @@
                 selectedPoints = points ? points : (char ? charSplineData[selectedCharacter] : [])
                 selectedPoints = selectedPoints.map(([x, y]) => [x * gridSize - gridSize / 2, y * gridSize - gridSize / 2]);
 
+                characterField.value = char ? char : '';
+
                 // update coloring of spline list
                 document.querySelectorAll('.spline-item').forEach(item => {
                     if (item.textContent === char) {
