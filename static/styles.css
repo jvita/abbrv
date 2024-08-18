@@ -136,8 +136,8 @@ button:hover {
     padding: 10px;
     list-style-type: none;
     flex-grow: 1;
-    margin-left: 5px;
-    margin-right: 5px;
+    /* margin-left: 5px;
+    margin-right: 5px; */
 }
 
 .spline-item {

@@ -148,27 +148,54 @@ def load_characters():
 def delete():
     data = request.json
     character = data['character']
+    joinchar = data['joinchar']
 
-    file_path = CHAR_FILE
+    if joinchar is None: # delete the single character
+        file_path = CHAR_FILE
 
-    # Load existing data
-    try:
-        with open(file_path, 'r') as f:
-            existing_data = json.load(f)
-    except FileNotFoundError:
-        existing_data = {}
+        # Load existing data
+        try:
+            with open(file_path, 'r') as f:
+                existing_data = json.load(f)
+        except FileNotFoundError:
+            existing_data = {}
 
-    # Remove the specified character
-    if character in existing_data:
-        del existing_data[character]
+        # Remove the specified character
+        if character in existing_data:
+            del existing_data[character]
 
-        # Save updated data
-        with open(file_path, 'w') as f:
-            json.dump(existing_data, f, indent=4)
+            # Save updated data
+            with open(file_path, 'w') as f:
+                json.dump(existing_data, f, indent=4)
 
-        return jsonify({'status': 'success'})
-    else:
-        return jsonify({'status': 'error', 'message': 'Character not found'})
+            return jsonify({'status': 'success'})
+        else:
+            return jsonify({'status': 'error', 'message': 'Character not found'})
+    else:  # try to delete the join
+        file_path = JOINS_FILE
+
+        # Load existing data
+        try:
+            with open(file_path, 'r') as f:
+                existing_data = json.load(f)
+        except FileNotFoundError:
+            existing_data = {}
+
+        # Remove the specified character
+        if character in existing_data:
+            if joinchar in existing_data[character]:
+                del existing_data[character]
+
+                # Save updated data
+                with open(file_path, 'w') as f:
+                    json.dump(existing_data, f, indent=4)
+
+                return jsonify({'status': 'success'})
+            else:
+                return jsonify({'status': 'error', 'message': 'Join not found'})
+        else:
+            return jsonify({'status': 'error', 'message': 'Character not found'})
+
 
 def execute_on_refresh():
     get_data()
@@ -324,7 +351,7 @@ def text_to_separate_splines(text):
 #     if points:
 #         d = f'M {points[0][0]},{points[0][1]} '
 #         d += ' '.join(f'L {x},{y}' for x, y in points[1:])
-        
+
 #         # Create the path element
 #         svg += f'    <path d="{d}" stroke="{stroke_color}" stroke-width="{stroke_width}" fill="none" />\n'
 

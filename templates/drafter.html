@@ -19,12 +19,12 @@
                     <!-- <h2>Saved splines</h2> -->
                     <div class="d-flex flex-row">
                         <div class="d-flex flex-column flex-grow-1">
-                            <h4 style="margin-left: 5px;">Characters</h4>
-                            <div id="charactersList" class="spline-list"></div>
+                            <h2>Characters</h2>
+                            <div id="charactersList" class="spline-list" style="margin-right: 5px;"></div>
                         </div>
                         <div class="d-flex flex-column flex-grow-1">
-                            <h4 style="margin-left: 5px">Joins</h4>
-                            <div id="joinsList" class="spline-list"></div>
+                            <h2 style="margin-left: 5px">Joins</h2>
+                            <div id="joinsList" class="spline-list" style="margin-left: 5px;"></div>
                         </div>
                     </div>
                     <div class="d-flex flex-row justify-content-between">
@@ -32,8 +32,6 @@
                             <button id="saveButton">Save</button>
                             <button id="clearButton">Clear</button>
                             <button id="joinButton" class="join-button" style="display:none;">Join</button>
-                        </div>
-                        <div>
                             <button id="deleteButton" class="delete-button" style="display:none;">Delete</button>
                         </div>
                     </div>
@@ -132,7 +130,7 @@
                 if (joiningPoints.length > 0) {
                     let lastX = 0;
                     let lastY = 0;
-                    
+
                     if (selectedPoints.length > 0) {
                         [lastX, lastY] = selectedPoints[0];
                     }
@@ -229,10 +227,12 @@
             });
 
             deleteButton.addEventListener('click', () => {
+                console.log("Delete clicked")
                 if (selectedCharacter) {
-                    axios.post('/delete', { character: selectedCharacter })
+                    axios.post('/delete', { character: selectedCharacter , joinchar: joiningCharacter})
                         .then(response => {
                             if (response.data.status === 'success') {
+                                loadJoins();
                                 loadCharacters();
                                 characterField.value = '';
                                 selectedPoints = [];
@@ -419,8 +419,8 @@
                         deleteButton.style.display = 'none'; // Hide delete button
                     }
                 }
-                
-                loadCharacters(); 
+
+                loadCharacters();
             });
 
             drawGrid();
