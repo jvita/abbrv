@@ -301,16 +301,6 @@ def text_to_separate_splines(text):
                             rightmost_x = returns[2]
                             cursor_pos = returns[3]
                         join = char
-                        # if char not in characters:
-                        #     print(f'char "{char}" not in characters???')
-                        #     # build spline
-                        #     returns = join_to_spline(join, cursor_pos, prev)
-                        #     prev = join
-
-                        #     splines.append(returns[0])
-                        #     red_dot_points.append(returns[1])
-                        #     rightmost_x = returns[2]
-                        #     cursor_pos = returns[3]
 
                 if join: # still something left
                     # build spline
