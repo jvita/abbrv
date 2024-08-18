@@ -31,8 +31,8 @@ def spline():
         return jsonify({'spline': []})
 
     points = np.array(points)
-    x = points[:, 0] * 72 - 36
-    y = points[:, 1] * 72 - 36
+    x = points[:, 0] * 76 - 38
+    y = points[:, 1] * 76 - 38
     t = np.linspace(0, 1, len(points))
 
     num_plot_points = 100

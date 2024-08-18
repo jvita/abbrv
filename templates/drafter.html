@@ -37,8 +37,8 @@
                     </div>
                 </div>
                 <div class="grid-container">
-                    <canvas id="splineCanvas" width="1440" height="1440"></canvas>
-                    <canvas id="gridCanvas" width="1440" height="1440"></canvas>
+                    <canvas id="splineCanvas" width="1520" height="1520"></canvas>
+                    <canvas id="gridCanvas" width="1520" height="1520"></canvas>
                 </div>
             </div>
         </div>
@@ -62,7 +62,7 @@
             let selectedPoints = [];
             let selectedCharacter = null;
             let joiningCharacter = null; // Track the currently joining spline
-            const gridSize = 72;
+            const gridSize = 76;
             const cellSize = 20;
             const centerOffset = Math.floor(gridSize / 2) * cellSize;
 
@@ -107,6 +107,7 @@
                 gridCtx.strokeRect(centerX - 360, centerY - 360, 720, 720);
                 gridCtx.strokeRect(centerX - 480, centerY - 480, 960, 960);
                 gridCtx.strokeRect(centerX - 600, centerY - 600, 1200, 1200);
+                gridCtx.strokeRect(centerX - 720, centerY - 720, 1440, 1440);
                 gridCtx.stroke();
             }
 
@@ -218,6 +219,12 @@
                                 updatePointsField();
                             }
                         });
+                }
+                deleteButton.style.display = 'none'; // Hide delete button after deleting
+                joinButton.style.display = 'none'; // Hide join button after deleting
+                if (joiningCharacter === selectedCharacter) {
+                    joiningCharacter = null; // Stop joining if spline was deleted
+                    joinButton.textContent = 'Join';
                 }
             });
 
@@ -353,17 +360,19 @@
                                 listItem.className = 'spline-item';
                                 listItem.textContent = joinchar+character;
                                 listItem.addEventListener('click', () => {
-                                    if ((selectedCharacter === joinchar) || (joiningCharacter === joinchar)){
-                                        if (joiningCharacter !== joinchar) {
-                                            // Deselect the spline
-                                            selectedPoints = [];
-                                            selectedCharacter = null;
-                                            characterField.value = ''; // Clear the character field
-                                            // deleteButton.style.display = 'none'; // Hide delete button
+                                    // if ((selectedCharacter === joinchar) || (joiningCharacter === joinchar)){
+                                    if (listItem.classList.contains('selected')) {
+                                        // Deselect the spline
+                                        selectedPoints = [];
+                                        selectedCharacter = null;
+                                        joiningPoints = [];
+                                        joiningCharacter = null;
+                                        characterField.value = ''; // Clear the character field
+                                        deleteButton.style.display = 'none'; // Hide delete button
+                                        joinButton.style.display = 'none';
 
-                                            // Remove the selected class from the clicked item
-                                            listItem.classList.remove('selected');
-                                        }
+                                        // Remove the selected class from the clicked item
+                                        listItem.classList.remove('selected');
                                     } else {
                                         // Remove selected class from all items
                                         document.querySelectorAll('.spline-item').forEach(item => {
@@ -374,24 +383,20 @@
                                         characterField.value = joinchar;
                                         selectedCharacter = character;
                                         characterField.value = character;
-                                        // deleteButton.style.display = 'inline-block'; // Show delete button
+
+                                        joiningPoints = charSplineData[joinchar].map(([x, y]) => [x * gridSize - gridSize / 2, y * gridSize - gridSize / 2]);
+                                        joiningCharacter = joinchar
+                                        joinButton.textContent = 'Unjoin';
 
                                         // Add selected class to the clicked item
-                                        // listItem.classList.add('selected');
+                                        listItem.classList.add('selected');
                                     }
 
-                                    joiningPoints = charSplineData[joinchar].map(([x, y]) => [x * gridSize - gridSize / 2, y * gridSize - gridSize / 2]);
-                                    joiningCharacter = joinchar
-                                    joinButton.style.display = 'inline-block';
-                                    joinButton.textContent = 'Unjoin';
                                     updatePointsField();
                                     loadCharacters();
                                 });
 
                                 // Make sure selected character is always highlighted
-                                if (joinchar === selectedCharacter) {
-                                    listItem.classList.add('selected');
-                                }
                                 joinsList.appendChild(listItem);
                             }
                         }
@@ -431,8 +436,8 @@
                 const gridContainer = document.querySelector('.grid-container');
                 const containerWidth = gridContainer.clientWidth;
                 const containerHeight = gridContainer.clientHeight;
-                const gridWidth = 1440;
-                const gridHeight = 1440;
+                const gridWidth = 1520;
+                const gridHeight = 1520;
 
                 gridContainer.scrollLeft = (gridWidth - containerWidth) / 2;
                 gridContainer.scrollTop = (gridHeight - containerHeight) / 2;
