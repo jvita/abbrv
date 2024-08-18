@@ -180,22 +180,17 @@
                 const gridX = Math.round(x / cellSize);
                 const gridY = Math.round(y / cellSize);
 
-                // Check if Ctrl key is pressed
                 const isCtrlPressed = event.ctrlKey;
 
-                // Find if the point is already selected
-                const pointIndex = selectedPoints.findLastIndex(([px, py]) => Math.round(px) === gridX && Math.round(py) === gridY);
-
                 if (isCtrlPressed) {
+                    const pointIndex = selectedPoints.findLastIndex(([px, py]) => Math.round(px) === gridX && Math.round(py) === gridY);
                     // Ctrl+click: Remove the point if it exists
                     if (pointIndex !== -1) {
                         selectedPoints.splice(pointIndex, 1);
                     }
                 } else {
-                    // Regular click: Add the point if it's not already selected
-                    if (pointIndex === -1) {
-                        selectedPoints.push([gridX, gridY]);
-                    }
+                    // Regular click
+                    selectedPoints.push([gridX, gridY]);
                 }
 
                 updatePointsField();
@@ -216,16 +211,18 @@
                                 loadCharacters();
                                 characterField.value = '';
                                 selectedPoints = [];
+                                selectedCharacter = null;
+                                deleteButton.style.display = 'none'; // Hide delete button after deleting
+                                joinButton.style.display = 'none'; // Hide join button after deleting
+                                if (joiningCharacter === selectedCharacter) {
+                                    joiningCharacter = null; // Stop joining if spline was deleted
+                                    joinButton.textContent = 'Join';
+                                }
                                 updatePointsField();
                             }
                         });
                 }
-                deleteButton.style.display = 'none'; // Hide delete button after deleting
-                joinButton.style.display = 'none'; // Hide join button after deleting
-                if (joiningCharacter === selectedCharacter) {
-                    joiningCharacter = null; // Stop joining if spline was deleted
-                    joinButton.textContent = 'Join';
-                }
+
             });
 
             clearButton.addEventListener('click', () => {
@@ -426,6 +423,7 @@
                 }
 
                 loadCharacters();
+                loadJoins();
             });
 
             drawGrid();
