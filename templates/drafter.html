@@ -14,7 +14,6 @@
                 <div class="controls">
                     <h2>Editing character</h2>
                     <input type="text" id="character" placeholder="Enter character(s)" autocomplete="off">
-                    <!-- <h2>Saved splines</h2> -->
                     <div class="d-flex flex-row">
                         <div class="d-flex flex-column flex-grow-1">
                             <h2>Characters</h2>
@@ -29,8 +28,8 @@
                         <div>
                             <button id="saveButton">Save</button>
                             <button id="clearButton">Clear</button>
-                            <button id="joinButton" class="join-button" style="display:none;">Join</button>
-                            <button id="deleteButton" class="delete-button" style="display:none;">Delete</button>
+                            <button id="joinButton" style="display:none;">Join</button>
+                            <button id="deleteButton" class="delete-button" style="display:none">Delete</button>
                         </div>
                     </div>
                 </div>
@@ -194,6 +193,55 @@
                 updatePointsField();
             });
 
+            function handleCharSelect(char, points = null) {
+                selectedCharacter = char;
+                selectedPoints = points ? points : (char ? charSplineData[selectedCharacter] : [])
+                selectedPoints = selectedPoints.map(([x, y]) => [x * gridSize - gridSize / 2, y * gridSize - gridSize / 2]);
+
+                // update coloring of spline list
+                document.querySelectorAll('.spline-item').forEach(item => {
+                    if (item.textContent === char) {
+                        if (item.classList.contains('selected')) {  // on -> off
+                            item.classList.remove('selected');
+                        } else {  // off -> on
+                            item.classList.add('selected');
+                        }
+                    } else {
+                        if (item.classList.contains('selected')) {  // on -> off
+                            item.classList.remove('selected');
+                        }
+                    }
+                });
+            }
+
+            function handleJoinSelect(prev) {
+                joiningCharacter = prev;
+                joiningPoints = prev ? charSplineData[prev] : [];
+                joiningPoints = joiningPoints.map(([x, y]) => [x * gridSize - gridSize / 2, y * gridSize - gridSize / 2]);
+
+                // update coloring of spline list
+                document.querySelectorAll('.spline-item').forEach(item => {
+                    item.classList.remove('joining');
+                    if (item.textContent === prev ) {
+                        item.classList.add('joining');
+                        if (item.classList.contains('selected')) {
+                            item.classList.remove('selected');
+                        }
+                    } else {
+                        if (item.classList.contains('joining')) {
+                            item.classList.remove('joining');
+                        }
+                    }
+                });
+            }
+
+            function handleJoinAndCharSelect(prev, char){
+                handleJoinSelect(prev)
+
+                const newPoints = ((char in joinsSplineData) && (prev in joinsSplineData[char])) ? joinsSplineData[char][prev] : null;
+                handleCharSelect(char, newPoints);
+            }
+
             saveButton.addEventListener('click', () => {
                 const character = characterField.value.trim();
                 if (character && selectedPoints.length) {
@@ -205,17 +253,13 @@
                     axios.post('/save', data)
                         .then(response => {
                             if (response.data.status === 'success') {
-                                loadJoins();
+                                loadJoins();  // to re-add the new data
                                 loadCharacters();
-                                characterField.value = '';
-                                selectedPoints = [];
-                                selectedCharacter = null;
-                                deleteButton.style.display = 'none'; // Hide delete button after deleting
-                                joinButton.style.display = 'none'; // Hide join button after deleting
-                                joiningPoints = [];
-                                joiningCharacter = null; // Stop joining if spline was deleted
-                                joinButton.textContent = 'Join';
+                                handleJoinAndCharSelect(null, null);
+                                refreshJoinButton();
+                                refreshDeleteButton();
                                 updatePointsField();
+                                characterField.value = '';
                                 characterField.focus();
                             }
                         });
@@ -229,22 +273,17 @@
             });
 
             deleteButton.addEventListener('click', () => {
-                console.log("Delete clicked")
                 if (selectedCharacter) {
                     axios.post('/delete', { character: selectedCharacter , joinchar: joiningCharacter})
                         .then(response => {
                             if (response.data.status === 'success') {
-                                loadJoins();
+                                loadJoins();  // to re-add the new data
                                 loadCharacters();
-                                characterField.value = '';
-                                selectedPoints = [];
+                                handleJoinAndCharSelect(null, null);
+                                refreshJoinButton();
+                                refreshDeleteButton();
                                 updatePointsField();
-                                deleteButton.style.display = 'none'; // Hide delete button after deleting
-                                joinButton.style.display = 'none'; // Hide join button after deleting
-                                if (joiningCharacter === selectedCharacter) {
-                                    joiningCharacter = null; // Stop joining if spline was deleted
-                                    joinButton.textContent = 'Join';
-                                }
+                                characterField.value = '';
                                 characterField.focus();
                             }
                         });
@@ -267,67 +306,15 @@
                             listItem.textContent = character;
 
                             listItem.addEventListener('click', () => {
-                                if ((selectedCharacter === character) || (joiningCharacter === character)){
-                                    if (joiningCharacter !== character) {
-                                        // Deselect the spline
-                                        selectedPoints = [];
-                                        selectedCharacter = null;
-                                        characterField.value = ''; // Clear the character field
-                                        deleteButton.style.display = 'none'; // Hide delete button
-                                        if (joiningCharacter === character) {
-                                            joiningCharacter = null;
-                                        }
+                                const prevSelected = listItem.classList.contains('selected');
 
-                                        // Remove the selected class from the clicked item
-                                        listItem.classList.remove('selected');
-                                    }
-                                } else {
-                                    // Remove selected class from all items
-                                    document.querySelectorAll('.spline-item').forEach(item => {
-                                        item.classList.remove('selected');
-                                    });
-
-                                    selectedPoints = points.map(([x, y]) => [x * gridSize - gridSize / 2, y * gridSize - gridSize / 2]);
-                                    characterField.value = character;
-                                    selectedCharacter = character;
-                                    deleteButton.style.display = 'inline-block'; // Show delete button
-                                    joinButton.style.display = joiningCharacter || selectedCharacter ? 'inline-block' : 'none'; // Show jion button if spline is selected or joining
-
-                                    // Add selected class to the clicked item
-                                    listItem.classList.add('selected');
-
-                                    // Check if this spline is the currently joining one
-                                    if (joiningCharacter === character) {
-                                        joinButton.textContent = 'Unjoin';
-                                    }
-                                }
-
+                                handleCharSelect(!prevSelected ? character: null)
+                                refreshJoinButton();
+                                refreshDeleteButton();
                                 updatePointsField();
-
                             });
-
-                            // Make sure selected character is always highlighted
-                            if (character === selectedCharacter) {
-                                listItem.classList.add('selected');
-                            }
-
-                            // Apply join class if this spline is joining
-                            if (joiningCharacter === character) {
-                                listItem.classList.add('joining');
-                                listItem.classList.remove('selected');
-
-                                // Record joining points for plotting spline later
-                                joiningPoints = points.map(([x, y]) => [x * gridSize - gridSize / 2, y * gridSize - gridSize / 2]);
-                            }
-
                             charactersList.appendChild(listItem);
                         }
-
-                        // Update join button visibility after loading splines
-                        joinButton.style.display = joiningCharacter || selectedCharacter ? 'inline-block' : 'none';
-                        deleteButton.style.display = joiningCharacter || selectedCharacter ? 'inline-block' : 'none';
-
-                        updatePointsField();
                     });
             }
 
@@ -353,81 +340,56 @@
                                 listItem.className = 'spline-item';
                                 listItem.textContent = joinchar+character;
                                 listItem.addEventListener('click', () => {
-                                    // if ((selectedCharacter === joinchar) || (joiningCharacter === joinchar)){
-                                    if (listItem.classList.contains('selected')) {
-                                        // Deselect the spline
-                                        selectedPoints = [];
-                                        selectedCharacter = null;
-                                        joiningPoints = [];
-                                        joiningCharacter = null;
-                                        characterField.value = ''; // Clear the character field
-                                        deleteButton.style.display = 'none'; // Hide delete button
-                                        joinButton.style.display = 'none';
+                                    const prevSelected = listItem.classList.contains('selected');
 
-                                        // Remove the selected class from the clicked item
-                                        listItem.classList.remove('selected');
-                                    } else {
-                                        // Remove selected class from all items
-                                        document.querySelectorAll('.spline-item').forEach(item => {
-                                            item.classList.remove('selected');
-                                        });
+                                    // only 1 can be selected at a time
+                                    document.querySelectorAll('.spline-item').forEach(item => {
+                                        item.classList.remove('selected');
+                                    });
 
-                                        selectedPoints = joinPoints.map(([x, y]) => [x * gridSize - gridSize / 2, y * gridSize - gridSize / 2]);
-                                        characterField.value = joinchar;
-                                        selectedCharacter = character;
-                                        characterField.value = character;
-
-                                        joiningPoints = charSplineData[joinchar].map(([x, y]) => [x * gridSize - gridSize / 2, y * gridSize - gridSize / 2]);
-                                        joiningCharacter = joinchar
-                                        joinButton.textContent = 'Unjoin';
-
-                                        // Add selected class to the clicked item
+                                    // select the new one
+                                    if (!prevSelected) {  // select
                                         listItem.classList.add('selected');
                                     }
 
+                                    handleJoinAndCharSelect(
+                                        !prevSelected ? joinchar: null,
+                                        !prevSelected ? character: null,
+                                    )
                                     updatePointsField();
-                                    loadCharacters();
                                 });
 
                                 // Make sure selected character is always highlighted
                                 joinsList.appendChild(listItem);
                             }
                         }
-                        updatePointsField();
                     });
             }
 
             joinButton.addEventListener('click', () => {
-                if (joiningCharacter) {
-                    // Unjoin the currently joining spline
-                    joiningPoints = []
-                    joiningCharacter = null;
-                    joinButton.textContent = 'Join';
-                } else {
-                    if (selectedCharacter) {
-                        // Join the currently selected spline
-                        joinButton.style.display = 'none'; // Hide delete button
-                        joiningCharacter = selectedCharacter;
-                        joinButton.textContent = 'Unjoin';
+                handleJoinAndCharSelect(
+                    joiningCharacter ? null : selectedCharacter,
+                    null
+                )
+                refreshJoinButton();
+                refreshDeleteButton();
+                updatePointsField();
 
-                        deleteButton.style.display = 'none'; // Hide delete button
-                    }
-                }
-
-                // Always unselect; either becasue a join was stopped,
-                // or because a selected was turned into the start of a join
-                selectedCharacter = null;
-                selectedPoints = [];
-                characterField.value = ''; // Clear the character field
-
-                loadCharacters();
-                loadJoins();
+                // joinButton.blur();
                 characterField.focus();
             });
 
-            document.getElementById('character').addEventListener('input', sortAndDisplayList);
+            function refreshJoinButton() {
+                joinButton.style.display = (joiningCharacter || selectedCharacter) ? 'inline-block' : 'none';
+                joinButton.textContent = joiningCharacter ? 'Unjoin' : 'Join';
+            }
 
-            document.getElementById('character').addEventListener('input', sortAndDisplayList);
+            function refreshDeleteButton() {
+                deleteButton.style.display = selectedCharacter ? 'inline-block' : 'none';
+            }
+
+            // document.getElementById('character').addEventListener('input', sortAndDisplayList);
+            document.getElementById('character').onkeyup = sortAndDisplayList;
 
             function sortAndDisplayList() {
                 sortOneList(charactersList);
@@ -439,15 +401,16 @@
                     item.classList.remove('selected');
                 });
 
-                if ((searchTerm) && (searchTerm in charSplineData)) {
+                if ((searchTerm) && (searchTerm in charSplineData)) {  // select
                     const topResult = charactersList.children[0];
-                    selectedCharacter = topResult.textContent;
-                    selectedPoints = charSplineData[selectedCharacter].map(([x, y]) => [x * gridSize - gridSize / 2, y * gridSize - gridSize / 2]);
+                    handleCharSelect(topResult.textContent)
                     topResult.classList.add('selected');
                 } else {
-                    selectedCharacter = null;
-                    selectedPoints = [];
+                    handleCharSelect(null)
                 }
+
+                refreshJoinButton();
+                refreshDeleteButton();
                 updatePointsField();
 
                 sortOneList(joinsList);
