@@ -7,8 +7,6 @@
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Draft</title>
-        <!-- <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap"> -->
-        <!-- <link rel="stylesheet" href="{{ url_for('static', filename='drafter_styles.css') }}"> -->
     </head>
     <body>
         <div class="container">
@@ -214,11 +212,11 @@
                                 selectedCharacter = null;
                                 deleteButton.style.display = 'none'; // Hide delete button after deleting
                                 joinButton.style.display = 'none'; // Hide join button after deleting
-                                if (joiningCharacter === selectedCharacter) {
-                                    joiningCharacter = null; // Stop joining if spline was deleted
-                                    joinButton.textContent = 'Join';
-                                }
+                                joiningPoints = [];
+                                joiningCharacter = null; // Stop joining if spline was deleted
+                                joinButton.textContent = 'Join';
                                 updatePointsField();
+                                characterField.focus();
                             }
                         });
                 }
@@ -247,6 +245,7 @@
                                     joiningCharacter = null; // Stop joining if spline was deleted
                                     joinButton.textContent = 'Join';
                                 }
+                                characterField.focus();
                             }
                         });
                 }
@@ -275,9 +274,6 @@
                                         selectedCharacter = null;
                                         characterField.value = ''; // Clear the character field
                                         deleteButton.style.display = 'none'; // Hide delete button
-                                        // if (!joiningCharacter) {
-                                        //     joinButton.style.display = 'none';
-                                        // }
                                         if (joiningCharacter === character) {
                                             joiningCharacter = null;
                                         }
@@ -414,60 +410,79 @@
                         joiningCharacter = selectedCharacter;
                         joinButton.textContent = 'Unjoin';
 
-                        // Unselect it now that it's been joined
-                        selectedPoints = [];
-                        selectedCharacter = null;
-                        characterField.value = ''; // Clear the character field
                         deleteButton.style.display = 'none'; // Hide delete button
                     }
                 }
 
+                // Always unselect; either becasue a join was stopped,
+                // or because a selected was turned into the start of a join
+                selectedCharacter = null;
+                selectedPoints = [];
+                characterField.value = ''; // Clear the character field
+
                 loadCharacters();
                 loadJoins();
+                characterField.focus();
             });
 
             document.getElementById('character').addEventListener('input', sortAndDisplayList);
 
-    document.getElementById('character').addEventListener('input', sortAndDisplayList);
+            document.getElementById('character').addEventListener('input', sortAndDisplayList);
 
-    function sortAndDisplayList() {
-        sortOneList(charactersList);
-        sortOneList(joinsList);
-    }
+            function sortAndDisplayList() {
+                sortOneList(charactersList);
 
-    function sortOneList(listToSort) {
-        // Get the value from the character input field
-        const searchTerm = document.getElementById('character').value.toLowerCase();
+                // select the top result if it exists
+                const searchTerm = document.getElementById('character').value.toLowerCase();
 
-        // Get current list items
-        let listItems = Array.from(listToSort.children);
+                document.querySelectorAll('.spline-item').forEach(item => {
+                    item.classList.remove('selected');
+                });
 
-        // Function to check if an item contains the search term
-        const containsSearchTerm = text => text.toLowerCase().includes(searchTerm);
-        const startsWithSearchTerm = text => text.toLowerCase().startsWith(searchTerm);
+                if ((searchTerm) && (searchTerm in charSplineData)) {
+                    const topResult = charactersList.children[0];
+                    selectedCharacter = topResult.textContent;
+                    selectedPoints = charSplineData[selectedCharacter].map(([x, y]) => [x * gridSize - gridSize / 2, y * gridSize - gridSize / 2]);
+                    topResult.classList.add('selected');
+                } else {
+                    selectedCharacter = null;
+                    selectedPoints = [];
+                }
+                updatePointsField();
 
-        // Separate items into those that start with the search term, those that contain it elsewhere, and those that do not contain it
-        let startsWithItems = listItems.filter(item => startsWithSearchTerm(item.textContent));
-        let containsItems = listItems.filter(item => containsSearchTerm(item.textContent) && !startsWithSearchTerm(item.textContent));
-        let nonMatchingItems = listItems.filter(item => !containsSearchTerm(item.textContent));
+                sortOneList(joinsList);
+            }
 
-        // Sort each array alphabetically
-        startsWithItems.sort((a, b) => a.textContent.toLowerCase().localeCompare(b.textContent.toLowerCase()));
-        containsItems.sort((a, b) => a.textContent.toLowerCase().localeCompare(b.textContent.toLowerCase()));
-        nonMatchingItems.sort((a, b) => a.textContent.toLowerCase().localeCompare(b.textContent.toLowerCase()));
+            function sortOneList(listToSort) {
+                // Get the value from the character input field
+                const searchTerm = document.getElementById('character').value.toLowerCase();
 
-        // Combine the arrays: items starting with the search term first, then items containing it elsewhere, then non-matching items
-        let sortedItems = startsWithItems.concat(containsItems, nonMatchingItems);
+                // Get current list items
+                let listItems = Array.from(listToSort.children);
 
-        // Clear the current list and re-append sorted items
-        listToSort.innerHTML = '';
-        sortedItems.forEach(item => {
-            listToSort.appendChild(item);
-        });
-    }
+                // Function to check if an item contains the search term
+                const containsSearchTerm = text => text.toLowerCase().includes(searchTerm);
+                const startsWithSearchTerm = text => text.toLowerCase().startsWith(searchTerm);
 
-// Initial load (if needed)
-loadJoins(); // Ensure this function populates the 'charactersList' div
+                // Separate items into those that start with the search term, those that contain it elsewhere, and those that do not contain it
+                let startsWithItems = listItems.filter(item => startsWithSearchTerm(item.textContent));
+                let containsItems = listItems.filter(item => containsSearchTerm(item.textContent) && !startsWithSearchTerm(item.textContent));
+                let nonMatchingItems = listItems.filter(item => !containsSearchTerm(item.textContent));
+
+                // Sort each array alphabetically
+                startsWithItems.sort((a, b) => a.textContent.toLowerCase().localeCompare(b.textContent.toLowerCase()));
+                containsItems.sort((a, b) => a.textContent.toLowerCase().localeCompare(b.textContent.toLowerCase()));
+                nonMatchingItems.sort((a, b) => a.textContent.toLowerCase().localeCompare(b.textContent.toLowerCase()));
+
+                // Combine the arrays: items starting with the search term first, then items containing it elsewhere, then non-matching items
+                let sortedItems = startsWithItems.concat(containsItems, nonMatchingItems);
+
+                // Clear the current list and re-append sorted items
+                listToSort.innerHTML = '';
+                sortedItems.forEach(item => {
+                    listToSort.appendChild(item);
+                });
+            }
 
             drawGrid();
             loadJoins();
@@ -483,6 +498,8 @@ loadJoins(); // Ensure this function populates the 'charactersList' div
                 gridContainer.scrollLeft = (gridWidth - containerWidth) / 2;
                 gridContainer.scrollTop = (gridHeight - containerHeight) / 2;
             });
+
+            characterField.focus();
         </script>
     </body>
     </html>
