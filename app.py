@@ -14,7 +14,9 @@ import base64
 app = Flask(__name__)
 
 # File paths for single-character and multi-character splines
-JOIN_FILE = 'data/joins.json'
+CHAR_FILE = 'data/characters.json'
+JOINS_FILE = 'data/joins.json'
+characters = {}
 joins = {}
 
 def adjust_points(points, adjustment):
@@ -52,25 +54,47 @@ def spline():
 def save():
     data = request.json
     character = data['character']
+    joiningCharacter = data['joiningCharacter']
     points = data['points']
 
-    adjusted_points = adjust_points(points, np.array([-0.5, -0.5]))
+    if joiningCharacter is None: # save as individual character
+        adjusted_points = adjust_points(points, np.array([-0.5, -0.5]))
 
-    # Load existing data
-    try:
-        with open(JOIN_FILE, 'r') as f:
-            existing_data = json.load(f)
-    except FileNotFoundError:
-        existing_data = {}
+        # Load existing data
+        try:
+            with open(CHAR_FILE, 'r') as f:
+                existing_data = json.load(f)
+        except FileNotFoundError:
+            existing_data = {}
 
-    # Update or add new entry
-    existing_data[character] = adjusted_points
+        # Update or add new entry
+        existing_data[character] = adjusted_points
 
-    # Save updated data
-    with open(JOIN_FILE, 'w') as f:
-        json.dump(existing_data, f, indent=4)
+        # Save updated data
+        with open(CHAR_FILE, 'w') as f:
+            json.dump(existing_data, f, indent=4)
 
-    return jsonify({'status': 'success'})
+        return jsonify({'status': 'success'})
+    else: # save in joins dictionary
+        adjusted_points = adjust_points(points, np.array([-0.5, -0.5]))
+
+        # Load existing data
+        try:
+            with open(JOINS_FILE, 'r') as f:
+                existing_data = json.load(f)
+        except FileNotFoundError:
+            existing_data = {}
+
+        # Update or add new entry
+        # data[character][join] is the array of points used when "character" is preceded by "join"
+        existing_data[character] = {joiningCharacter: adjusted_points}
+
+        # Save updated data
+        with open(JOINS_FILE, 'w') as f:
+            json.dump(existing_data, f, indent=4)
+
+        return jsonify({'status': 'success'})
+
 
 @app.route('/load')
 def load():
@@ -78,7 +102,7 @@ def load():
 
     # Load single-character splines
     try:
-        with open(JOIN_FILE, 'r') as f:
+        with open(CHAR_FILE, 'r') as f:
             join_data = json.load(f)
             all_data.update({k: adjust_points(v, np.array([0.5, 0.5])) for k, v in join_data.items()})
     except FileNotFoundError:
@@ -91,7 +115,7 @@ def delete():
     data = request.json
     character = data['character']
 
-    file_path = JOIN_FILE
+    file_path = CHAR_FILE
 
     # Load existing data
     try:
@@ -125,12 +149,22 @@ def load_json_file(filename):
         return json.load(f)
 
 def get_data():
-    global joins
-    _joins = load_json_file(JOIN_FILE)
-    joins = {
+    global characters
+    _chars = load_json_file(CHAR_FILE)
+    characters = {
         char: np.array(points, dtype=np.float32)
-        for char, points in _joins.items()
+        for char, points in _chars.items()
     }
+
+    global joins
+    _joins = load_json_file(JOINS_FILE)
+    joins = {
+        char: {j: np.array(points, dtype=np.float32) for j, points in join_dict.items()}
+        for char, join_dict in _joins.items()
+    }
+
+    print(joins)
+    print('hello?', flush=True)
 
 def interpolate_points(points, num_points=100):
     if len(points) < 2:
@@ -148,16 +182,19 @@ def interpolate_points(points, num_points=100):
 def text_to_splines(text):
     raise NotImplementedError
 
-def join_to_spline(join, ci, cursor_pos):
-    global joins
+def join_to_spline(char, cursor_pos, prev=None):
+    global characters
 
-    # Shift points to cursor position
-    join_points = joins[join].copy()
-
-    if ci == 0:
+    join_points = characters[char].copy()
+    if prev is None: # first character in word
         # shift to properly respect spaces b/w words
+        print(f'{char} is first')
         join_points[:, 0] += abs(join_points[:, 0].min())
     else:
+        print(f'{char} is preceded by {prev}')
+        if (char in joins) and (prev in joins[char]):
+            # replace with modified version for the join
+            join_points = joins[char][prev].copy()
         # shift to align with cursor position
         join_points -= join_points[0]
 
@@ -175,7 +212,7 @@ def join_to_spline(join, ci, cursor_pos):
 
 
 def text_to_separate_splines(text):
-    global joins
+    global characters
 
     lines = text.split('\n')
     splines = []
@@ -189,27 +226,32 @@ def text_to_separate_splines(text):
     for line in lines:
         words = line.split(' ')
         for word in words:
+            print('new word')
             if word:
                 join = ''
+                prev = None
+                print('setting prev=None')
 
-                for ci, char in enumerate(word):
+                for char in word:
                     test_join = join + char
-                    if test_join in joins:
+                    if test_join in characters:
                         join = test_join
                     else:
                         if join:  # non-empty
                             # build spline
                             # ci-1 because char hasn't been added yet
-                            returns = join_to_spline(join, ci-1, cursor_pos)
+                            returns = join_to_spline(join, cursor_pos, prev)
+                            prev = join[-1]
 
                             splines.append(returns[0])
                             red_dot_points.append(returns[1])
                             rightmost_x = returns[2]
                             cursor_pos = returns[3]
                         join = char
-                        if char not in joins:
+                        if char not in characters:
                             # build spline
-                            returns = join_to_spline(join, ci, cursor_pos)
+                            returns = join_to_spline(join, cursor_pos, prev)
+                            prev = join[-1]
 
                             splines.append(returns[0])
                             red_dot_points.append(returns[1])
@@ -218,7 +260,7 @@ def text_to_separate_splines(text):
 
                 if join: # still something left
                     # build spline
-                    returns = join_to_spline(join, ci, cursor_pos)
+                    returns = join_to_spline(join, cursor_pos, prev)
 
                     splines.append(returns[0])
                     red_dot_points.append(returns[1])

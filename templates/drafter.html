@@ -159,7 +159,7 @@
             }
 
             gridCanvas.addEventListener('click', (event) => {
-                if (joiningCharacter) return; // Prevent point selection if a spline is joining
+                // if (joiningCharacter) return; // Prevent point selection if a spline is joining
 
                 const rect = gridCanvas.getBoundingClientRect();
                 const x = event.clientX - rect.left - centerOffset;
@@ -172,6 +172,8 @@
 
                 // Find if the point is already selected
                 const pointIndex = selectedPoints.findLastIndex(([px, py]) => px === gridX && py === gridY);
+
+                console.log(pointIndex, isCtrlPressed)
 
                 if (isCtrlPressed) {
                     // Ctrl+click: Remove the point if it exists
@@ -193,6 +195,7 @@
                 if (character && selectedPoints.length) {
                     const data = {
                         character: character,
+                        joiningCharacter: joiningCharacter,
                         points: selectedPoints.map(([x, y]) => [(x + gridSize / 2) / gridSize, (y + gridSize / 2) / gridSize])
                     };
                     axios.post('/save', data)
