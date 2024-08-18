@@ -137,22 +137,43 @@ button:hover {
     margin-right: 5px; */
 }
 
-.spline-item {
+.char-list-item {
     padding: 8px;
     border-radius: 4px;
     cursor: pointer;
 }
 
-.spline-item:hover {
+.char-list-item:hover {
     background-color: #f0f0f0;
 }
 
-.spline-item.selected {
+.char-list-item.selected {
     background-color: #007bff;
     color: white;
 }
 
-.spline-item.joining {
+.char-list-item.joining {
+    background-color: gray;
+    color: white;
+}
+
+
+.join-list-item {
+    padding: 8px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.join-list-item:hover {
+    background-color: #f0f0f0;
+}
+
+.join-list-item.selected {
+    background-color: #007bff;
+    color: white;
+}
+
+.join-list-item.joining {
     background-color: gray;
     color: white;
 }

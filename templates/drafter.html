@@ -201,12 +201,13 @@
                 characterField.value = char ? char : '';
 
                 // update coloring of spline list
-                document.querySelectorAll('.spline-item').forEach(item => {
+                document.querySelectorAll('.char-list-item').forEach(item => {
                     if (item.textContent === char) {
                         if (item.classList.contains('selected')) {  // on -> off
                             item.classList.remove('selected');
                         } else {  // off -> on
                             item.classList.add('selected');
+                            item.scrollIntoView({ behavior: 'smooth', block: 'start' });
                         }
                     } else {
                         if (item.classList.contains('selected')) {  // on -> off
@@ -222,7 +223,7 @@
                 joiningPoints = joiningPoints.map(([x, y]) => [x * gridSize - gridSize / 2, y * gridSize - gridSize / 2]);
 
                 // update coloring of spline list
-                document.querySelectorAll('.spline-item').forEach(item => {
+                document.querySelectorAll('.char-list-item').forEach(item => {
                     item.classList.remove('joining');
                     if (item.textContent === prev ) {
                         item.classList.add('joining');
@@ -242,6 +243,23 @@
 
                 const newPoints = ((char in joinsSplineData) && (prev in joinsSplineData[char])) ? joinsSplineData[char][prev] : null;
                 handleCharSelect(char, newPoints);
+
+                // update coloring of spline list
+                document.querySelectorAll('.join-list-item').forEach(item => {
+                    item.classList.remove('selected');
+                    if (item.textContent === prev+char ) {
+                        if (item.classList.contains('selected')) {
+                            item.classList.remove('selected');
+                        } else {
+                            item.classList.add('selected');
+                            item.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        }
+                    } else {
+                        if (item.classList.contains('selected')) {
+                            item.classList.remove('selected');
+                        }
+                    }
+                });
             }
 
             saveButton.addEventListener('click', () => {
@@ -304,13 +322,14 @@
 
                         for (const [character, points] of Object.entries(charSplineData)) {
                             const listItem = document.createElement('div');
-                            listItem.className = 'spline-item';
+                            listItem.className = 'char-list-item';
                             listItem.textContent = character;
 
                             listItem.addEventListener('click', () => {
                                 const prevSelected = listItem.classList.contains('selected');
 
-                                handleCharSelect(!prevSelected ? character: null)
+                                // handleCharSelect(!prevSelected ? character: null)
+                                handleJoinAndCharSelect(joiningCharacter, !prevSelected ? character : null)
                                 refreshJoinButton();
                                 refreshDeleteButton();
                                 updatePointsField();
@@ -339,20 +358,20 @@
 
                             for (const [joinchar, joinPoints] of Object.entries(joinsSplineData[character])) {
                                 const listItem = document.createElement('div');
-                                listItem.className = 'spline-item';
+                                listItem.className = 'join-list-item';
                                 listItem.textContent = joinchar+character;
                                 listItem.addEventListener('click', () => {
                                     const prevSelected = listItem.classList.contains('selected');
 
-                                    // only 1 can be selected at a time
-                                    document.querySelectorAll('.spline-item').forEach(item => {
-                                        item.classList.remove('selected');
-                                    });
+                                    // // only 1 can be selected at a time
+                                    // document.querySelectorAll('.join-list-item').forEach(item => {
+                                    //     item.classList.remove('selected');
+                                    // });
 
-                                    // select the new one
-                                    if (!prevSelected) {  // select
-                                        listItem.classList.add('selected');
-                                    }
+                                    // // select the new one
+                                    // if (!prevSelected) {  // select
+                                    //     listItem.classList.add('selected');
+                                    // }
 
                                     handleJoinAndCharSelect(
                                         !prevSelected ? joinchar: null,
@@ -377,7 +396,7 @@
                 refreshDeleteButton();
                 updatePointsField();
 
-                // joinButton.blur();
+                // to make it easier to continue typing a join after clicking "Join"
                 characterField.focus();
             });
 
@@ -390,32 +409,25 @@
                 deleteButton.style.display = selectedCharacter ? 'inline-block' : 'none';
             }
 
-            // document.getElementById('character').addEventListener('input', sortAndDisplayList);
             document.getElementById('character').onkeyup = sortAndDisplayList;
 
             function sortAndDisplayList() {
                 sortOneList(charactersList);
+                sortOneList(joinsList);
 
                 // select the top result if it exists
                 const searchTerm = document.getElementById('character').value.toLowerCase();
 
-                document.querySelectorAll('.spline-item').forEach(item => {
-                    item.classList.remove('selected');
-                });
-
                 if ((searchTerm) && (searchTerm in charSplineData)) {  // select
                     const topResult = charactersList.children[0];
-                    handleCharSelect(topResult.textContent)
+                    console.log(joiningCharacter, topResult.textContent)
+                    handleJoinAndCharSelect(joiningCharacter, topResult.textContent)
                     topResult.classList.add('selected');
-                } else {
-                    handleCharSelect(null)
                 }
 
                 refreshJoinButton();
                 refreshDeleteButton();
                 updatePointsField();
-
-                sortOneList(joinsList);
             }
 
             function sortOneList(listToSort) {
