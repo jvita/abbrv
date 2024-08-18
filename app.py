@@ -14,8 +14,8 @@ import base64
 app = Flask(__name__)
 
 # File paths for single-character and multi-character splines
-CHAR_FILE = 'data/characters.json'
-JOINS_FILE = 'data/joins.json'
+CHAR_FILE = 'static/data/characters.json'
+JOINS_FILE = 'static/data/joins.json'
 characters = {}
 joins = {}
 
@@ -209,6 +209,9 @@ def load_json_file(filename):
     with open(filename, 'r') as f:
         return json.load(f)
 
+def text_to_splines(text):
+    raise NotImplementedError
+
 def get_data():
     global characters
     _chars = load_json_file(CHAR_FILE)
@@ -237,19 +240,14 @@ def interpolate_points(points, num_points=100):
 
     return x_spline, y_spline
 
-def text_to_splines(text):
-    raise NotImplementedError
-
 def join_to_spline(char, cursor_pos, prev=None):
     global characters
 
     join_points = characters[char].copy()
     if prev is None: # first character in word
         # shift to properly respect spaces b/w words
-        print(f'{char} is first')
         join_points[:, 0] += abs(join_points[:, 0].min())
     else:
-        print(f'{char} is preceded by {prev}')
         if (char in joins) and (prev in joins[char]):
             # replace with modified version for the join
             join_points = joins[char][prev].copy()
@@ -284,12 +282,9 @@ def text_to_separate_splines(text):
     for line in lines:
         words = line.split(' ')
         for word in words:
-            print('new word')
             if word:
                 join = ''
                 prev = None
-                print('setting prev=None')
-
                 for char in word:
                     test_join = join + char
                     if test_join in characters:
@@ -306,15 +301,16 @@ def text_to_separate_splines(text):
                             rightmost_x = returns[2]
                             cursor_pos = returns[3]
                         join = char
-                        if char not in characters:
-                            # build spline
-                            returns = join_to_spline(join, cursor_pos, prev)
-                            prev = join
+                        # if char not in characters:
+                        #     print(f'char "{char}" not in characters???')
+                        #     # build spline
+                        #     returns = join_to_spline(join, cursor_pos, prev)
+                        #     prev = join
 
-                            splines.append(returns[0])
-                            red_dot_points.append(returns[1])
-                            rightmost_x = returns[2]
-                            cursor_pos = returns[3]
+                        #     splines.append(returns[0])
+                        #     red_dot_points.append(returns[1])
+                        #     rightmost_x = returns[2]
+                        #     cursor_pos = returns[3]
 
                 if join: # still something left
                     # build spline
