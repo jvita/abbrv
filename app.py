@@ -131,17 +131,17 @@ def load_joins():
 
 @app.route('/load_characters')
 def load_characters():
-    all_data = {}
+    chars = {}
 
     # Load single-character splines
     try:
         with open(CHAR_FILE, 'r') as f:
             join_data = json.load(f)
-            all_data.update({k: adjust_points(v, np.array([0.5, 0.5])) for k, v in join_data.items()})
+            chars.update({k: adjust_points(v, np.array([0.5, 0.5])) for k, v in join_data.items()})
     except FileNotFoundError:
         pass
 
-    return jsonify(all_data)
+    return jsonify(chars)
 
 
 @app.route('/delete', methods=['POST'])
