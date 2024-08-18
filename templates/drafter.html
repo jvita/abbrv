@@ -18,11 +18,15 @@
                     <input type="text" id="character" placeholder="Enter character(s)">
                     <h2>Saved Splines</h2>
                     <div id="splineList" class="spline-list"></div>
-                    <div class="button-container">
-                        <button id="saveButton">Save</button>
-                        <button id="clearButton">Clear</button>
-                        <button id="joinButton" class="join-button" style="display:none;">Join</button>
-                        <button id="deleteButton" class="delete-button" style="display:none;">Delete</button>
+                    <div class="d-flex flex-row justify-content-between">
+                        <div>
+                            <button id="saveButton">Save</button>
+                            <button id="clearButton">Clear</button>
+                            <button id="joinButton" class="join-button" style="display:none;">Join</button>
+                        </div>
+                        <div>
+                            <button id="deleteButton" class="delete-button" style="display:none;">Delete</button>
+                        </div>
                     </div>
                 </div>
                 <div class="grid-container">
@@ -258,6 +262,9 @@
                                         selectedCharacter = null;
                                         characterField.value = ''; // Clear the character field
                                         deleteButton.style.display = 'none'; // Hide delete button
+                                        if (!joiningCharacter) {
+                                            joinButton.style.display = 'none'; // Hide delete button
+                                        }
                                         if (joiningCharacter === character) {
                                             joiningCharacter = null;
                                             joinButton.textContent = 'Join';
