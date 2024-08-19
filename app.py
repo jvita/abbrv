@@ -143,7 +143,6 @@ def load_characters():
 
     return jsonify(chars)
 
-
 @app.route('/delete', methods=['POST'])
 def delete():
     data = request.json
@@ -248,9 +247,13 @@ def join_to_spline(char, cursor_pos, prev=None):
         # shift to properly respect spaces b/w words
         join_points[:, 0] += abs(join_points[:, 0].min())
     else:
-        if (char in joins) and (prev in joins[char]):
-            # replace with modified version for the join
-            join_points = joins[char][prev].copy()
+        if (char in joins):
+            if prev in joins[char]:
+                # replace with modified version for the join
+                join_points = joins[char][prev].copy()
+            elif prev[-1] in joins[char]:  # try joining to last char instead
+                join_points = joins[char][prev[-1]].copy()
+
         # shift to align with cursor position
         join_points -= join_points[0]
 
