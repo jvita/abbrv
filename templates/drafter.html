@@ -373,10 +373,13 @@
                                     //     listItem.classList.add('selected');
                                     // }
 
+                                    console.log(joinchar, character)
                                     handleJoinAndCharSelect(
                                         !prevSelected ? joinchar: null,
                                         !prevSelected ? character: null,
                                     )
+                                    refreshJoinButton();
+                                    refreshDeleteButton();
                                     updatePointsField();
                                 });
 
