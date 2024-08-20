@@ -61,6 +61,7 @@
             const colorInk = rootStyles.getPropertyValue('--ink-color').trim()
             const colorSelected = rootStyles.getPropertyValue('--selected-color').trim()
             const colorDarkSelected = rootStyles.getPropertyValue('--dark-selected-color').trim()
+            const colorFreeze = rootStyles.getPropertyValue('--freeze-color').trim()
             const colorFrozen = rootStyles.getPropertyValue('--frozen-color').trim()
 
             let selectedPoints = [];
@@ -407,11 +408,22 @@
                 characterField.focus();
             });
 
+            freezeButton.addEventListener('click', () => {
+                refreshFreezeButton();
+                characterField.focus();
+            })
+
             function refreshJoinButton() {
                 joinButton.style.display = (joiningCharacter || selectedCharacter) ? 'inline-block' : 'none';
                 joinButton.textContent = joiningCharacter ? 'Unjoin' : 'Join';
                 joinButton.style.backgroundColor = joiningCharacter ? colorDarkSelected : colorSelected;
             }
+
+            function refreshFreezeButton() {
+                freezeButton.textContent = (freezeButton.textContent === 'Freeze') ? 'Unfreeze' : 'Freeze';
+                freezeButton.style.backgroundColor = joiningCharacter ? colorFrozen: colorFreze;
+            }
+
 
             function refreshDeleteButton() {
                 deleteButton.style.display = selectedCharacter ? 'inline-block' : 'none';

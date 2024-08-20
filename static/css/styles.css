@@ -11,6 +11,7 @@
     --ink-color: #0B0B0B;
     --selected-color: #a8733d;
     --dark-selected-color: #583909;
+    --freeze-color: #1c6e5e;
     --frozen-color: #0f3d34;
 }
 
@@ -91,7 +92,7 @@ button:hover {
 }
 
 .freeze-button {
-    background-color: #1c6e5e;
+    background-color: var(--freeze-color);
 }
 
 .freeze-button:hover {
