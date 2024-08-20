@@ -264,10 +264,11 @@ def join_to_spline(char, cursor_pos, prev=None):
     red_dot_points = join_points  # for optionally plotting red dots
 
     # move cursor and word endpoint tracker
+    leftmost_x = join_points[:, 0].min()
     rightmost_x = join_points[:, 0].max()
     cursor_pos = join_points[-1].copy()
 
-    return splines, red_dot_points, rightmost_x, cursor_pos
+    return splines, red_dot_points, leftmost_x, rightmost_x, cursor_pos
 
 
 def text_to_separate_splines(text):
@@ -285,6 +286,8 @@ def text_to_separate_splines(text):
     for line in lines:
         words = line.split(' ')
         for word in words:
+            word_splines = []
+            leftmost_x = cursor_pos[0]
             if word:
                 join = ''
                 prev = None
@@ -299,22 +302,31 @@ def text_to_separate_splines(text):
                             returns = join_to_spline(join, cursor_pos, prev)
                             prev = join
 
-                            splines.append(returns[0])
+                            word_splines.append(returns[0])
                             red_dot_points.append(returns[1])
-                            rightmost_x = returns[2]
-                            cursor_pos = returns[3]
+                            leftmost_x = min(leftmost_x, returns[2])
+                            rightmost_x = max(rightmost_x, returns[3])
+                            cursor_pos = returns[4]
                         join = char
 
                 if join: # still something left
                     # build spline
                     returns = join_to_spline(join, cursor_pos, prev)
 
-                    splines.append(returns[0])
+                    word_splines.append(returns[0])
                     red_dot_points.append(returns[1])
-                    rightmost_x = returns[2]
-                    cursor_pos = returns[3]
+                    leftmost_x = min(leftmost_x, returns[2])
+                    rightmost_x = max(rightmost_x, returns[3])
+                    cursor_pos = returns[4]
 
-                cursor_pos[0] = rightmost_x + word_space
+                # shift right so that the leftmost point of the word is shifted to the'
+                # word's start point
+                word_start = word_splines[0][0][0]  # first character, first point, x-pos
+                dx = word_start - leftmost_x
+                splines += [[sp[0]+dx, sp[1]] for sp in word_splines]
+
+                # add space between word's rightmost point and the next word
+                cursor_pos[0] = rightmost_x + word_space + dx
                 cursor_pos[1] = 0
 
         y_offset -= line_height
