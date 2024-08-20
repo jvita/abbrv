@@ -27,7 +27,7 @@ html, body {
 .container {
     display: flex;
     flex: 1;
-    max-width: 1375px;
+    max-width: 1400;
     margin: 0 auto;
 }
 
@@ -68,7 +68,7 @@ button {
     background-color: var(--selected-color);
     border: none;
     color: white;
-    padding: 10px 15px;
+    padding: 5px 10px;
     text-align: center;
     text-decoration: none;
     display: inline-block;
@@ -152,7 +152,7 @@ button:hover {
 }
 
 .char-list-item {
-    padding: 8px;
+    padding: 4px;
     border-radius: 4px;
     cursor: pointer;
 }
@@ -173,7 +173,7 @@ button:hover {
 
 
 .join-list-item {
-    padding: 8px;
+    padding: 4px;
     border-radius: 4px;
     cursor: pointer;
 }
