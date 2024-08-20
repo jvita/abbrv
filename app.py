@@ -208,9 +208,6 @@ def load_json_file(filename):
     with open(filename, 'r') as f:
         return json.load(f)
 
-def text_to_splines(text):
-    raise NotImplementedError
-
 def get_data():
     global characters
     _chars = load_json_file(CHAR_FILE)
@@ -271,7 +268,11 @@ def join_to_spline(char, cursor_pos, prev=None):
     return splines, red_dot_points, leftmost_x, rightmost_x, cursor_pos
 
 
-def text_to_separate_splines(text):
+def text_to_splines(
+        text,
+        elevate_th=False
+    ):
+
     global characters
 
     lines = text.split('\n')
@@ -289,10 +290,9 @@ def text_to_separate_splines(text):
         for word in words:
             word_splines = []
 
-            # if len(word) > 2:
-            #     if word[:2] == 'th':
-            #         cursor_pos[1] += char_height
-            #         word = word[2:]
+            if (elevate_th) and (len(word) > 2) and (word[:2] == 'th'):
+                cursor_pos[1] += char_height
+                word = word[2:]
                 
             leftmost_x = cursor_pos[0]
             if word:
@@ -376,13 +376,11 @@ def generate_splines():
         text = 'a b c d e f g h i j k l m n o p q r s t u v w x y z'
     # text = process_text(text)
 
-    separate_splines = 'separate_splines' in request.form
-    show_knot_points = 'show_knot_points' in request.form
+    rules = {
+        'elevate_th': 'elevate_th' in request.form,
+    }
 
-    if separate_splines:
-        splines, red_dot_points = text_to_separate_splines(text)
-    else:
-        splines, red_dot_points = text_to_splines(text)
+    splines, red_dot_points = text_to_splines(text, **rules)
 
     plt.figure(figsize=(15, 3))
     for x_spline, y_spline in splines:
@@ -393,7 +391,7 @@ def generate_splines():
             solid_capstyle='round'
             )
 
-    if show_knot_points:
+    if 'show_knot_points' in request.form:
         for points in red_dot_points:
             x, y = zip(*points)
             plt.plot(x, y, 'ro')

@@ -9,16 +9,18 @@
         <title>Write</title>
     </head>
     <body>
-        <form id="text-form">
+        <form id="text-form" class="d-flex flex-column">
             <textarea id="text" name="text" placeholder="Enter text here..."></textarea>
+            <div>
                 <div class="button-container align-items-center">
                     <input type="checkbox" id="show_knot_points" name="show_knot_points" style="max-height: 20px; max-width: 20px">
                     <label for="show_knot_points" style="flex: 6;">Display knot points</label>
                 </div>
                 <div class="button-container align-items-center">
-                    <input type="checkbox" id="separate_splines" name="separate_splines" style="max-height: 20px; max-width: 20px" checked>
-                    <label for="separate_splines" style="flex: 6;">Use separate splines for each character</label>
+                    <input type="checkbox" id="elevate_th" name="elevate_th" style="max-height: 20px; max-width: 20px">
+                    <label for="elevate_th" style="flex: 6;">Elevate "th"</label>
                 </div>
+            </div>
         </form>
         <div id="output"></div>
     </body>
