@@ -282,11 +282,18 @@ def text_to_separate_splines(text):
     rightmost_x = 0 # for adding spaces between words
     y_offset = 0  # for adding newlines
     line_height = 2
+    char_height = 0.1
 
     for line in lines:
         words = line.split(' ')
         for word in words:
             word_splines = []
+
+            # if len(word) > 2:
+            #     if word[:2] == 'th':
+            #         cursor_pos[1] += char_height
+            #         word = word[2:]
+                
             leftmost_x = cursor_pos[0]
             if word:
                 join = ''
