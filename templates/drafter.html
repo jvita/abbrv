@@ -26,12 +26,12 @@
                     </div>
                     <div class="d-flex flex-column">
                         <div class="d-flex" style="margin-left:0px;margin-right:0px;">
-                            <button id="saveButton">Save</button>
-                            <button id="clearButton">Clear</button>
-                            <button id="joinButton" class="join-button" style="display:none;">Join</button>
-                            <button id="freezeButton" class="freeze-button ml-auto">Freeze</button>
+                            <button id="saveButton" class="btn btn-primary">Save</button>
+                            <button id="clearButton" class="btn btn-primary">Clear</button>
+                            <button id="joinButton" class="btn btn-primary" disabled>Join</button>
+                            <button id="freezeButton" class="btn btn-primary ml-auto freeze-button" disabled>Freeze</button>
                         </div>
-                        <button id="deleteButton" class="delete-button" style="display:none">Delete</button>
+                        <button id="deleteButton" class="btn btn-primary delete-button" disabled>Delete</button>
                     </div>
                 </div>
                 <div class="grid-container">
@@ -63,6 +63,7 @@
             const colorDarkSelected = rootStyles.getPropertyValue('--dark-selected-color').trim()
             const colorFreeze = rootStyles.getPropertyValue('--freeze-color').trim()
             const colorFrozen = rootStyles.getPropertyValue('--frozen-color').trim()
+            const colorDisabled = rootStyles.getPropertyValue('--disabled-color').trim()
 
             let selectedPoints = [];
             let joiningPoints = [];
@@ -165,15 +166,12 @@
                     return;
                 }
 
-                console.log(points)
-
                 axios.post('/spline', { points })
                     .then(response => {
                         splineCtx.beginPath();
                         splineCtx.lineWidth = 4; // Thicker line width for spline
                         splineCtx.strokeStyle = color
                         const spline = response.data.spline;
-                        console.log(color, spline.length)
                         spline.forEach(([x, y], index) => {
                             const plotX = (x + (gridSize / 2)) * (splineCanvas.width / gridSize);
                             const plotY = splineCanvas.height - ((y + (gridSize / 2)) * (splineCanvas.height / gridSize));
@@ -297,6 +295,7 @@
                                 handleJoinAndCharSelect(null, null);
                                 refreshJoinButton();
                                 refreshDeleteButton();
+                                refreshFreezeButton()
                                 updatePointsField();
                                 characterField.value = '';
                                 characterField.focus();
@@ -321,6 +320,7 @@
                                 handleJoinAndCharSelect(null, null);
                                 refreshJoinButton();
                                 refreshDeleteButton();
+                                refreshFreezeButton()
                                 updatePointsField();
                                 characterField.value = '';
                                 characterField.focus();
@@ -335,7 +335,7 @@
 
                         charSplineData = response.data; // Store the data in the global variable
                         charactersList.innerHTML = '';
-                        deleteButton.style.display = 'none'; // Hide delete button initially
+                        // deleteButton.style.display = 'none'; // Hide delete button initially
 
                         // splineCtx.clearRect(0, 0, splineCanvas.width, splineCanvas.height);
 
@@ -351,6 +351,7 @@
                                 handleJoinAndCharSelect(joiningCharacter, !prevSelected ? character : null)
                                 refreshJoinButton();
                                 refreshDeleteButton();
+                                refreshFreezeButton()
                                 updatePointsField();
                             });
                             charactersList.appendChild(listItem);
@@ -365,8 +366,8 @@
                         charSplineData = response.data['chars'];
                         joinsSplineData = response.data['joins'];
                         joinsList.innerHTML = '';
-                        deleteButton.style.display = 'none'; // Hide delete button initially
-                        joinButton.style.display = 'none'; // Hide delete button initially
+                        // deleteButton.style.display = 'none'; // Hide delete button initially
+                        // joinButton.style.display = 'none'; // Hide delete button initially
 
                         // splineCtx.clearRect(0, 0, splineCanvas.width, splineCanvas.height);
 
@@ -388,6 +389,7 @@
                                     )
                                     refreshJoinButton();
                                     refreshDeleteButton();
+                                    refreshFreezeButton()
                                     updatePointsField();
                                 });
 
@@ -403,8 +405,10 @@
                     joiningCharacter ? null : selectedCharacter,
                     null
                 )
+
                 refreshJoinButton();
                 refreshDeleteButton();
+                refreshFreezeButton()
                 updatePointsField();
 
                 // to make it easier to continue typing a join after clicking "Join"
@@ -412,31 +416,66 @@
             });
 
             freezeButton.addEventListener('click', () => {
+                freezeButton.textContent = (freezeButton.textContent === 'Freeze') ? 'Unfreeze' : 'Freeze';
                 refreshFreezeButton();
                 characterField.focus();
             })
 
             function refreshJoinButton() {
-                joinButton.style.display = (joiningCharacter || selectedCharacter) ? 'inline-block' : 'none';
+                // joinButton.style.display = (joiningCharacter || selectedCharacter) ? 'inline-block' : 'none';
                 joinButton.textContent = joiningCharacter ? 'Unjoin' : 'Join';
 
-                // Toggle the color behavior
-                if (joiningCharacter) {
+                // check if disabled
+                joinButton.disabled = (joiningCharacter || selectedCharacter) == null
+
+                if (joinButton.disabled) {
+                    // remove other classes so that it doesn't overload hover behavior
                     if (joinButton.classList.contains('join-button')) {
-                        joinButton.classList.remove('join-button');
-                        joinButton.classList.add('unjoin-button');
+                        joinButton.classList.remove('join-button')
+                    }
+                    if (joinButton.classList.contains('unjoin-button')) {
+                        joinButton.classList.remove('unjoin-button')
+                    }
+                } else {
+                    if (joiningCharacter) {  // if joining, turn it into an Unjoin button
+                        if (joinButton.classList.contains('join-button')) {
+                            joinButton.classList.remove('join-button')
+                        }
+                        joinButton.classList.add('unjoin-button')
+                    } else {  // not joining, so make it a join button
+                        if (joinButton.classList.contains('unjoin-button')) {
+                            joinButton.classList.remove('unjoin-button')
+                        }
+                        joinButton.classList.add('join-button')
                     }
                 }
         }
 
             function refreshFreezeButton() {
-                freezeButton.textContent = (freezeButton.textContent === 'Freeze') ? 'Unfreeze' : 'Freeze';
-                freezeButton.style.backgroundColor = joiningCharacter ? colorFrozen: colorFreze;
+                freezeButton.disabled =  (selectedCharacter || joiningCharacter) == null
+                if (freezeButton.disabled) {
+                    if (freezeButton.classList.contains('freeze-button')) {
+                        freezeButton.classList.remove('freeze-button')
+                    }
+                } else {
+                    if (!freezeButton.classList.contains('freeze-button')) {
+                        freezeButton.classList.add('freeze-button')
+                    }
+                }
             }
 
 
             function refreshDeleteButton() {
-                deleteButton.style.display = selectedCharacter ? 'inline-block' : 'none';
+                deleteButton.disabled =  (selectedCharacter || joiningCharacter) == null
+                if (deleteButton.disabled) {
+                    if (deleteButton.classList.contains('delete-button')) {
+                        deleteButton.classList.remove('delete-button')
+                    }
+                } else {
+                    if (!deleteButton.classList.contains('delete-button')) {
+                        deleteButton.classList.add('delete-button')
+                    }
+                }
             }
 
             document.getElementById('character').onkeyup = sortAndDisplayList;
@@ -456,6 +495,7 @@
 
                 refreshJoinButton();
                 refreshDeleteButton();
+                refreshFreezeButton()
                 updatePointsField();
             }
 
@@ -490,6 +530,9 @@
                 });
             }
 
+            refreshJoinButton();
+            refreshDeleteButton();
+            refreshFreezeButton()
             drawGrid();
             loadJoins();
             loadCharacters();

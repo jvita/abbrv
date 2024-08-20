@@ -67,7 +67,8 @@ html, body {
     flex-direction: row;
 }
 
-button {
+/* Overwrite some Bootstrap defaults */
+.btn {
     background-color: var(--selected-color);
     border: none;
     color: white;
@@ -77,15 +78,14 @@ button {
     display: inline-block;
     font-size: 16px;
     margin: 5px;
-    cursor: pointer;
     border-radius: 4px;
 }
 
-button:hover {
-    background-color: #583909;
+.btn:hover {
+    background-color: var(--dark-selected-color);
 }
 
-.join-button {
+.btn-primary {
     background-color: var(--selected-color);
     border: none;
     color: white;
@@ -95,26 +95,28 @@ button:hover {
     display: inline-block;
     font-size: 16px;
     margin: 5px;
-    cursor: pointer;
     border-radius: 4px;
+}
+
+.btn-primary:hover {
+    background-color: var(--dark-selected-color);
+}
+
+.btn-primary:disabled {
+    background-color: var(--disabled-color);
+}
+
+/* Add modifications for different colors */
+/* .join-button {
+    background-color: var(--selected-color);
 }
 
 .join-button:hover {
     background-color: var(--dark-selected-color);
-}
+} */
 
 .unjoin-button {
     background-color: var(--dark-selected-color);
-    border: none;
-    color: white;
-    padding: 5px 10px;
-    text-align: center;
-    text-decoration: none;
-    display: inline-block;
-    font-size: 16px;
-    margin: 5px;
-    cursor: pointer;
-    border-radius: 4px;
 }
 
 .unjoin-button:hover {
