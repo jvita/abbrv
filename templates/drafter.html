@@ -1,7 +1,7 @@
 {% extends "index.html" %}
 
 {% block content %}
-<div class="app2-container">
+<div class="container">
     <html lang="en">
     <head>
         <meta charset="UTF-8">
@@ -28,7 +28,7 @@
                         <div class="d-flex" style="margin-left:0px;margin-right:0px;">
                             <button id="saveButton">Save</button>
                             <button id="clearButton">Clear</button>
-                            <button id="joinButton" style="display:none;">Join</button>
+                            <button id="joinButton" class="join-button" style="display:none;">Join</button>
                             <button id="freezeButton" class="freeze-button ml-auto">Freeze</button>
                         </div>
                         <button id="deleteButton" class="delete-button" style="display:none">Delete</button>
@@ -119,7 +119,7 @@
             }
 
             function drawPoints() {
-                gridCtx.clearRect(0, 0, gridCanvas.width, gridCanvas.height); // Clear the grid canvas before redrawing
+                // gridCtx.clearRect(0, 0, gridCanvas.width, gridCanvas.height); // Clear the grid canvas before redrawing
                 drawGrid(); // Redraw the grid
                 gridCtx.fillStyle = colorSelected; // Color for knot points
                 selectedPoints.forEach(([x, y]) => {
@@ -161,16 +161,19 @@
 
             function plotSpline(points, color = colorInk) {
                 if (points.length < 2) {
-                    splineCtx.clearRect(0, 0, splineCanvas.width, splineCanvas.height);
+                    // splineCtx.clearRect(0, 0, splineCanvas.width, splineCanvas.height);
                     return;
                 }
+
+                console.log(points)
 
                 axios.post('/spline', { points })
                     .then(response => {
                         splineCtx.beginPath();
-                        splineCtx.lineWidth = 2; // Thicker line width for spline
+                        splineCtx.lineWidth = 4; // Thicker line width for spline
                         splineCtx.strokeStyle = color
                         const spline = response.data.spline;
+                        console.log(color, spline.length)
                         spline.forEach(([x, y], index) => {
                             const plotX = (x + (gridSize / 2)) * (splineCanvas.width / gridSize);
                             const plotY = splineCanvas.height - ((y + (gridSize / 2)) * (splineCanvas.height / gridSize));
@@ -334,7 +337,7 @@
                         charactersList.innerHTML = '';
                         deleteButton.style.display = 'none'; // Hide delete button initially
 
-                        splineCtx.clearRect(0, 0, splineCanvas.width, splineCanvas.height);
+                        // splineCtx.clearRect(0, 0, splineCanvas.width, splineCanvas.height);
 
                         for (const [character, points] of Object.entries(charSplineData)) {
                             const listItem = document.createElement('div');
@@ -365,7 +368,7 @@
                         deleteButton.style.display = 'none'; // Hide delete button initially
                         joinButton.style.display = 'none'; // Hide delete button initially
 
-                        splineCtx.clearRect(0, 0, splineCanvas.width, splineCanvas.height);
+                        // splineCtx.clearRect(0, 0, splineCanvas.width, splineCanvas.height);
 
                         for (const [character, charPoints] of Object.entries(charSplineData)) {
                             if (!(character in joinsSplineData)) {
@@ -416,8 +419,15 @@
             function refreshJoinButton() {
                 joinButton.style.display = (joiningCharacter || selectedCharacter) ? 'inline-block' : 'none';
                 joinButton.textContent = joiningCharacter ? 'Unjoin' : 'Join';
-                joinButton.style.backgroundColor = joiningCharacter ? colorDarkSelected : colorSelected;
-            }
+
+                // Toggle the color behavior
+                if (joiningCharacter) {
+                    if (joinButton.classList.contains('join-button')) {
+                        joinButton.classList.remove('join-button');
+                        joinButton.classList.add('unjoin-button');
+                    }
+                }
+        }
 
             function refreshFreezeButton() {
                 freezeButton.textContent = (freezeButton.textContent === 'Freeze') ? 'Unfreeze' : 'Freeze';

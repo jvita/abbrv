@@ -7,12 +7,13 @@
 
 :root {
     --background-color: #fffbef;
+    --disabled-color: #4d4a4a;
     --accent-color: #dbd2ba;
     --ink-color: #0B0B0B;
-    --selected-color: #a8733d;
+    --selected-color: #a67c52;
     --dark-selected-color: #583909;
-    --freeze-color: #1c6e5e;
-    --frozen-color: #0f3d34;
+    --freeze-color: #166354;
+    --frozen-color: #12433a;
 }
 
 /* Ensure body and html take full height */
@@ -23,6 +24,7 @@ html, body {
     background-color: var(--background-color);
     color: #333;
     padding: 20px;
+    scrollbar-color: var(--accent-color) var(--background-color);
 }
 
 .container {
@@ -83,6 +85,42 @@ button:hover {
     background-color: #583909;
 }
 
+.join-button {
+    background-color: var(--selected-color);
+    border: none;
+    color: white;
+    padding: 5px 10px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+    margin: 5px;
+    cursor: pointer;
+    border-radius: 4px;
+}
+
+.join-button:hover {
+    background-color: var(--dark-selected-color);
+}
+
+.unjoin-button {
+    background-color: var(--dark-selected-color);
+    border: none;
+    color: white;
+    padding: 5px 10px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+    margin: 5px;
+    cursor: pointer;
+    border-radius: 4px;
+}
+
+.unjoin-button:hover {
+    background-color: var(--selected-color);
+}
+
 .delete-button {
     background-color: #ac2431;
 }
@@ -124,6 +162,7 @@ button:hover {
 
 #splineCanvas {
     z-index: 1;
+    background-color: #ffffff;
 }
 
 .side-panel {
@@ -146,7 +185,8 @@ button:hover {
     overflow-y: auto;
     border: 1px solid #ddd;
     border-radius: 4px;
-    background-color: var(--background-color);
+    /* background-color: var(--background-color); */
+    background-color: #ffffff;
     padding: 10px;
     list-style-type: none;
     flex-grow: 1;
