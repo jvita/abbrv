@@ -29,6 +29,7 @@
                             <button id="saveButton">Save</button>
                             <button id="clearButton">Clear</button>
                             <button id="joinButton" style="display:none;">Join</button>
+                            <button id="freezeButton" class="freeze-button">Freeze</button>
                             <button id="deleteButton" class="delete-button" style="display:none">Delete</button>
                         </div>
                     </div>
@@ -52,11 +53,19 @@
             const clearButton = document.getElementById('clearButton');
             const deleteButton = document.getElementById('deleteButton');
             const joinButton = document.getElementById('joinButton');
+            const freezeButton = document.getElementById('freezeButton');
             const charactersList = document.getElementById('charactersList');
             const joinsList = document.getElementById('joinsList');
 
-            let joiningPoints = [];
+            const rootStyles = getComputedStyle(document.documentElement);
+            const colorInk = rootStyles.getPropertyValue('--ink-color').trim()
+            const colorSelected = rootStyles.getPropertyValue('--selected-color').trim()
+            const colorDarkSelected = rootStyles.getPropertyValue('--dark-selected-color').trim()
+            const colorFrozen = rootStyles.getPropertyValue('--frozen-color').trim()
+
             let selectedPoints = [];
+            let joiningPoints = [];
+            let frozenPoints = [];
             let selectedCharacter = null;
             let joiningCharacter = null; // Track the currently joining spline
             const gridSize = 76;
@@ -111,7 +120,7 @@
             function drawPoints() {
                 gridCtx.clearRect(0, 0, gridCanvas.width, gridCanvas.height); // Clear the grid canvas before redrawing
                 drawGrid(); // Redraw the grid
-                gridCtx.fillStyle = 'red'; // Color for knot points
+                gridCtx.fillStyle = colorSelected; // Color for knot points
                 selectedPoints.forEach(([x, y]) => {
                     gridCtx.beginPath();
                     gridCtx.arc(centerOffset + x * cellSize, centerOffset - y * cellSize, 5, 0, Math.PI * 2);
@@ -121,6 +130,11 @@
 
             function updatePointsField() {
                 splineCtx.clearRect(0, 0, splineCanvas.width, splineCanvas.height); // Clear spline visualization
+
+                if (frozenPoints.length > 0) {
+                    const frozenNormalizedPointsSelected = frozenPoints.map(([x, y]) => [(x + gridSize / 2) / gridSize, (y + gridSize / 2) / gridSize]);
+                    plotSpline(frozenNormalizedPointsSelected , colorFrozen);
+                }
 
                 drawPoints(); // Draw new points
 
@@ -136,14 +150,15 @@
                     const [firstX, firstY] = joiningPoints[joiningPoints.length - 1]
                     const shiftedJoinPoints = joiningPoints.map(([x, y]) => [x - firstX + lastX, y - firstY + lastY]);
                     const normalizedPointsJoining = shiftedJoinPoints.map(([x, y]) => [(x + gridSize / 2) / gridSize, (y + gridSize / 2) / gridSize]);
-                    plotSpline(normalizedPointsJoining, true);
+                    // plotSpline(normalizedPointsJoining, colorDarkSelected);
+                    plotSpline(normalizedPointsJoining);
                 }
 
                 const normalizedPointsSelected = selectedPoints.map(([x, y]) => [(x + gridSize / 2) / gridSize, (y + gridSize / 2) / gridSize]);
-                plotSpline(normalizedPointsSelected, false);
+                plotSpline(normalizedPointsSelected);
             }
 
-            function plotSpline(points, isJoining = false) {
+            function plotSpline(points, color = colorInk) {
                 if (points.length < 2) {
                     splineCtx.clearRect(0, 0, splineCanvas.width, splineCanvas.height);
                     return;
@@ -153,7 +168,7 @@
                     .then(response => {
                         splineCtx.beginPath();
                         splineCtx.lineWidth = 2; // Thicker line width for spline
-                        splineCtx.strokeStyle = isJoining ? 'red' : 'blue';
+                        splineCtx.strokeStyle = color
                         const spline = response.data.spline;
                         spline.forEach(([x, y], index) => {
                             const plotX = (x + (gridSize / 2)) * (splineCanvas.width / gridSize);
@@ -406,6 +421,7 @@
             function refreshJoinButton() {
                 joinButton.style.display = (joiningCharacter || selectedCharacter) ? 'inline-block' : 'none';
                 joinButton.textContent = joiningCharacter ? 'Unjoin' : 'Join';
+                joinButton.style.backgroundColor = joiningCharacter ? colorDarkSelected : colorSelected;
             }
 
             function refreshDeleteButton() {

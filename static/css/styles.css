@@ -5,12 +5,21 @@
     box-sizing: border-box;
 }
 
+:root {
+    --background-color: #fffbef;
+    --accent-color: #dbd2ba;
+    --ink-color: #0B0B0B;
+    --selected-color: #a8733d;
+    --dark-selected-color: #583909;
+    --frozen-color: #12493e;
+}
+
 /* Ensure body and html take full height */
 html, body {
     height: 100%;
     margin: 0;
     font-family: Arial, sans-serif;
-    background-color: #f4f4f4;
+    background-color: var(--background-color);
     color: #333;
     padding: 20px;
 }
@@ -56,7 +65,7 @@ html, body {
 }
 
 button {
-    background-color: #007bff;
+    background-color: var(--selected-color);
     border: none;
     color: white;
     padding: 10px 15px;
@@ -70,16 +79,23 @@ button {
 }
 
 button:hover {
-    background-color: #0056b3;
+    background-color: #583909;
 }
 
 .delete-button {
-    background-color: #dc3545;
+    background-color: #ac2431;
 }
 
 .delete-button:hover {
-    background-color: #c82333;
-    /* background-color: #dc3545; */
+    background-color: #801822;
+}
+
+.freeze-button {
+    background-color: #1c6e5e;
+}
+
+.freeze-button:hover {
+    background-color: var(--frozen-color);
 }
 
 .grid-container {
@@ -129,12 +145,10 @@ button:hover {
     overflow-y: auto;
     border: 1px solid #ddd;
     border-radius: 4px;
-    background-color: #fff;
+    background-color: var(--background-color);
     padding: 10px;
     list-style-type: none;
     flex-grow: 1;
-    /* margin-left: 5px;
-    margin-right: 5px; */
 }
 
 .char-list-item {
@@ -144,16 +158,16 @@ button:hover {
 }
 
 .char-list-item:hover {
-    background-color: #f0f0f0;
+    background-color: var(--accent-color);
 }
 
 .char-list-item.selected {
-    background-color: #007bff;
+    background-color: var(--selected-color);
     color: white;
 }
 
 .char-list-item.joining {
-    background-color: gray;
+    background-color: var(--dark-selected-color);
     color: white;
 }
 
@@ -165,11 +179,11 @@ button:hover {
 }
 
 .join-list-item:hover {
-    background-color: #f0f0f0;
+    background-color: var(--accent-color);
 }
 
 .join-list-item.selected {
-    background-color: #007bff;
+    background-color: var(--selected-color);
     color: white;
 }
 
