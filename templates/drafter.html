@@ -261,7 +261,7 @@
                 const newPoints = ((char in joinsSplineData) && (prev in joinsSplineData[char])) ? joinsSplineData[char][prev] : null;
                 handleCharSelect(char, newPoints);
 
-                // update coloring of spline list
+                // update coloring of joins list and scroll into view
                 document.querySelectorAll('.join-list-item').forEach(item => {
                     item.classList.remove('selected');
                     if (item.textContent === prev+char ) {
@@ -401,10 +401,17 @@
             }
 
             joinButton.addEventListener('click', () => {
-                handleJoinAndCharSelect(
-                    joiningCharacter ? null : selectedCharacter,
-                    null
-                )
+
+                if (joiningCharacter && selectedCharacter) {
+                    // drop the selected, make the join the selected
+                    handleJoinAndCharSelect(null, joiningCharacter)
+                } else if (joiningCharacter) {
+                    // make the join the selected
+                    handleJoinAndCharSelect(null, joiningCharacter)
+                } else if (selectedCharacter) {
+                    // make the selected the join
+                    handleJoinAndCharSelect(selectedCharacter, null)
+                }
 
                 refreshJoinButton();
                 refreshDeleteButton();
@@ -479,9 +486,12 @@
             }
 
             characterField.addEventListener('keyup', function(event) {
-                if (event.key === 'Control') {
+                if (event.key === 'Control' && !event.altKey && !event.shiftKey && !event.metaKey) {
                     joinButton.click()
-                } else {
+                } else if (event.key === 'Shift') {
+                    freezeButton.click();
+                }
+                else {
                     sortAndDisplayList();
                 }
             })
