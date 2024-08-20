@@ -141,7 +141,7 @@ button:hover {
     display: flex;
     flex-direction: column;
     gap: 5px;
-    max-height: 550px;
+    max-height: 507px;
     overflow-y: auto;
     border: 1px solid #ddd;
     border-radius: 4px;
