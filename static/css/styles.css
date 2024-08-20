@@ -11,7 +11,7 @@
     --ink-color: #0B0B0B;
     --selected-color: #a8733d;
     --dark-selected-color: #583909;
-    --frozen-color: #12493e;
+    --frozen-color: #0f3d34;
 }
 
 /* Ensure body and html take full height */
@@ -27,7 +27,7 @@ html, body {
 .container {
     display: flex;
     flex: 1;
-    max-width: 1200px;
+    max-width: 1375px;
     margin: 0 auto;
 }
 

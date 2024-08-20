@@ -29,6 +29,8 @@
                             <button id="saveButton">Save</button>
                             <button id="clearButton">Clear</button>
                             <button id="joinButton" style="display:none;">Join</button>
+                        </div>
+                        <div>
                             <button id="freezeButton" class="freeze-button">Freeze</button>
                             <button id="deleteButton" class="delete-button" style="display:none">Delete</button>
                         </div>
@@ -378,17 +380,6 @@
                                 listItem.addEventListener('click', () => {
                                     const prevSelected = listItem.classList.contains('selected');
 
-                                    // // only 1 can be selected at a time
-                                    // document.querySelectorAll('.join-list-item').forEach(item => {
-                                    //     item.classList.remove('selected');
-                                    // });
-
-                                    // // select the new one
-                                    // if (!prevSelected) {  // select
-                                    //     listItem.classList.add('selected');
-                                    // }
-
-                                    console.log(joinchar, character)
                                     handleJoinAndCharSelect(
                                         !prevSelected ? joinchar: null,
                                         !prevSelected ? character: null,
@@ -439,7 +430,6 @@
 
                 if ((searchTerm) && (searchTerm in charSplineData)) {  // select
                     const topResult = charactersList.children[0];
-                    console.log(joiningCharacter, topResult.textContent)
                     handleJoinAndCharSelect(joiningCharacter, topResult.textContent)
                     topResult.classList.add('selected');
                 }
