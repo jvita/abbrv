@@ -478,7 +478,13 @@
                 }
             }
 
-            document.getElementById('character').onkeyup = sortAndDisplayList;
+            characterField.addEventListener('keyup', function(event) {
+                if (event.key === 'Control') {
+                    joinButton.click()
+                } else {
+                    sortAndDisplayList();
+                }
+            })
 
             function sortAndDisplayList() {
                 sortOneList(charactersList);
