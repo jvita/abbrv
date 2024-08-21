@@ -176,36 +176,40 @@
                 }
 
                 const normalizedPointsSelected = selectedPoints.map(([x, y]) => [(x + gridSize / 2) / gridSize, (y + gridSize / 2) / gridSize]);
+                console.log(selectedPoints.length)
                 plotSpline(normalizedPointsSelected, colorInk, () => drawPoints(selectedPoints));
             }
 
             function plotSpline(points, color = colorInk, callback = null) {
-                if (points.length < 2) {
-                    return;
-                }
+                if (points.length > 1) {
+                    axios.post('/spline', { points })
+                        .then(response => {
+                            splineCtx.beginPath();
+                            splineCtx.lineWidth = 4; // Thicker line width for spline
+                            splineCtx.strokeStyle = color;
+                            const spline = response.data.spline;
+                            spline.forEach(([x, y], index) => {
+                                const plotX = (x + (gridSize / 2)) * (splineCanvas.width / gridSize);
+                                const plotY = splineCanvas.height - ((y + (gridSize / 2)) * (splineCanvas.height / gridSize));
+                                if (index === 0) {
+                                    splineCtx.moveTo(plotX, plotY);
+                                } else {
+                                    splineCtx.lineTo(plotX, plotY);
+                                }
+                            });
+                            splineCtx.stroke();
 
-                axios.post('/spline', { points })
-                    .then(response => {
-                        splineCtx.beginPath();
-                        splineCtx.lineWidth = 4; // Thicker line width for spline
-                        splineCtx.strokeStyle = color;
-                        const spline = response.data.spline;
-                        spline.forEach(([x, y], index) => {
-                            const plotX = (x + (gridSize / 2)) * (splineCanvas.width / gridSize);
-                            const plotY = splineCanvas.height - ((y + (gridSize / 2)) * (splineCanvas.height / gridSize));
-                            if (index === 0) {
-                                splineCtx.moveTo(plotX, plotY);
-                            } else {
-                                splineCtx.lineTo(plotX, plotY);
+                            // Redraw the points
+                            if (callback) {
+                                callback();
                             }
                         });
-                        splineCtx.stroke();
-
-                        // Call the callback if provided
-                        if (callback) {
-                            callback();
-                        }
-                    });
+                }
+                // always draw the points, even if they'll get redrawn later
+                // to avoid no points being drawn if there's only 1
+                if (callback) {
+                    callback();
+                }
             }
 
             gridCanvas.addEventListener('click', (event) => {
@@ -547,7 +551,6 @@
             const debouncedKeyCheck = debounce(keyCheck, 100);  // ms?
 
             function keyCheck(event) {
-                console.log(event.key)
                 if (event.key === 'Control') {
                     freezeButton.click()
                 } else if (event.key === 'Shift') {
@@ -570,7 +573,6 @@
                 // select the top result if it exists
                 const searchTerm = document.getElementById('character').value.toLowerCase();
 
-                console.log(searchTerm, searchTerm in charSplineData)
                 if ((searchTerm) && (searchTerm in charSplineData)) {  // select
                     const topResult = charactersList.children[0];
                     handleJoinAndCharSelect(joiningCharacter, topResult.textContent)
