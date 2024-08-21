@@ -159,12 +159,12 @@ html, body {
 }
 
 #gridCanvas {
-    z-index: 2;
+    z-index: 1;
+    background-color: #ffffff;
 }
 
 #splineCanvas {
-    z-index: 1;
-    background-color: #ffffff;
+    z-index: 2;
 }
 
 .side-panel {

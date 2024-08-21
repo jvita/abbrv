@@ -69,7 +69,10 @@
 
             let selectedPoints = [];
             let joiningPoints = [];
-            let frozenPoints = [];
+            let frozenCharPoints = [];
+            let frozenJoinPoints = [];
+            let frozenChar = null;
+            let frozenJoin = null;
             let selectedCharacter = null;
             let joiningCharacter = null; // Track the currently joining spline
             const gridSize = 76;
@@ -121,50 +124,62 @@
                 gridCtx.stroke();
             }
 
-            function drawPoints() {
-                // gridCtx.clearRect(0, 0, gridCanvas.width, gridCanvas.height); // Clear the grid canvas before redrawing
-                drawGrid(); // Redraw the grid
-                gridCtx.fillStyle = colorSelected; // Color for knot points
-                selectedPoints.forEach(([x, y]) => {
-                    gridCtx.beginPath();
-                    gridCtx.arc(centerOffset + x * cellSize, centerOffset - y * cellSize, 5, 0, Math.PI * 2);
-                    gridCtx.fill();
-                });
+            function drawPoints(points = null, color = colorSelected) {
+                console.log('drawPoints')
+                // drawGrid(); // Redraw the grid
+                splineCtx.fillStyle = color; // Color for knot points
+                if (!points) {
+                    selectedPoints.forEach(([x, y]) => {
+                        splineCtx.beginPath();
+                        splineCtx.arc(centerOffset + x * cellSize, centerOffset - y * cellSize, 5, 0, Math.PI * 2);
+                        splineCtx.fill();
+                    });
+                } else {
+                    points.forEach(([x, y]) => {
+                        splineCtx.beginPath();
+                        splineCtx.arc(centerOffset + x * cellSize, centerOffset - y * cellSize, 5, 0, Math.PI * 2);
+                        splineCtx.fill();
+                    });
+                }
             }
 
-            function updatePointsField() {
-                splineCtx.clearRect(0, 0, splineCanvas.width, splineCanvas.height); // Clear spline visualization
+function updatePointsField() {
+    drawGrid(); // Redraw the grid
+    splineCtx.clearRect(0, 0, splineCanvas.width, splineCanvas.height); // Clear spline visualization
 
-                if (frozenPoints.length > 0) {
-                    const frozenNormalizedPointsSelected = frozenPoints.map(([x, y]) => [(x + gridSize / 2) / gridSize, (y + gridSize / 2) / gridSize]);
-                    plotSpline(frozenNormalizedPointsSelected , colorFrozen);
-                }
+    // Paint frozen char and join separately
+    if (frozenCharPoints.length > 0) {
+        const frozenNormalizedCharPointsSelected = frozenCharPoints.map(([x, y]) => [(x + gridSize / 2) / gridSize, (y + gridSize / 2) / gridSize]);
+        plotSpline(frozenNormalizedCharPointsSelected, colorFrozen, () => drawPoints(frozenCharPoints, colorFrozen));
+    }
 
-                drawPoints(); // Draw new points
+    if (frozenJoinPoints.length > 0) {
+        const frozenNormalizedJoinPointsSelected = frozenJoinPoints.map(([x, y]) => [(x + gridSize / 2) / gridSize, (y + gridSize / 2) / gridSize]);
+        plotSpline(frozenNormalizedJoinPointsSelected, colorFrozen, () => drawPoints(frozenJoinPoints, colorFrozen));
+    }
 
-                // Calculate the shift required to align the joining char to the selected char
-                if (joiningPoints.length > 0) {
-                    let lastX = 0;
-                    let lastY = 0;
+    // Calculate the shift required to align the joining char to the selected char
+    if (joiningPoints.length > 0) {
+        let lastX = 0;
+        let lastY = 0;
 
-                    if (selectedPoints.length > 0) {
-                        [lastX, lastY] = selectedPoints[0];
-                    }
+        if (selectedPoints.length > 0) {
+            [lastX, lastY] = selectedPoints[0];
+        }
 
-                    const [firstX, firstY] = joiningPoints[joiningPoints.length - 1]
-                    const shiftedJoinPoints = joiningPoints.map(([x, y]) => [x - firstX + lastX, y - firstY + lastY]);
-                    const normalizedPointsJoining = shiftedJoinPoints.map(([x, y]) => [(x + gridSize / 2) / gridSize, (y + gridSize / 2) / gridSize]);
-                    // plotSpline(normalizedPointsJoining, colorDarkSelected);
-                    plotSpline(normalizedPointsJoining);
-                }
+        const [firstX, firstY] = joiningPoints[joiningPoints.length - 1];
+        const shiftedJoinPoints = joiningPoints.map(([x, y]) => [x - firstX + lastX, y - firstY + lastY]);
+        const normalizedPointsJoining = shiftedJoinPoints.map(([x, y]) => [(x + gridSize / 2) / gridSize, (y + gridSize / 2) / gridSize]);
+        plotSpline(normalizedPointsJoining, colorInk, () => drawPoints(shiftedJoinPoints));
+    }
 
-                const normalizedPointsSelected = selectedPoints.map(([x, y]) => [(x + gridSize / 2) / gridSize, (y + gridSize / 2) / gridSize]);
-                plotSpline(normalizedPointsSelected);
-            }
+    const normalizedPointsSelected = selectedPoints.map(([x, y]) => [(x + gridSize / 2) / gridSize, (y + gridSize / 2) / gridSize]);
+    plotSpline(normalizedPointsSelected, colorInk, () => drawPoints(selectedPoints));
+}
 
-            function plotSpline(points, color = colorInk) {
+            function plotSpline(points, color = colorInk, callback = null) {
+                console.log('drawSpline')
                 if (points.length < 2) {
-                    // splineCtx.clearRect(0, 0, splineCanvas.width, splineCanvas.height);
                     return;
                 }
 
@@ -172,7 +187,7 @@
                     .then(response => {
                         splineCtx.beginPath();
                         splineCtx.lineWidth = 4; // Thicker line width for spline
-                        splineCtx.strokeStyle = color
+                        splineCtx.strokeStyle = color;
                         const spline = response.data.spline;
                         spline.forEach(([x, y], index) => {
                             const plotX = (x + (gridSize / 2)) * (splineCanvas.width / gridSize);
@@ -184,8 +199,15 @@
                             }
                         });
                         splineCtx.stroke();
+                        
+                        // Call the callback if provided
+                        if (callback) {
+                            callback();
+                        }
                     });
             }
+
+
 
             gridCanvas.addEventListener('click', (event) => {
                 // if (joiningCharacter) return; // Prevent point selection if a spline is joining
@@ -258,7 +280,6 @@
             }
 
             function handleJoinAndCharSelect(prev, char){
-                console.log(prev, char)
                 handleJoinSelect(prev)
 
                 const newPoints = ((char in joinsSplineData) && (prev in joinsSplineData[char])) ? joinsSplineData[char][prev] : null;
@@ -340,7 +361,6 @@
                         charactersList.innerHTML = '';
                         // deleteButton.style.display = 'none'; // Hide delete button initially
 
-                        // splineCtx.clearRect(0, 0, splineCanvas.width, splineCanvas.height);
 
                         for (const [character, points] of Object.entries(charSplineData)) {
                             const listItem = document.createElement('div');
@@ -372,7 +392,6 @@
                         // deleteButton.style.display = 'none'; // Hide delete button initially
                         // joinButton.style.display = 'none'; // Hide delete button initially
 
-                        // splineCtx.clearRect(0, 0, splineCanvas.width, splineCanvas.height);
 
                         for (const [character, charPoints] of Object.entries(charSplineData)) {
                             if (!(character in joinsSplineData)) {
@@ -426,8 +445,34 @@
             });
 
             freezeButton.addEventListener('click', () => {
+                splineCtx.clearRect(0, 0, splineCanvas.width, splineCanvas.height);
+                if (freezeButton.textContent === 'Freeze') {
+                    frozenCharPoints = selectedPoints;
+                    frozenJoinPoints = joiningPoints;
+                    selectedPoints = []
+                    joiningPoints = []
+
+                    frozenChar = selectedCharacter;
+                    frozenJoin = joiningCharacter;
+
+                    selectedCharacter = null;
+                    joiningCharacter = null;
+                } else {
+                    selectedPoints = frozenCharPoints;
+                    joiningPoints = frozenJoinPoints;
+
+                    selectedCharacter = frozenChar;
+                    joiningCharacter = frozenJoin ;
+
+                    frozenChar = null;
+                    frozenJoin = null;
+                    frozenCharPoints = [];
+                    frozenJoinPoints = [];
+                }
                 freezeButton.textContent = (freezeButton.textContent === 'Freeze') ? 'Unfreeze' : 'Freeze';
+                handleJoinAndCharSelect(joiningCharacter, selectedCharacter)
                 refreshFreezeButton();
+                updatePointsField();
                 characterField.focus();
             })
 
@@ -462,18 +507,20 @@
         }
 
             function refreshFreezeButton() {
-                freezeButton.disabled =  (selectedCharacter || joiningCharacter) == null
+                // freezeButton.disabled =  (selectedCharacter || joiningCharacter) == null
+                freezeButton.disabled = ((joiningCharacter || selectedCharacter) == null) && (frozenChar == null)
                 if (freezeButton.disabled) {
+                    // disabled; so make sure it's greyed out
                     if (freezeButton.classList.contains('freeze-button')) {
                         freezeButton.classList.remove('freeze-button')
                     }
                 } else {
+                    // enabled; color it, then do stuff
                     if (!freezeButton.classList.contains('freeze-button')) {
                         freezeButton.classList.add('freeze-button')
                     }
                 }
             }
-
 
             function refreshDeleteButton() {
                 deleteButton.disabled =  (selectedCharacter || joiningCharacter) == null
@@ -489,7 +536,6 @@
             }
 
             characterField.addEventListener('keyup', function(event) {
-                console.log(event.key)
                 if (event.key === 'Control' && !event.altKey && !event.shiftKey && !event.metaKey) {
                     joinButton.click()
                 } else if (event.key === 'Shift') {
