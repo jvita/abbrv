@@ -9,20 +9,32 @@
         <title>Write</title>
     </head>
     <body>
-        <form id="text-form" class="d-flex flex-column">
+        <form id="text-form" class="d-flex flex-column justify-content-start">
             <textarea id="text" name="text" placeholder="Enter text here..."></textarea>
-            <div>
-                <div class="button-container align-items-center">
-                    <input type="checkbox" id="show_knot_points" name="show_knot_points" style="max-height: 20px; max-width: 20px">
-                    <label for="show_knot_points" style="flex: 6;">Display knot points</label>
-                </div>
-                <div class="button-container align-items-center">
-                    <input type="checkbox" id="elevate_th" name="elevate_th" style="max-height: 20px; max-width: 20px">
-                    <label for="elevate_th" style="flex: 6;">Elevate "th"</label>
-                </div>
+            
+            <div id="output"></div>
+
+            <!-- Dropdown Menu -->
+            <div class="dropdown mt-3">
+                <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
+                    Options
+                </button>
+                <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                    <li class="dropdown-item button-container align-items-center">
+                        <input type="checkbox" id="show_knot_points" name="show_knot_points" style="max-height: 20px; max-width: 20px; min-width: 20px">
+                        <label for="show_knot_points" style="flex: 6;">Display knot points</label>
+                    </li>
+                    <li class="dropdown-item button-container align-items-center">
+                        <input type="checkbox" id="elevate_th" name="elevate_th" style="max-height: 20px; max-width: 20px; min-width: 20px">
+                        <label for="elevate_th" style="flex: 6;">Elevate "th"</label>
+                    </li>
+                    <li class="dropdown-item button-container align-items-center">
+                        <input type="checkbox" id="remove_duplicates" name="remove_duplicates" style="max-height: 20px; max-width: 20px; min-width: 20px">
+                        <label for="remove_duplicates" style="flex: 6;">Remove duplicate characters</label>
+                    </li>
+                </ul>
             </div>
         </form>
-        <div id="output"></div>
     </body>
     </html>
 </div>
@@ -58,9 +70,13 @@
         // Debounce the plot update to avoid too many requests
         const debouncedUpdatePlot = debounce(updatePlot, 300);
 
-        // Bind the input event on textarea and change event on checkbox/select
-        $('#text, #show_knot_points, #separate_splines').on('input change', function() {
+        // Bind the input event on textarea and change event on checkboxes
+        $('#text').on('input', function() {
             debouncedUpdatePlot();
+        });
+
+        $('#show_knot_points, #elevate_th, #remove_duplicates').on('change', function() {
+            updatePlot();  // Call updatePlot immediately when checkboxes are modified
         });
 
         // Initial plot update

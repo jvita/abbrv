@@ -289,6 +289,7 @@ def text_to_splines(
         words = line.split(' ')
         for word in words:
             word_splines = []
+            word_red_dots = []
 
             if (elevate_th) and (len(word) > 2) and (word[:2] == 'th'):
                 cursor_pos[1] += char_height
@@ -310,7 +311,7 @@ def text_to_splines(
                             prev = join
 
                             word_splines.append(returns[0])
-                            red_dot_points.append(returns[1])
+                            word_red_dots.append(returns[1])
                             leftmost_x = min(leftmost_x, returns[2])
                             rightmost_x = max(rightmost_x, returns[3])
                             cursor_pos = returns[4]
@@ -321,7 +322,7 @@ def text_to_splines(
                     returns = join_to_spline(join, cursor_pos, prev)
 
                     word_splines.append(returns[0])
-                    red_dot_points.append(returns[1])
+                    word_red_dots.append(returns[1])
                     leftmost_x = min(leftmost_x, returns[2])
                     rightmost_x = max(rightmost_x, returns[3])
                     cursor_pos = returns[4]
@@ -331,6 +332,9 @@ def text_to_splines(
                 word_start = word_splines[0][0][0]  # first character, first point, x-pos
                 dx = word_start - leftmost_x
                 splines += [[sp[0]+dx, sp[1]] for sp in word_splines]
+                for p in word_red_dots:
+                    p[:, 0] += dx
+                red_dot_points += word_red_dots
 
                 # add space between word's rightmost point and the next word
                 cursor_pos[0] = rightmost_x + word_space + dx
@@ -339,6 +343,18 @@ def text_to_splines(
         y_offset -= line_height
 
     return splines, red_dot_points
+
+def remove_consecutive_duplicates(s):
+    if not s:
+        return ""
+
+    result = [s[0]]  # Start with the first character
+    
+    for char in s[1:]:
+        if char != result[-1]:
+            result.append(char)
+    
+    return ''.join(result)
 
 # def process_text(text):
 #     new_text = str(text)
@@ -375,6 +391,11 @@ def generate_splines():
     if text == '':
         text = 'a b c d e f g h i j k l m n o p q r s t u v w x y z'
     # text = process_text(text)
+
+    print(request.form)
+
+    if 'remove_duplicates' in request.form:
+        text = remove_consecutive_duplicates(text)
 
     rules = {
         'elevate_th': 'elevate_th' in request.form,
