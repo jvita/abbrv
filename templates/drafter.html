@@ -256,6 +256,7 @@
             }
 
             function handleJoinAndCharSelect(prev, char){
+                console.log(prev, char)
                 handleJoinSelect(prev)
 
                 const newPoints = ((char in joinsSplineData) && (prev in joinsSplineData[char])) ? joinsSplineData[char][prev] : null;
@@ -486,6 +487,7 @@
             }
 
             characterField.addEventListener('keyup', function(event) {
+                console.log(event.key)
                 if (event.key === 'Control' && !event.altKey && !event.shiftKey && !event.metaKey) {
                     joinButton.click()
                 } else if (event.key === 'Shift') {
@@ -507,6 +509,9 @@
                     const topResult = charactersList.children[0];
                     handleJoinAndCharSelect(joiningCharacter, topResult.textContent)
                     topResult.classList.add('selected');
+                } else {
+                    // deselect
+                    handleJoinAndCharSelect(null, null)
                 }
 
                 refreshJoinButton();
