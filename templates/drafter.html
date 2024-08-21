@@ -176,7 +176,6 @@
                 }
 
                 const normalizedPointsSelected = selectedPoints.map(([x, y]) => [(x + gridSize / 2) / gridSize, (y + gridSize / 2) / gridSize]);
-                console.log(selectedPoints.length)
                 plotSpline(normalizedPointsSelected, colorInk, () => drawPoints(selectedPoints));
             }
 

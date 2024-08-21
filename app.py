@@ -426,14 +426,13 @@ def generate_splines():
 
     xlims = plt.gca().get_xlim()
     xlims = (xlims[0]-0.15, xlims[-1]+0.15) # make them extend just past a normal character length
-    print(line_positions)
     for y in line_positions:
         plt.plot(xlims, [-y, -y], '--', color='lightgrey', zorder=0)
     plt.gca().set_aspect('equal', adjustable='box')
     plt.axis('off')
 
     img = io.BytesIO()
-    plt.savefig(img, format='png')
+    plt.savefig(img, format='png', bbox_inches='tight')
     img.seek(0)
     img_base64 = base64.b64encode(img.getvalue()).decode()
 
