@@ -70,9 +70,9 @@
             let selectedPoints = [];
             let joiningPoints = [];
             let frozenCharPoints = [];
-            let frozenJoinPoints = [];
+            // let frozenJoinPoints = [];
             let frozenChar = null;
-            let frozenJoin = null;
+            // let frozenJoin = null;
             let selectedCharacter = null;
             let joiningCharacter = null; // Track the currently joining spline
             const gridSize = 76;
@@ -152,10 +152,10 @@
                     plotSpline(frozenNormalizedCharPointsSelected, colorFrozen, () => drawPoints(frozenCharPoints, colorFrozen));
                 }
 
-                if (frozenJoinPoints.length > 0) {
-                    const frozenNormalizedJoinPointsSelected = frozenJoinPoints.map(([x, y]) => [(x + gridSize / 2) / gridSize, (y + gridSize / 2) / gridSize]);
-                    plotSpline(frozenNormalizedJoinPointsSelected, colorFrozen, () => drawPoints(frozenJoinPoints, colorFrozen));
-                }
+                // if (frozenJoinPoints.length > 0) {
+                //     const frozenNormalizedJoinPointsSelected = frozenJoinPoints.map(([x, y]) => [(x + gridSize / 2) / gridSize, (y + gridSize / 2) / gridSize]);
+                //     plotSpline(frozenNormalizedJoinPointsSelected, colorFrozen, () => drawPoints(frozenJoinPoints, colorFrozen));
+                // }
 
                 // Calculate the shift required to align the joining char to the selected char
                 if (joiningPoints.length > 0) {
@@ -444,26 +444,26 @@
                 splineCtx.clearRect(0, 0, splineCanvas.width, splineCanvas.height);
                 if (freezeButton.textContent === 'Freeze') {
                     frozenCharPoints = selectedPoints;
-                    frozenJoinPoints = joiningPoints;
+                    // frozenJoinPoints = joiningPoints;
                     selectedPoints = []
                     joiningPoints = []
 
                     frozenChar = selectedCharacter;
-                    frozenJoin = joiningCharacter;
+                    // frozenJoin = joiningCharacter;
 
                     selectedCharacter = null;
                     joiningCharacter = null;
                 } else {
                     selectedPoints = frozenCharPoints;
-                    joiningPoints = frozenJoinPoints;
+                    // joiningPoints = frozenJoinPoints;
 
                     selectedCharacter = frozenChar;
-                    joiningCharacter = frozenJoin ;
+                    // joiningCharacter = frozenJoin ;
 
                     frozenChar = null;
-                    frozenJoin = null;
+                    // frozenJoin = null;
                     frozenCharPoints = [];
-                    frozenJoinPoints = [];
+                    // frozenJoinPoints = [];
                 }
                 freezeButton.textContent = (freezeButton.textContent === 'Freeze') ? 'Unfreeze' : 'Freeze';
                 handleJoinAndCharSelect(joiningCharacter, selectedCharacter)
@@ -532,10 +532,12 @@
             }
 
             characterField.addEventListener('keyup', function(event) {
-                if (event.key === 'Control' && !event.altKey && !event.shiftKey && !event.metaKey) {
-                    joinButton.click()
+                if (event.key === 'Control') {
+                    clearButton.click()
+                } else if (event.key == 'Alt') {
+                    freezeButton.click()
                 } else if (event.key === 'Shift') {
-                    freezeButton.click();
+                    joinButton.click();
                 }
                 else {
                     sortAndDisplayList();
