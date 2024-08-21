@@ -268,79 +268,73 @@ def join_to_spline(char, cursor_pos, prev=None):
     return splines, red_dot_points, leftmost_x, rightmost_x, cursor_pos
 
 
-def text_to_splines(
-        text,
+def line_to_splines(
+        line,
         elevate_th=False
     ):
 
     global characters
 
-    lines = text.split('\n')
     splines = []
     red_dot_points = []
     word_space = 0.1
     cursor_pos = np.array([0, 0], dtype=np.float32)
     rightmost_x = 0 # for adding spaces between words
-    y_offset = 0  # for adding newlines
-    line_height = 2
     char_height = 0.1
 
-    for line in lines:
-        words = line.split(' ')
-        for word in words:
-            word_splines = []
-            word_red_dots = []
+    words = line.split(' ')
+    for word in words:
+        word_splines = []
+        word_red_dots = []
 
-            if (elevate_th) and (len(word) > 2) and (word[:2] == 'th'):
-                cursor_pos[1] += char_height
-                word = word[2:]
-                
-            leftmost_x = cursor_pos[0]
-            if word:
-                join = ''
-                prev = None
-                for char in word:
-                    test_join = join + char
-                    if test_join in characters:
-                        join = test_join
-                    else:
-                        if join:  # non-empty
-                            # build spline
-                            # ci-1 because char hasn't been added yet
-                            returns = join_to_spline(join, cursor_pos, prev)
-                            prev = join
+        if (elevate_th) and (len(word) > 2) and (word[:2] == 'th'):
+            cursor_pos[1] += char_height
+            word = word[2:]
 
-                            word_splines.append(returns[0])
-                            word_red_dots.append(returns[1])
-                            leftmost_x = min(leftmost_x, returns[2])
-                            rightmost_x = max(rightmost_x, returns[3])
-                            cursor_pos = returns[4]
-                        join = char
+        leftmost_x = cursor_pos[0]
+        if word:
+            join = ''
+            prev = None
+            for char in word:
+                test_join = join + char
+                if test_join in characters:
+                    join = test_join
+                else:
+                    if join:  # non-empty
+                        # build spline
+                        # ci-1 because char hasn't been added yet
+                        returns = join_to_spline(join, cursor_pos, prev)
+                        prev = join
 
-                if join: # still something left
-                    # build spline
-                    returns = join_to_spline(join, cursor_pos, prev)
+                        word_splines.append(returns[0])
+                        word_red_dots.append(returns[1])
+                        leftmost_x = min(leftmost_x, returns[2])
+                        rightmost_x = max(rightmost_x, returns[3])
+                        cursor_pos = returns[4]
+                    join = char
 
-                    word_splines.append(returns[0])
-                    word_red_dots.append(returns[1])
-                    leftmost_x = min(leftmost_x, returns[2])
-                    rightmost_x = max(rightmost_x, returns[3])
-                    cursor_pos = returns[4]
+            if join: # still something left
+                # build spline
+                returns = join_to_spline(join, cursor_pos, prev)
 
-                # shift right so that the leftmost point of the word is shifted to the'
-                # word's start point
-                word_start = word_splines[0][0][0]  # first character, first point, x-pos
-                dx = word_start - leftmost_x
-                splines += [[sp[0]+dx, sp[1]] for sp in word_splines]
-                for p in word_red_dots:
-                    p[:, 0] += dx
-                red_dot_points += word_red_dots
+                word_splines.append(returns[0])
+                word_red_dots.append(returns[1])
+                leftmost_x = min(leftmost_x, returns[2])
+                rightmost_x = max(rightmost_x, returns[3])
+                cursor_pos = returns[4]
 
-                # add space between word's rightmost point and the next word
-                cursor_pos[0] = rightmost_x + word_space + dx
-                cursor_pos[1] = 0
+            # shift right so that the leftmost point of the word is shifted to the'
+            # word's start point
+            word_start = word_splines[0][0][0]  # first character, first point, x-pos
+            dx = word_start - leftmost_x
+            splines += [[sp[0]+dx, sp[1]] for sp in word_splines]
+            for p in word_red_dots:
+                p[:, 0] += dx
+            red_dot_points += word_red_dots
 
-        y_offset -= line_height
+            # add space between word's rightmost point and the next word
+            cursor_pos[0] = rightmost_x + word_space + dx
+            cursor_pos[1] = 0
 
     return splines, red_dot_points
 
@@ -349,11 +343,11 @@ def remove_consecutive_duplicates(s):
         return ""
 
     result = [s[0]]  # Start with the first character
-    
+
     for char in s[1:]:
         if char != result[-1]:
             result.append(char)
-    
+
     return ''.join(result)
 
 # def process_text(text):
@@ -399,24 +393,42 @@ def generate_splines():
         'elevate_th': 'elevate_th' in request.form,
     }
 
-    splines, red_dot_points = text_to_splines(text, **rules)
+    y_offset = 0.
+    line_positions = []
+    lines = text.splitlines()
+    nlines = len(lines)
+    plt.figure(figsize=(15, 3*nlines))
+    for i, line in enumerate(text.splitlines()):
+        splines, red_dot_points = line_to_splines(line, **rules)
 
-    plt.figure(figsize=(15, 3))
-    for x_spline, y_spline in splines:
-        plt.plot(
-            x_spline, y_spline,
-            'k',
-            linewidth=3,
-            solid_capstyle='round'
-            )
+        start_of_line = min(splines[0][0])  # leftmost x value; used for shifting
 
-    if 'show_knot_points' in request.form:
-        for points in red_dot_points:
-            x, y = zip(*points)
-            plt.plot(x, y, 'ro')
+        if i > 0:  # not the first line
+            # shift based on how tall you are
+            y_offset += abs(max([max(sp_tup[1]) for sp_tup in splines]))
+
+        for x_spline, y_spline in splines:
+            plt.plot(
+                x_spline-start_of_line, y_spline-y_offset,
+                'k',
+                linewidth=3,
+                solid_capstyle='round'
+                )
+
+        if 'show_knot_points' in request.form:
+            for points in red_dot_points:
+                x, y = zip(*points)
+                plt.plot(x-start_of_line, y-y_offset, 'ro')
+
+        # shift based on the y-position of the lowest point
+        line_positions.append(y_offset)
+        y_offset += 0.15 + abs(min([min(sp_tup[1]) for sp_tup in splines]))
 
     xlims = plt.gca().get_xlim()
-    plt.plot(xlims, [0, 0], '--', color='lightgrey', zorder=0)
+    xlims = (xlims[0]-0.15, xlims[-1]+0.15) # make them extend just past a normal character length
+    print(line_positions)
+    for y in line_positions:
+        plt.plot(xlims, [-y, -y], '--', color='lightgrey', zorder=0)
     plt.gca().set_aspect('equal', adjustable='box')
     plt.axis('off')
 
