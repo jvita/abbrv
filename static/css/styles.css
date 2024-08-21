@@ -5,8 +5,8 @@
     box-sizing: border-box;
 }
 
-:root {
-    --background-color: #fffbef;
+/* :root {
+    --background-color: #fdfbec;
     --disabled-color: #4d4a4a;
     --accent-color: #dbd2ba;
     --ink-color: #0B0B0B;
@@ -14,6 +14,19 @@
     --dark-selected-color: #583909;
     --freeze-color: #166354;
     --frozen-color: #12433a;
+} */
+
+:root {
+    --background-color: #ffffff;
+    --disabled-color: #4d4a4a;
+    --accent-color: #a1a09f;
+    --ink-color: #0B0B0B;
+    --selected-color: #366df6;
+    --dark-selected-color: #2250c6;
+    --freeze-color: #3ca2b6;
+    --frozen-color: #277d8e;
+    --delete-color: #d3374b;
+    --delete-color-dark: #af2437;
 }
 
 /* Ensure body and html take full height */
@@ -69,7 +82,7 @@ html, body {
 
 /* Overwrite some Bootstrap defaults */
 .btn {
-    background-color: var(--selected-color);
+    /* background-color: var(--selected-color); */
     border: none;
     color: white;
     padding: 5px 10px;
@@ -81,11 +94,11 @@ html, body {
     border-radius: 4px;
 }
 
-.btn:hover {
+/* .btn:hover {
     background-color: var(--dark-selected-color);
-}
+} */
 
-.btn-primary {
+/* .btn-primary {
     background-color: var(--selected-color);
     border: none;
     color: white;
@@ -104,7 +117,7 @@ html, body {
 
 .btn-primary:disabled {
     background-color: var(--disabled-color);
-}
+} */
 
 /* Add modifications for different colors */
 /* .join-button {
@@ -124,11 +137,11 @@ html, body {
 }
 
 .delete-button {
-    background-color: #ac2431;
+    background-color: var(--delete-color);
 }
 
 .delete-button:hover {
-    background-color: #801822;
+    background-color: var(--delete-color-dark);
 }
 
 .freeze-button {
@@ -210,8 +223,9 @@ html, body {
 }
 
 .char-list-item.joining {
-    background-color: var(--dark-selected-color);
-    color: white;
+    /* background-color: var(--dark-selected-color); */
+    /* color: white; */
+    background-color: var(--accent-color)
 }
 
 

@@ -392,8 +392,6 @@ def generate_splines():
         text = 'a b c d e f g h i j k l m n o p q r s t u v w x y z'
     # text = process_text(text)
 
-    print(request.form)
-
     if 'remove_duplicates' in request.form:
         text = remove_consecutive_duplicates(text)
 
