@@ -418,7 +418,7 @@ def generate_splines():
         if 'show_knot_points' in request.form:
             for points in red_dot_points:
                 x, y = zip(*points)
-                plt.plot(x-start_of_line, y-y_offset, 'ro')
+                plt.plot([_x-start_of_line for _x in x], [_y-y_offset for _y in y], 'ro')
 
         # shift based on the y-position of the lowest point
         line_positions.append(y_offset)
