@@ -150,8 +150,9 @@
                 if (frozenCharPoints.length > 0) {
                     const frozenNormalizedCharPointsSelected = frozenCharPoints.map(([x, y]) => [(x + gridSize / 2) / gridSize, (y + gridSize / 2) / gridSize]);
 
-                    const color = getComputedStyle(freezeButton)['background-color']
-                    plotSpline(frozenNormalizedCharPointsSelected, color, () => drawPoints(frozenCharPoints, color));
+                    // const color = getComputedStyle(freezeButton)['background-color']
+                    // plotSpline(frozenNormalizedCharPointsSelected, color, () => drawPoints(frozenCharPoints, color));
+                    plotSpline(frozenNormalizedCharPointsSelected, colorDisabled, () => drawPoints(frozenCharPoints, colorDisabled));
                 }
 
                 // if (frozenJoinPoints.length > 0) {
