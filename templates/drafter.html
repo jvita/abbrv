@@ -454,13 +454,13 @@
                     frozenChar = selectedCharacter;
                     // frozenJoin = joiningCharacter;
 
-                    selectedCharacter = null;
+                    // selectedCharacter = null;
                     // joiningCharacter = null;
                 } else {
-                    selectedPoints = frozenCharPoints;
+                    // selectedPoints = frozenCharPoints;
                     // joiningPoints = frozenJoinPoints;
 
-                    selectedCharacter = frozenChar;
+                    // selectedCharacter = frozenChar;
                     // joiningCharacter = frozenJoin ;
 
                     frozenChar = null;
@@ -534,10 +534,21 @@
                 }
             }
 
-            characterField.addEventListener('keyup', function(event) {
+            // to avoid too-fast updates when typing into char field
+            let debounceTimeout;
+            function debounce(func, delay) {
+                return function(...args) {
+                    clearTimeout(debounceTimeout);
+                    debounceTimeout = setTimeout(() => func.apply(this, args), delay);
+                };
+            }
+
+            // Debounce the plot update to avoid too many requests
+            const debouncedKeyCheck = debounce(keyCheck, 100);  // ms?
+
+            function keyCheck(event) {
+                console.log(event.key)
                 if (event.key === 'Control') {
-                    clearButton.click()
-                } else if (event.key == 'Alt') {
                     freezeButton.click()
                 } else if (event.key === 'Shift') {
                     joinButton.click();
@@ -545,6 +556,11 @@
                 else {
                     sortAndDisplayList();
                 }
+            }
+
+            // Bind the input event on textarea and change event on checkboxes
+            characterField.addEventListener('keyup', function(event) {
+                debouncedKeyCheck(event);
             })
 
             function sortAndDisplayList() {
@@ -561,7 +577,7 @@
                     topResult.classList.add('selected');
                 } else if (searchTerm === '') {
                     // deselect
-                    handleJoinAndCharSelect(null, null)
+                    handleJoinAndCharSelect(joiningCharacter, null)
                 }
 
                 refreshJoinButton();
