@@ -125,7 +125,6 @@
             }
 
             function drawPoints(points = null, color = colorSelected) {
-                console.log('drawPoints')
                 // drawGrid(); // Redraw the grid
                 splineCtx.fillStyle = color; // Color for knot points
                 if (!points) {
@@ -143,42 +142,41 @@
                 }
             }
 
-function updatePointsField() {
-    drawGrid(); // Redraw the grid
-    splineCtx.clearRect(0, 0, splineCanvas.width, splineCanvas.height); // Clear spline visualization
+            function updatePointsField() {
+                drawGrid(); // Redraw the grid
+                splineCtx.clearRect(0, 0, splineCanvas.width, splineCanvas.height); // Clear spline visualization
 
-    // Paint frozen char and join separately
-    if (frozenCharPoints.length > 0) {
-        const frozenNormalizedCharPointsSelected = frozenCharPoints.map(([x, y]) => [(x + gridSize / 2) / gridSize, (y + gridSize / 2) / gridSize]);
-        plotSpline(frozenNormalizedCharPointsSelected, colorFrozen, () => drawPoints(frozenCharPoints, colorFrozen));
-    }
+                // Paint frozen char and join separately
+                if (frozenCharPoints.length > 0) {
+                    const frozenNormalizedCharPointsSelected = frozenCharPoints.map(([x, y]) => [(x + gridSize / 2) / gridSize, (y + gridSize / 2) / gridSize]);
+                    plotSpline(frozenNormalizedCharPointsSelected, colorFrozen, () => drawPoints(frozenCharPoints, colorFrozen));
+                }
 
-    if (frozenJoinPoints.length > 0) {
-        const frozenNormalizedJoinPointsSelected = frozenJoinPoints.map(([x, y]) => [(x + gridSize / 2) / gridSize, (y + gridSize / 2) / gridSize]);
-        plotSpline(frozenNormalizedJoinPointsSelected, colorFrozen, () => drawPoints(frozenJoinPoints, colorFrozen));
-    }
+                if (frozenJoinPoints.length > 0) {
+                    const frozenNormalizedJoinPointsSelected = frozenJoinPoints.map(([x, y]) => [(x + gridSize / 2) / gridSize, (y + gridSize / 2) / gridSize]);
+                    plotSpline(frozenNormalizedJoinPointsSelected, colorFrozen, () => drawPoints(frozenJoinPoints, colorFrozen));
+                }
 
-    // Calculate the shift required to align the joining char to the selected char
-    if (joiningPoints.length > 0) {
-        let lastX = 0;
-        let lastY = 0;
+                // Calculate the shift required to align the joining char to the selected char
+                if (joiningPoints.length > 0) {
+                    let lastX = 0;
+                    let lastY = 0;
 
-        if (selectedPoints.length > 0) {
-            [lastX, lastY] = selectedPoints[0];
-        }
+                    if (selectedPoints.length > 0) {
+                        [lastX, lastY] = selectedPoints[0];
+                    }
 
-        const [firstX, firstY] = joiningPoints[joiningPoints.length - 1];
-        const shiftedJoinPoints = joiningPoints.map(([x, y]) => [x - firstX + lastX, y - firstY + lastY]);
-        const normalizedPointsJoining = shiftedJoinPoints.map(([x, y]) => [(x + gridSize / 2) / gridSize, (y + gridSize / 2) / gridSize]);
-        plotSpline(normalizedPointsJoining, colorInk, () => drawPoints(shiftedJoinPoints));
-    }
+                    const [firstX, firstY] = joiningPoints[joiningPoints.length - 1];
+                    const shiftedJoinPoints = joiningPoints.map(([x, y]) => [x - firstX + lastX, y - firstY + lastY]);
+                    const normalizedPointsJoining = shiftedJoinPoints.map(([x, y]) => [(x + gridSize / 2) / gridSize, (y + gridSize / 2) / gridSize]);
+                    plotSpline(normalizedPointsJoining, colorInk);
+                }
 
-    const normalizedPointsSelected = selectedPoints.map(([x, y]) => [(x + gridSize / 2) / gridSize, (y + gridSize / 2) / gridSize]);
-    plotSpline(normalizedPointsSelected, colorInk, () => drawPoints(selectedPoints));
-}
+                const normalizedPointsSelected = selectedPoints.map(([x, y]) => [(x + gridSize / 2) / gridSize, (y + gridSize / 2) / gridSize]);
+                plotSpline(normalizedPointsSelected, colorInk, () => drawPoints(selectedPoints));
+            }
 
             function plotSpline(points, color = colorInk, callback = null) {
-                console.log('drawSpline')
                 if (points.length < 2) {
                     return;
                 }
@@ -199,15 +197,13 @@ function updatePointsField() {
                             }
                         });
                         splineCtx.stroke();
-                        
+
                         // Call the callback if provided
                         if (callback) {
                             callback();
                         }
                     });
             }
-
-
 
             gridCanvas.addEventListener('click', (event) => {
                 // if (joiningCharacter) return; // Prevent point selection if a spline is joining
@@ -553,11 +549,12 @@ function updatePointsField() {
                 // select the top result if it exists
                 const searchTerm = document.getElementById('character').value.toLowerCase();
 
+                console.log(searchTerm, searchTerm in charSplineData)
                 if ((searchTerm) && (searchTerm in charSplineData)) {  // select
                     const topResult = charactersList.children[0];
                     handleJoinAndCharSelect(joiningCharacter, topResult.textContent)
                     topResult.classList.add('selected');
-                } else {
+                } else if (searchTerm === '') {
                     // deselect
                     handleJoinAndCharSelect(null, null)
                 }
