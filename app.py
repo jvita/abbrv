@@ -343,12 +343,21 @@ def remove_consecutive_duplicates(s):
         return ""
 
     result = [s[0]]  # Start with the first character
+    e_count = 1 if s[0] == 'e' else 0  # Track consecutive 'e' characters
 
     for char in s[1:]:
-        if char != result[-1]:
+        if char == 'e':
+            e_count += 1
+        else:
+            e_count = 0
+
+        if char != result[-1] or (char == 'e' and e_count <= 2):
+            result.append(char)
+        elif char != 'e':
             result.append(char)
 
     return ''.join(result)
+
 
 # def process_text(text):
 #     new_text = str(text)
