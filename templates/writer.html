@@ -29,6 +29,10 @@
                         <label for="elevate_th" style="flex: 6;">Elevate "th"</label>
                     </li>
                     <li class="dropdown-item button-container align-items-center">
+                        <input type="checkbox" id="oa_mn_rule" name="oa_mn_rule" style="max-height: 20px; max-width: 20px; min-width: 20px">
+                        <label for="oa_mn_rule" style="flex: 6;">Remove "o" and "a" before "m" and "n"</label>
+                    </li>
+                    <li class="dropdown-item button-container align-items-center">
                         <input type="checkbox" id="show_knot_points" name="show_knot_points" style="max-height: 20px; max-width: 20px; min-width: 20px">
                         <label for="show_knot_points" style="flex: 6;">Display knot points</label>
                     </li>
@@ -75,7 +79,7 @@
             debouncedUpdatePlot();
         });
 
-        $('#show_knot_points, #elevate_th, #remove_duplicates').on('change', function() {
+        $('#show_knot_points, #elevate_th, #remove_duplicates, #oa_mn_rule').on('change', function() {
             updatePlot();  // Call updatePlot immediately when checkboxes are modified
         });
 

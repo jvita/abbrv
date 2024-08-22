@@ -3,6 +3,7 @@ import numpy as np
 import json
 from scipy.interpolate import CubicSpline, BSpline
 import os
+import re
 
 import matplotlib
 matplotlib.use('Agg')
@@ -358,17 +359,23 @@ def remove_consecutive_duplicates(s):
 
     return ''.join(result)
 
+def remove_a_o_before_m_n(text):
+    # Use a regular expression to find "a" or "o" before "m" or "n", not at the start of a word
+    result = re.sub(r'(?<!\b)[ao](?=[mn])', '', text)
+    return result
 
-# def process_text(text):
-#     new_text = str(text)
-#     global join_remap
-#     n = len(text)
-#     for i in range(n):
-#         j = min(i + 2, n)
-#         k = text[i:j]
-#         if k in join_remap:
-#             new_text = new_text.replace(k, join_remap[k])
-#     return new_text
+def process_text(
+        text,
+        remove_dups=False,
+        oa_mn_rule=False
+        ):
+    
+    if remove_dups:
+        text = remove_consecutive_duplicates(text)
+    if oa_mn_rule:
+        text = remove_a_o_before_m_n(text)
+
+    return text
 
 # def points_to_svg(points, stroke_color='black', stroke_width=2, width=100, height=100):
 #     # Start the SVG string
@@ -397,6 +404,12 @@ def generate_splines():
 
     if 'remove_duplicates' in request.form:
         text = remove_consecutive_duplicates(text)
+
+    text = process_text(
+        text,
+        remove_dups='remove_duplicates' in request.form,
+        oa_mn_rule='oa_mn_rule' in request.form
+        )
 
     rules = {
         'elevate_th': 'elevate_th' in request.form,
