@@ -61,7 +61,26 @@ def save():
     points = data['points']
     as_word = data['as_word']
 
-    if joinchar is not None: # save as join
+    if as_word:
+        adjusted_points = adjust_points(points, np.array([-0.5, -0.5]))
+
+        # Load existing data
+        try:
+            with open(WORDS_FILE, 'r') as f:
+                existing_data = json.load(f)
+        except FileNotFoundError:
+            existing_data = {}
+
+        # Update or add new entry
+        existing_data[character] = adjusted_points
+
+        # Save updated data
+        with open(WORDS_FILE, 'w') as f:
+            json.dump(existing_data, f, indent=4)
+
+        return jsonify({'status': 'success'})
+
+    elif joinchar is not None: # save as join
         adjusted_points = adjust_points(points, np.array([-0.5, -0.5]))
 
         # Load existing data
@@ -84,26 +103,6 @@ def save():
             json.dump(existing_data, f, indent=4)
 
         return jsonify({'status': 'success'})
-
-    elif as_word:
-        adjusted_points = adjust_points(points, np.array([-0.5, -0.5]))
-
-        # Load existing data
-        try:
-            with open(WORDS_FILE, 'r') as f:
-                existing_data = json.load(f)
-        except FileNotFoundError:
-            existing_data = {}
-
-        # Update or add new entry
-        existing_data[character] = adjusted_points
-
-        # Save updated data
-        with open(WORDS_FILE, 'w') as f:
-            json.dump(existing_data, f, indent=4)
-
-        return jsonify({'status': 'success'})
-
 
     else: # save in characters
         adjusted_points = adjust_points(points, np.array([-0.5, -0.5]))
