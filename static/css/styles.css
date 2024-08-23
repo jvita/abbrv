@@ -44,6 +44,7 @@ html, body {
     display: flex;
     flex: 1;
     max-width: 1400;
+    height: 800px;
     margin: 0 auto;
 }
 
@@ -205,6 +206,21 @@ html, body {
     padding: 10px;
     list-style-type: none;
     flex-grow: 1;
+}
+
+.word-list-item {
+    padding: 4px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.word-list-item:hover {
+    background-color: var(--accent-color);
+}
+
+.word-list-item.selected {
+    background-color: var(--selected-color);
+    color: white;
 }
 
 .char-list-item {

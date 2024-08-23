@@ -23,11 +23,23 @@
                             <h2 style="margin-left: 5px">Joins</h2>
                             <div id="joinsList" class="spline-list" style="margin-left: 5px;"></div>
                         </div>
+                        <div class="d-flex flex-column flex-grow-1">
+                            <h2 style="margin-left: 5px">Words</h2>
+                            <div id="wordsList" class="spline-list" style="margin-left: 5px;"></div>
+                        </div>
                     </div>
                     <div class="d-flex flex-column">
                         <div class="d-flex justify-content-between">
-                            <div class="d-flex">
-                                <button id="saveButton" type="button" class="btn btn-primary">Save</button>
+                                <div class="d-flex">
+                                <div class="btn-group">
+                                    <button id="saveButton" type="button" class="btn btn-primary">Save</button>
+                                    <button id="saveDropdown" type="button" class="btn btn-primary dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
+                                        <span class="visually-hidden">Toggle Dropdown</span>
+                                    </button>
+                                    <ul class="dropdown-menu">
+                                        <li><a id="saveWord" class="dropdown-item" href="#" id="saveAsOption">Save word</a></li>
+                                    </ul>
+                                </div>
                                 <button id="clearButton" type="button" class="btn btn-primary">Clear</button>
                                 <button id="joinButton" type="button" class="btn btn-primary" disabled>Join</button>
                             </div>
@@ -46,12 +58,16 @@
         <script>
             let charSplineData = {}; // Global variable to store spline data
             let joinsSplineData = {}; // Global variable to store spline data
+            let wordSplineData = {}; // Global variable to store spline data
+            let wordSelected = false;  // for handling differently than char selected
             const gridCanvas = document.getElementById('gridCanvas');
             const gridCtx = gridCanvas.getContext('2d');
             const splineCanvas = document.getElementById('splineCanvas');
             const splineCtx = splineCanvas.getContext('2d');
             const characterField = document.getElementById('character');
             const saveButton = document.getElementById('saveButton');
+            const saveDropdown = document.getElementById('saveDropdown');
+            const saveWord = document.getElementById('saveWord');
             const clearButton = document.getElementById('clearButton');
             const deleteButton = document.getElementById('deleteButton');
             const joinButton = document.getElementById('joinButton');
@@ -263,9 +279,27 @@
 
                 // update coloring of spline list
                 document.querySelectorAll('.char-list-item').forEach(item => {
-                    if (item.textContent === char) {
+                    if ((item.textContent === char) && !wordSelected) {
                         if (item.classList.contains('selected')) {  // on -> off
                             item.classList.remove('selected');
+                        } else {  // off -> on
+                            item.classList.add('selected');
+                            item.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        }
+                    } else {
+                        if (item.classList.contains('selected')) {  // on -> off
+                            item.classList.remove('selected');
+                        }
+                    }
+                });
+
+                // TODO: handle case where word and character are the same
+
+                // update coloring of spline list
+                document.querySelectorAll('.word-list-item').forEach(item => {
+                    if ((item.textContent === char) && wordSelected) {
+                        if (item.classList.contains('selected')) {  // on -> off
+                            // item.classList.remove('selected');
                         } else {  // off -> on
                             item.classList.add('selected');
                             item.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -330,6 +364,7 @@
                         character: character,
                         joinchar: joiningCharacter,
                         points: selectedPoints.map(([x, y]) => [(x + gridSize / 2) / gridSize, (y + gridSize / 2) / gridSize]),
+                        as_word: false,
                     };
                     axios.post('/save', data)
                         .then(response => {
@@ -337,9 +372,35 @@
                                 loadJoins();  // to re-add the new data
                                 loadCharacters();
                                 handleJoinAndCharSelect(null, null);
-                                refreshJoinButton();
-                                refreshDeleteButton();
-                                refreshFreezeButton()
+                                refreshButtons();
+                                updatePointsField();
+                                characterField.value = '';
+                                characterField.focus();
+                            }
+                        });
+                }
+
+            });
+
+            saveWord.addEventListener('click', () => {
+                let combinedArray = [...joiningPoints, ...selectedPoints];
+
+                const character = characterField.value.trim();
+                if (character && combinedArray.length) {
+                    const data = {
+                        character: character,
+                        joinchar: joiningCharacter,
+                        points: combinedArray.map(([x, y]) => [(x + gridSize / 2) / gridSize, (y + gridSize / 2) / gridSize]),
+                        as_word: true,
+                    };
+                    axios.post('/save', data)
+                        .then(response => {
+                            if (response.data.status === 'success') {
+                                loadJoins();  // to re-add the new data
+                                loadCharacters();
+                                loadWords();
+                                handleJoinAndCharSelect(null, null);
+                                refreshButtons();
                                 updatePointsField();
                                 characterField.value = '';
                                 characterField.focus();
@@ -356,20 +417,20 @@
 
             deleteButton.addEventListener('click', () => {
                 if (selectedCharacter) {
-                    axios.post('/delete', { character: selectedCharacter , joinchar: joiningCharacter})
+                    axios.post('/delete', { character: selectedCharacter , joinchar: joiningCharacter, delete_word: wordSelected})
                         .then(response => {
                             if (response.data.status === 'success') {
                                 loadJoins();  // to re-add the new data
                                 loadCharacters();
+                                loadWords();
                                 handleJoinAndCharSelect(null, null);
-                                refreshJoinButton();
-                                refreshDeleteButton();
-                                refreshFreezeButton()
+                                refreshButtons();
                                 updatePointsField();
                                 characterField.value = '';
                                 characterField.focus();
                             }
                         });
+                wordSelected = !wordSelected
                 }
             });
 
@@ -390,11 +451,11 @@
                             listItem.addEventListener('click', () => {
                                 const prevSelected = listItem.classList.contains('selected');
 
+                                wordSelected = false; // for handling delete
+
                                 // handleCharSelect(!prevSelected ? character: null)
                                 handleJoinAndCharSelect(joiningCharacter, !prevSelected ? character : null)
-                                refreshJoinButton();
-                                refreshDeleteButton();
-                                refreshFreezeButton()
+                                refreshButtons();
                                 updatePointsField();
                             });
                             charactersList.appendChild(listItem);
@@ -429,9 +490,7 @@
                                         !prevSelected ? joinchar: null,
                                         !prevSelected ? character: null,
                                     )
-                                    refreshJoinButton();
-                                    refreshDeleteButton();
-                                    refreshFreezeButton()
+                                    refreshButtons();
                                     updatePointsField();
                                 });
 
@@ -441,6 +500,38 @@
                         }
                     });
             }
+
+            function loadWords() {
+                axios.get('/load_words')
+                    .then(response => {
+
+                        wordSplineData = response.data; // Store the data in the global variable
+                        wordsList.innerHTML = '';
+
+                        for (const [word, points] of Object.entries(wordSplineData)) {
+                            const listItem = document.createElement('div');
+                            listItem.className = 'word-list-item';
+                            listItem.textContent = word;
+
+                            listItem.addEventListener('click', () => {
+                                if (listItem.classList.contains('selected')) {
+                                    wordSelected = false;
+                                    handleJoinSelect(null);
+                                    handleCharSelect(null);
+                                } else {
+                                    wordSelected = true; // for handling delete
+                                    handleJoinSelect(null);
+                                    handleCharSelect(word, points);
+                                }
+                                refreshButtons();
+                                updatePointsField();
+                            });
+
+                            wordsList.appendChild(listItem);
+                        }
+                    });
+            }
+
 
             joinButton.addEventListener('click', () => {
 
@@ -455,9 +546,7 @@
                     handleJoinAndCharSelect(selectedCharacter, null)
                 }
 
-                refreshJoinButton();
-                refreshDeleteButton();
-                refreshFreezeButton()
+                refreshButtons();
                 updatePointsField();
 
                 // to make it easier to continue typing a join after clicking "Join"
@@ -496,12 +585,23 @@
                 characterField.focus();
             })
 
+            function refreshButtons() {
+                refreshJoinButton();
+                refreshDeleteButton();
+                refreshFreezeButton();
+                refreshDropdownButton();
+            }
+
+            function refreshDropdownButton() {
+                // saveDropdown.disabled = (selectedCharacter == null) || (joiningCharacter != null)
+            }
+
             function refreshJoinButton() {
                 // joinButton.style.display = (joiningCharacter || selectedCharacter) ? 'inline-block' : 'none';
                 joinButton.textContent = joiningCharacter ? 'Unjoin' : 'Join';
 
                 // check if disabled
-                joinButton.disabled = (joiningCharacter || selectedCharacter) == null
+                joinButton.disabled = (((joiningCharacter || selectedCharacter) == null) || wordSelected)
 
                 // if (joinButton.disabled) {
                 //     // remove other classes so that it doesn't overload hover behavior
@@ -528,7 +628,7 @@
 
             function refreshFreezeButton() {
                 // freezeButton.disabled =  (selectedCharacter || joiningCharacter) == null
-                freezeButton.disabled = ((joiningCharacter || selectedCharacter) == null) && (frozenChar == null)
+                freezeButton.disabled = ((joiningCharacter || selectedCharacter) == null) && (frozenChar == null) || wordSelected
                 // if (freezeButton.disabled) {
                 //     // disabled; so make sure it's greyed out
                 //     if (freezeButton.classList.contains('freeze-button')) {
@@ -602,9 +702,7 @@
                     handleJoinAndCharSelect(joiningCharacter, null)
                 }
 
-                refreshJoinButton();
-                refreshDeleteButton();
-                refreshFreezeButton()
+                refreshButtons();
                 updatePointsField();
             }
 
@@ -639,12 +737,11 @@
                 });
             }
 
-            refreshJoinButton();
-            refreshDeleteButton();
-            refreshFreezeButton()
+            refreshButtons();
             drawGrid();
             loadJoins();
             loadCharacters();
+            loadWords();
 
             document.addEventListener("DOMContentLoaded", function() {
                 const gridContainer = document.querySelector('.grid-container');

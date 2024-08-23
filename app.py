@@ -17,8 +17,10 @@ app = Flask(__name__)
 # File paths for single-character and multi-character splines
 CHAR_FILE = 'static/data/characters.json'
 JOINS_FILE = 'static/data/joins.json'
-characters = {}
-joins = {}
+WORDS_FILE = 'static/data/words.json'
+characters_dict = {}
+joins_dict = {}
+words_dict = {}
 
 def adjust_points(points, adjustment):
     """Adjust points by adding or subtracting a constant."""
@@ -57,26 +59,9 @@ def save():
     character = data['character']
     joinchar = data['joinchar']
     points = data['points']
+    as_word = data['as_word']
 
-    if joinchar is None: # save as individual character
-        adjusted_points = adjust_points(points, np.array([-0.5, -0.5]))
-
-        # Load existing data
-        try:
-            with open(CHAR_FILE, 'r') as f:
-                existing_data = json.load(f)
-        except FileNotFoundError:
-            existing_data = {}
-
-        # Update or add new entry
-        existing_data[character] = adjusted_points
-
-        # Save updated data
-        with open(CHAR_FILE, 'w') as f:
-            json.dump(existing_data, f, indent=4)
-
-        return jsonify({'status': 'success'})
-    else: # save in joins dictionary
+    if joinchar is not None: # save as join
         adjusted_points = adjust_points(points, np.array([-0.5, -0.5]))
 
         # Load existing data
@@ -96,6 +81,45 @@ def save():
 
         # Save updated data
         with open(JOINS_FILE, 'w') as f:
+            json.dump(existing_data, f, indent=4)
+
+        return jsonify({'status': 'success'})
+
+    elif as_word:
+        adjusted_points = adjust_points(points, np.array([-0.5, -0.5]))
+
+        # Load existing data
+        try:
+            with open(WORDS_FILE, 'r') as f:
+                existing_data = json.load(f)
+        except FileNotFoundError:
+            existing_data = {}
+
+        # Update or add new entry
+        existing_data[character] = adjusted_points
+
+        # Save updated data
+        with open(WORDS_FILE, 'w') as f:
+            json.dump(existing_data, f, indent=4)
+
+        return jsonify({'status': 'success'})
+
+
+    else: # save in characters
+        adjusted_points = adjust_points(points, np.array([-0.5, -0.5]))
+
+        # Load existing data
+        try:
+            with open(CHAR_FILE, 'r') as f:
+                existing_data = json.load(f)
+        except FileNotFoundError:
+            existing_data = {}
+
+        # Update or add new entry
+        existing_data[character] = adjusted_points
+
+        # Save updated data
+        with open(CHAR_FILE, 'w') as f:
             json.dump(existing_data, f, indent=4)
 
         return jsonify({'status': 'success'})
@@ -137,20 +161,57 @@ def load_characters():
     # Load single-character splines
     try:
         with open(CHAR_FILE, 'r') as f:
-            join_data = json.load(f)
-            chars.update({k: adjust_points(v, np.array([0.5, 0.5])) for k, v in join_data.items()})
+            chars_data = json.load(f)
+            chars.update({k: adjust_points(v, np.array([0.5, 0.5])) for k, v in chars_data.items()})
     except FileNotFoundError:
         pass
 
     return jsonify(chars)
+
+
+@app.route('/load_words')
+def load_words():
+    words = {}
+
+    # Load single-character splines
+    try:
+        with open(WORDS_FILE, 'r') as f:
+            words_data = json.load(f)
+            words.update({k: adjust_points(v, np.array([0.5, 0.5])) for k, v in words_data.items()})
+    except FileNotFoundError:
+        pass
+
+    return jsonify(words)
 
 @app.route('/delete', methods=['POST'])
 def delete():
     data = request.json
     character = data['character']
     joinchar = data['joinchar']
+    delete_word = data['delete_word']
 
-    if joinchar is None: # delete the single character
+    if delete_word:
+        file_path = WORDS_FILE
+
+        # Load existing data
+        try:
+            with open(file_path, 'r') as f:
+                existing_data = json.load(f)
+        except FileNotFoundError:
+            existing_data = {}
+
+        # Remove the specified character
+        if character in existing_data:
+            del existing_data[character]
+
+            # Save updated data
+            with open(file_path, 'w') as f:
+                json.dump(existing_data, f, indent=4)
+
+            return jsonify({'status': 'success'})
+        else:
+            return jsonify({'status': 'error', 'message': 'Character not found'})
+    elif joinchar is None: # delete the single character
         file_path = CHAR_FILE
 
         # Load existing data
@@ -210,19 +271,27 @@ def load_json_file(filename):
         return json.load(f)
 
 def get_data():
-    global characters
+    global characters_dict
     _chars = load_json_file(CHAR_FILE)
-    characters = {
+    characters_dict = {
         char: np.array(points, dtype=np.float32)
         for char, points in _chars.items()
     }
 
-    global joins
+    global joins_dict
     _joins = load_json_file(JOINS_FILE)
-    joins = {
+    joins_dict = {
         char: {j: np.array(points, dtype=np.float32) for j, points in join_dict.items()}
         for char, join_dict in _joins.items()
     }
+
+    global words_dict
+    _words = load_json_file(WORDS_FILE)
+    words_dict = {
+        word: np.array(points, dtype=np.float32)
+        for word, points in _words.items()
+    }
+
 
 def interpolate_points(points, num_points=100):
     if len(points) < 2:
@@ -237,20 +306,24 @@ def interpolate_points(points, num_points=100):
 
     return x_spline, y_spline
 
-def join_to_spline(char, cursor_pos, prev=None):
-    global characters
+def join_to_spline(char, cursor_pos, prev=None, full_word=False):
+    global characters_dict, words_dict
 
-    join_points = characters[char].copy()
+    if full_word:
+        join_points = words_dict[char].copy()
+    else:
+        join_points = characters_dict[char].copy()
+
     if prev is None: # first character in word
         # shift to properly respect spaces b/w words
         join_points[:, 0] += abs(join_points[:, 0].min())
     else:
-        if (char in joins):
-            if prev in joins[char]:
+        if (char in joins_dict):
+            if prev in joins_dict[char]:
                 # replace with modified version for the join
-                join_points = joins[char][prev].copy()
-            elif prev[-1] in joins[char]:  # try joining to last char instead
-                join_points = joins[char][prev[-1]].copy()
+                join_points = joins_dict[char][prev].copy()
+            elif prev[-1] in joins_dict[char]:  # try joining to last char instead
+                join_points = joins_dict[char][prev[-1]].copy()
 
         # shift to align with cursor position
         join_points -= join_points[0]
@@ -268,13 +341,12 @@ def join_to_spline(char, cursor_pos, prev=None):
 
     return splines, red_dot_points, leftmost_x, rightmost_x, cursor_pos
 
-
 def line_to_splines(
         line,
         elevate_th=False
     ):
 
-    global characters
+    global characters_dict
 
     splines = []
     red_dot_points = []
@@ -288,44 +360,15 @@ def line_to_splines(
         word_splines = []
         word_red_dots = []
 
-        if (elevate_th) and (len(word) > 2) and (word[:2] == 'th'):
-            cursor_pos[1] += char_height
-            word = word[2:]
+        if word in words_dict:
+            returns = join_to_spline(word, cursor_pos, None, full_word=True)
 
-        leftmost_x = cursor_pos[0]
-        if word:
-            join = ''
-            prev = None
-            for char in word:
-                test_join = join + char
-                if test_join in characters:
-                    join = test_join
-                else:
-                    if join:  # non-empty
-                        # build spline
-                        # ci-1 because char hasn't been added yet
-                        returns = join_to_spline(join, cursor_pos, prev)
-                        prev = join
+            word_splines.append(returns[0])
+            word_red_dots.append(returns[1])
+            leftmost_x = returns[2]
+            rightmost_x = returns[3]
+            cursor_pos = returns[4]
 
-                        word_splines.append(returns[0])
-                        word_red_dots.append(returns[1])
-                        leftmost_x = min(leftmost_x, returns[2])
-                        rightmost_x = max(rightmost_x, returns[3])
-                        cursor_pos = returns[4]
-                    join = char
-
-            if join: # still something left
-                # build spline
-                returns = join_to_spline(join, cursor_pos, prev)
-
-                word_splines.append(returns[0])
-                word_red_dots.append(returns[1])
-                leftmost_x = min(leftmost_x, returns[2])
-                rightmost_x = max(rightmost_x, returns[3])
-                cursor_pos = returns[4]
-
-            # shift right so that the leftmost point of the word is shifted to the'
-            # word's start point
             word_start = word_splines[0][0][0]  # first character, first point, x-pos
             dx = word_start - leftmost_x
             splines += [[sp[0]+dx, sp[1]] for sp in word_splines]
@@ -333,11 +376,59 @@ def line_to_splines(
                 p[:, 0] += dx
             red_dot_points += word_red_dots
 
-            # add space between word's rightmost point and the next word
+            # Add space between word's rightmost point and the next word
             cursor_pos[0] = rightmost_x + word_space + dx
             cursor_pos[1] = 0
+        else:
+            if (elevate_th) and (len(word) > 2) and (word[:2] == 'th'):
+                cursor_pos[1] += char_height
+                word = word[2:]
+
+            leftmost_x = cursor_pos[0]
+            join = ''
+            prev = None
+            i = 0
+            while i < len(word):
+                temp_join = ''
+                longest_match = ''
+
+                # Check all substrings starting at index i
+                for j in range(i, len(word)):
+                    temp_join += word[j]
+                    if temp_join in characters_dict:
+                        longest_match = temp_join
+
+                if longest_match:
+                    join = longest_match
+                    i += len(join) - 1  # Move i to the end of the matched substring
+
+                    # Build spline
+                    returns = join_to_spline(join, cursor_pos, prev)
+                    prev = join
+
+                    word_splines.append(returns[0])
+                    word_red_dots.append(returns[1])
+                    leftmost_x = min(leftmost_x, returns[2])
+                    rightmost_x = max(rightmost_x, returns[3])
+                    cursor_pos = returns[4]
+
+                i += 1  # Move to the next character
+
+            # Shift right so that the leftmost point of the word is shifted to the word's start point
+            if word_splines:
+                word_start = word_splines[0][0][0]  # first character, first point, x-pos
+                dx = word_start - leftmost_x
+                splines += [[sp[0]+dx, sp[1]] for sp in word_splines]
+                for p in word_red_dots:
+                    p[:, 0] += dx
+                red_dot_points += word_red_dots
+
+                # Add space between word's rightmost point and the next word
+                cursor_pos[0] = rightmost_x + word_space + dx
+                cursor_pos[1] = 0
 
     return splines, red_dot_points
+
 
 def remove_consecutive_duplicates(s):
     if not s:
@@ -375,8 +466,6 @@ def process_text(
         text = remove_consecutive_duplicates(text)
     if oa_mn_rule:
         text = remove_a_o_before_m_n(text)
-
-    print(f'{remove_dups=} {oa_mn_rule=} {text=}')
 
     return text
 
