@@ -350,14 +350,15 @@ def remove_consecutive_duplicates(s):
         if char == 'e':
             e_count += 1
         else:
-            e_count = 0
+            e_count = 0  # Reset the count if the character is not 'e'
 
         if char != result[-1] or (char == 'e' and e_count <= 2):
             result.append(char)
-        elif char != 'e':
+        elif char != 'e' and char != result[-1]:
             result.append(char)
 
     return ''.join(result)
+
 
 def remove_a_o_before_m_n(text):
     # Use a regular expression to find "a" or "o" before "m" or "n", not at the start of a word
@@ -369,11 +370,13 @@ def process_text(
         remove_dups=False,
         oa_mn_rule=False
         ):
-    
+
     if remove_dups:
         text = remove_consecutive_duplicates(text)
     if oa_mn_rule:
         text = remove_a_o_before_m_n(text)
+
+    print(f'{remove_dups=} {oa_mn_rule=} {text=}')
 
     return text
 
