@@ -424,6 +424,8 @@ def generate_splines():
     nlines = len(lines)
     plt.figure(figsize=(15, 3*nlines))
     for i, line in enumerate(text.splitlines()):
+        if len(line) == 0:
+            continue  # empty line
         splines, red_dot_points = line_to_splines(line, **rules)
 
         start_of_line = min(splines[0][0])  # leftmost x value; used for shifting
