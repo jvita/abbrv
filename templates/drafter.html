@@ -583,7 +583,6 @@
                     frozenCharPoints = [];
                     // frozenJoinPoints = [];
                 }
-                console.log(joiningCharacter, selectedCharacter, frozenChar)
                 freezeButton.textContent = (freezeButton.textContent === 'Freeze') ? 'Unfreeze' : 'Freeze';
                 handleJoinAndCharSelect(joiningCharacter, selectedCharacter)
                 refreshFreezeButton();
@@ -674,7 +673,6 @@
             const debouncedKeyCheck = debounce(keyCheck, 100);  // ms?
 
             function keyCheck(event) {
-                console.log(event.key)
                 if (event.key === 'Control') {
                     freezeButton.click()
                 } else if (event.key === 'Shift') {
