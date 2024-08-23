@@ -272,7 +272,12 @@
 
             function handleCharSelect(char, points = null) {
                 selectedCharacter = char;
-                selectedPoints = points ? points : (char ? charSplineData[selectedCharacter] : [])
+                if (wordSelected) {
+                    selectedPoints = points ? points : (char in wordSplineData ? wordSplineData[char] : [])
+                }
+                else {
+                    selectedPoints = points ? points : (char in charSplineData? charSplineData[char] : [])
+                }
                 selectedPoints = selectedPoints.map(([x, y]) => [x * gridSize - gridSize / 2, y * gridSize - gridSize / 2]);
 
                 characterField.value = char ? char : '';
@@ -566,7 +571,7 @@
 
                     // selectedCharacter = null;
                     // joiningCharacter = null;
-                } else {
+                } else {  // unfreeze
                     // selectedPoints = frozenCharPoints;
                     // joiningPoints = frozenJoinPoints;
 
@@ -578,6 +583,7 @@
                     frozenCharPoints = [];
                     // frozenJoinPoints = [];
                 }
+                console.log(joiningCharacter, selectedCharacter, frozenChar)
                 freezeButton.textContent = (freezeButton.textContent === 'Freeze') ? 'Unfreeze' : 'Freeze';
                 handleJoinAndCharSelect(joiningCharacter, selectedCharacter)
                 refreshFreezeButton();
@@ -628,7 +634,7 @@
 
             function refreshFreezeButton() {
                 // freezeButton.disabled =  (selectedCharacter || joiningCharacter) == null
-                freezeButton.disabled = ((joiningCharacter || selectedCharacter) == null) && (frozenChar == null) || wordSelected
+                freezeButton.disabled = ((joiningCharacter || selectedCharacter) == null) || wordSelected && (frozenChar == null) 
                 // if (freezeButton.disabled) {
                 //     // disabled; so make sure it's greyed out
                 //     if (freezeButton.classList.contains('freeze-button')) {
