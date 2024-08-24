@@ -86,9 +86,7 @@
             let selectedPoints = [];
             let joiningPoints = [];
             let frozenCharPoints = [[], []];
-            // let frozenJoinPoints = [];
             let frozenChar = null;
-            // let frozenJoin = null;
             let selectedCharacter = null;
             let joiningCharacter = null; // Track the currently joining spline
             const gridSize = 76;
@@ -141,7 +139,6 @@
             }
 
             function drawPoints(points = null, color = colorSelected) {
-                // drawGrid(); // Redraw the grid
                 splineCtx.fillStyle = color; // Color for knot points
                 if (!points) {
                     selectedPoints.forEach(([x, y]) => {
@@ -161,25 +158,13 @@
             function updatePointsField() {
                 drawGrid(); // Redraw the grid
                 splineCtx.clearRect(0, 0, splineCanvas.width, splineCanvas.height); // Clear spline visualization
-
-                // Paint frozen char and join separately
-                // if (frozenCharPoints.length > 0) {
-                //     const frozenNormalizedCharPointsSelected = frozenCharPoints.map(([x, y]) => [(x + gridSize / 2) / gridSize, (y + gridSize / 2) / gridSize]);
-
-                //     // const color = getComputedStyle(freezeButton)['background-color']
-                //     // plotSpline(frozenNormalizedCharPointsSelected, color, () => drawPoints(frozenCharPoints, color));
-                //     plotSpline(frozenNormalizedCharPointsSelected, colorDisabled, () => drawPoints(frozenCharPoints, colorDisabled));
-                // }
+                
+                // paint frozen join+char
                 frozenCharPoints.forEach(pointsList => {
                     const shiftedPoints = pointsList.map(([x, y]) => [(x + gridSize / 2) / gridSize, (y + gridSize / 2) / gridSize]);
                     plotSpline(shiftedPoints, colorDisabled, () => drawPoints(pointsList, colorDisabled));
 
                 });
-
-                // if (frozenJoinPoints.length > 0) {
-                //     const frozenNormalizedJoinPointsSelected = frozenJoinPoints.map(([x, y]) => [(x + gridSize / 2) / gridSize, (y + gridSize / 2) / gridSize]);
-                //     plotSpline(frozenNormalizedJoinPointsSelected, colorFrozen, () => drawPoints(frozenJoinPoints, colorFrozen));
-                // }
 
                 // Calculate the shift required to align the joining char to the selected char
                 if (joiningPoints.length > 0) {
@@ -252,6 +237,7 @@
                 }
 
                 updatePointsField();
+                refreshSaveButton();
             });
 
             gridCanvas.addEventListener('contextmenu', (event) => {
@@ -309,7 +295,6 @@
                 document.querySelectorAll('.word-list-item').forEach(item => {
                     if ((item.textContent === char) && wordSelected) {
                         if (item.classList.contains('selected')) {  // on -> off
-                            // item.classList.remove('selected');
                         } else {  // off -> on
                             item.classList.add('selected');
                             item.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -423,6 +408,7 @@
             clearButton.addEventListener('click', () => {
                 selectedPoints = [];
                 updatePointsField();
+                refreshSaveButton();
             });
 
             deleteButton.addEventListener('click', () => {
@@ -450,7 +436,6 @@
 
                         charSplineData = response.data; // Store the data in the global variable
                         charactersList.innerHTML = '';
-                        // deleteButton.style.display = 'none'; // Hide delete button initially
 
 
                         for (const [character, points] of Object.entries(charSplineData)) {
@@ -463,7 +448,6 @@
 
                                 wordSelected = false; // for handling delete
 
-                                // handleCharSelect(!prevSelected ? character: null)
                                 handleJoinAndCharSelect(joiningCharacter, !prevSelected ? character : null)
                                 refreshButtons();
                                 updatePointsField();
@@ -480,9 +464,6 @@
                         charSplineData = response.data['chars'];
                         joinsSplineData = response.data['joins'];
                         joinsList.innerHTML = '';
-                        // deleteButton.style.display = 'none'; // Hide delete button initially
-                        // joinButton.style.display = 'none'; // Hide delete button initially
-
 
                         for (const [character, charPoints] of Object.entries(charSplineData)) {
                             if (!(character in joinsSplineData)) {
@@ -579,15 +560,6 @@
 
                         const [firstX, firstY] = joiningPoints[joiningPoints.length - 1];
                         shiftedJoiningPoints = joiningPoints.map(([x, y]) => [x - firstX + lastX, y - firstY + lastY]);
-                        // const normalizedPointsJoining = shiftedJoinPoints.map(([x, y]) => [(x + gridSize / 2) / gridSize, (y + gridSize / 2) / gridSize]);
-
-                        // const shiftX = selectedPoints[0][0];
-                        // const shiftY = selectedPoints[0][0];
-                        // console.log([firstX, firstY], [lastX, lastY])
-                        // shiftedJoiningPoints = joiningPoints.map(([x, y]) => ([
-                        //     x - lastX + firstX,
-                        //     y - lastY + firstY
-                        // ]));
                     }
                     
                     // Concatenate joiningPoints and selectedPoints
@@ -613,58 +585,25 @@
                 refreshJoinButton();
                 refreshDeleteButton();
                 refreshFreezeButton();
-                refreshDropdownButton();
+                refreshSaveButton();
             }
 
-            function refreshDropdownButton() {
-                // saveDropdown.disabled = (selectedCharacter == null) || (joiningCharacter != null)
+            function refreshSaveButton() {
+                const anySelected = selectedPoints.length == 0
+                saveButton.disabled = anySelected
+                saveDropdown.disabled = anySelected
+                clearButton.disabled = anySelected
             }
 
             function refreshJoinButton() {
-                // joinButton.style.display = (joiningCharacter || selectedCharacter) ? 'inline-block' : 'none';
                 joinButton.textContent = joiningCharacter ? 'Unjoin' : 'Join';
 
                 // check if disabled
                 joinButton.disabled = (((joiningCharacter || selectedCharacter) == null) || wordSelected)
-
-                // if (joinButton.disabled) {
-                //     // remove other classes so that it doesn't overload hover behavior
-                //     if (joinButton.classList.contains('join-button')) {
-                //         joinButton.classList.remove('join-button')
-                //     }
-                //     if (joinButton.classList.contains('unjoin-button')) {
-                //         joinButton.classList.remove('unjoin-button')
-                //     }
-                // } else {
-                //     if (joiningCharacter) {  // if joining, turn it into an Unjoin button
-                //         if (joinButton.classList.contains('join-button')) {
-                //             joinButton.classList.remove('join-button')
-                //         }
-                //         joinButton.classList.add('unjoin-button')
-                //     } else {  // not joining, so make it a join button
-                //         if (joinButton.classList.contains('unjoin-button')) {
-                //             joinButton.classList.remove('unjoin-button')
-                //         }
-                //         joinButton.classList.add('join-button')
-                //     }
-                // }
-        }
+            }
 
             function refreshFreezeButton() {
-                // freezeButton.disabled =  (selectedCharacter || joiningCharacter) == null
-                console.log(joiningCharacter, selectedCharacter, frozenChar, wordSelected)
                 freezeButton.disabled = ((joiningCharacter || selectedCharacter) == null) && (frozenChar == null) && !wordSelected 
-                // if (freezeButton.disabled) {
-                //     // disabled; so make sure it's greyed out
-                //     if (freezeButton.classList.contains('freeze-button')) {
-                //         freezeButton.classList.remove('freeze-button')
-                //     }
-                // } else {
-                //     // enabled; color it, then do stuff
-                //     if (!freezeButton.classList.contains('freeze-button')) {
-                //         // freezeButton.classList.add('freeze-button')
-                //     }
-                // }
             }
 
             function refreshDeleteButton() {
