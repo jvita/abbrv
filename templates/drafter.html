@@ -594,6 +594,7 @@
                     frozenCharPoints = [shiftedJoiningPoints, selectedPoints];
 
                     frozenChar = (joiningCharacter ? joiningCharacter : '') + (selectedCharacter ? selectedCharacter : '');
+                    wordSelected = false;
                     handleJoinAndCharSelect(null, null);
                     refreshButtons();
                     
@@ -651,6 +652,7 @@
 
             function refreshFreezeButton() {
                 // freezeButton.disabled =  (selectedCharacter || joiningCharacter) == null
+                console.log(joiningCharacter, selectedCharacter, frozenChar, wordSelected)
                 freezeButton.disabled = ((joiningCharacter || selectedCharacter) == null) && (frozenChar == null) && !wordSelected 
                 // if (freezeButton.disabled) {
                 //     // disabled; so make sure it's greyed out
