@@ -85,7 +85,7 @@
 
             let selectedPoints = [];
             let joiningPoints = [];
-            let frozenCharPoints = [];
+            let frozenCharPoints = [[], []];
             // let frozenJoinPoints = [];
             let frozenChar = null;
             // let frozenJoin = null;
@@ -163,13 +163,18 @@
                 splineCtx.clearRect(0, 0, splineCanvas.width, splineCanvas.height); // Clear spline visualization
 
                 // Paint frozen char and join separately
-                if (frozenCharPoints.length > 0) {
-                    const frozenNormalizedCharPointsSelected = frozenCharPoints.map(([x, y]) => [(x + gridSize / 2) / gridSize, (y + gridSize / 2) / gridSize]);
+                // if (frozenCharPoints.length > 0) {
+                //     const frozenNormalizedCharPointsSelected = frozenCharPoints.map(([x, y]) => [(x + gridSize / 2) / gridSize, (y + gridSize / 2) / gridSize]);
 
-                    // const color = getComputedStyle(freezeButton)['background-color']
-                    // plotSpline(frozenNormalizedCharPointsSelected, color, () => drawPoints(frozenCharPoints, color));
-                    plotSpline(frozenNormalizedCharPointsSelected, colorDisabled, () => drawPoints(frozenCharPoints, colorDisabled));
-                }
+                //     // const color = getComputedStyle(freezeButton)['background-color']
+                //     // plotSpline(frozenNormalizedCharPointsSelected, color, () => drawPoints(frozenCharPoints, color));
+                //     plotSpline(frozenNormalizedCharPointsSelected, colorDisabled, () => drawPoints(frozenCharPoints, colorDisabled));
+                // }
+                frozenCharPoints.forEach(pointsList => {
+                    const shiftedPoints = pointsList.map(([x, y]) => [(x + gridSize / 2) / gridSize, (y + gridSize / 2) / gridSize]);
+                    plotSpline(shiftedPoints, colorDisabled, () => drawPoints(pointsList, colorDisabled));
+
+                });
 
                 // if (frozenJoinPoints.length > 0) {
                 //     const frozenNormalizedJoinPointsSelected = frozenJoinPoints.map(([x, y]) => [(x + gridSize / 2) / gridSize, (y + gridSize / 2) / gridSize]);
@@ -560,35 +565,48 @@
 
             freezeButton.addEventListener('click', () => {
                 splineCtx.clearRect(0, 0, splineCanvas.width, splineCanvas.height);
-                if (freezeButton.textContent === 'Freeze') {
-                    frozenCharPoints = selectedPoints;
-                    // frozenJoinPoints = joiningPoints;
-                    selectedPoints = []
-                    // joiningPoints = []
+                
+                if (freezeButton.textContent === 'Freeze') { // freeze
+                    let shiftedJoiningPoints = [];
+                    // If selectedPoints is non-empty, shift joiningPoints by the first point in selectedPoints
+                    if ((selectedPoints.length > 0) && (joiningPoints.length > 0)) {
+                        let lastX = 0;
+                        let lastY = 0;
 
-                    frozenChar = selectedCharacter;
-                    // frozenJoin = joiningCharacter;
+                        if (selectedPoints.length > 0) {
+                            [lastX, lastY] = selectedPoints[0];
+                        }
 
-                    // selectedCharacter = null;
-                    // joiningCharacter = null;
+                        const [firstX, firstY] = joiningPoints[joiningPoints.length - 1];
+                        shiftedJoiningPoints = joiningPoints.map(([x, y]) => [x - firstX + lastX, y - firstY + lastY]);
+                        // const normalizedPointsJoining = shiftedJoinPoints.map(([x, y]) => [(x + gridSize / 2) / gridSize, (y + gridSize / 2) / gridSize]);
+
+                        // const shiftX = selectedPoints[0][0];
+                        // const shiftY = selectedPoints[0][0];
+                        // console.log([firstX, firstY], [lastX, lastY])
+                        // shiftedJoiningPoints = joiningPoints.map(([x, y]) => ([
+                        //     x - lastX + firstX,
+                        //     y - lastY + firstY
+                        // ]));
+                    }
+                    
+                    // Concatenate joiningPoints and selectedPoints
+                    frozenCharPoints = [shiftedJoiningPoints, selectedPoints];
+
+                    frozenChar = (joiningCharacter ? joiningCharacter : '') + (selectedCharacter ? selectedCharacter : '');
+                    handleJoinAndCharSelect(null, null);
+                    refreshButtons();
+                    
                 } else {  // unfreeze
-                    // selectedPoints = frozenCharPoints;
-                    // joiningPoints = frozenJoinPoints;
-
-                    // selectedCharacter = frozenChar;
-                    // joiningCharacter = frozenJoin ;
-
                     frozenChar = null;
-                    // frozenJoin = null;
-                    frozenCharPoints = [];
-                    // frozenJoinPoints = [];
+                    frozenCharPoints = [[], []];
+                    refreshFreezeButton();
                 }
+
                 freezeButton.textContent = (freezeButton.textContent === 'Freeze') ? 'Unfreeze' : 'Freeze';
-                handleJoinAndCharSelect(joiningCharacter, selectedCharacter)
-                refreshFreezeButton();
                 updatePointsField();
                 characterField.focus();
-            })
+            });
 
             function refreshButtons() {
                 refreshJoinButton();
@@ -633,7 +651,7 @@
 
             function refreshFreezeButton() {
                 // freezeButton.disabled =  (selectedCharacter || joiningCharacter) == null
-                freezeButton.disabled = ((joiningCharacter || selectedCharacter) == null) || wordSelected && (frozenChar == null) 
+                freezeButton.disabled = ((joiningCharacter || selectedCharacter) == null) && (frozenChar == null) && !wordSelected 
                 // if (freezeButton.disabled) {
                 //     // disabled; so make sure it's greyed out
                 //     if (freezeButton.classList.contains('freeze-button')) {
