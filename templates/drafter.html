@@ -57,6 +57,8 @@
         <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
         <script>
             let charSplineData = {}; // Global variable to store spline data
+            let dotsData = {}; // Global variable to store spline data
+            let joinsDotsData = {}; // Global variable to store spline data
             let joinsSplineData = {}; // Global variable to store spline data
             let wordSplineData = {}; // Global variable to store spline data
             let wordSelected = false;  // for handling differently than char selected
@@ -86,6 +88,7 @@
             let selectedPoints = [];
             let joiningPoints = [];
             let frozenCharPoints = [[], []];
+            let dots = [];
             let frozenChar = null;
             let selectedCharacter = null;
             let joiningCharacter = null; // Track the currently joining spline
@@ -183,6 +186,8 @@
 
                 const normalizedPointsSelected = selectedPoints.map(([x, y]) => [(x + gridSize / 2) / gridSize, (y + gridSize / 2) / gridSize]);
                 plotSpline(normalizedPointsSelected, colorInk, () => drawPoints(selectedPoints));
+
+                drawPoints(dots, colorInk)
             }
 
             function plotSpline(points, color = colorInk, callback = null) {
@@ -231,6 +236,7 @@
                 if (isCtrlPressed) {
                     // to be replaced later with other ctrl-click functionality
                     // probably adding dots
+                    dots.push([gridX, gridY]);
                 } else {
                     // Regular click
                     selectedPoints.push([gridX, gridY]);
@@ -252,22 +258,33 @@
 
                 const isCtrlPressed = event.ctrlKey;
 
-                const pointIndex = selectedPoints.findLastIndex(([px, py]) => Math.round(px) === gridX && Math.round(py) === gridY);
-                // Ctrl+click: Remove the point if it exists
-                if (pointIndex !== -1) {
-                    selectedPoints.splice(pointIndex, 1);
+                if (isCtrlPressed) {  // remove from dots
+                    const pointIndex = dots.findLastIndex(([px, py]) => Math.round(px) === gridX && Math.round(py) === gridY);
+                    // Ctrl+click: Remove the point if it exists
+                    if (pointIndex !== -1) {
+                        dots.splice(pointIndex, 1);
+                    }
+                } else {  // remove from selected points
+                    const pointIndex = selectedPoints.findLastIndex(([px, py]) => Math.round(px) === gridX && Math.round(py) === gridY);
+                    // Ctrl+click: Remove the point if it exists
+                    if (pointIndex !== -1) {
+                        selectedPoints.splice(pointIndex, 1);
+                    }
                 }
                 updatePointsField();
             });
 
 
-            function handleCharSelect(char, points = null) {
+            function handleCharSelect(char, points = null, newDots = null) {
                 selectedCharacter = char;
                 if (wordSelected) {
                     selectedPoints = points ? points : (char in wordSplineData ? wordSplineData[char] : [])
                 }
                 else {
                     selectedPoints = points ? points : (char in charSplineData? charSplineData[char] : [])
+                    dots = newDots ? newDots : (char in dotsData) ? dotsData[char] : []
+                    dots = dots.map(([x, y]) => [x * gridSize - gridSize / 2, y * gridSize - gridSize / 2]);
+                    console.log(char, dots.length)
                 }
                 selectedPoints = selectedPoints.map(([x, y]) => [x * gridSize - gridSize / 2, y * gridSize - gridSize / 2]);
 
@@ -332,7 +349,8 @@
                 handleJoinSelect(prev)
 
                 const newPoints = ((char in joinsSplineData) && (prev in joinsSplineData[char])) ? joinsSplineData[char][prev] : null;
-                handleCharSelect(char, newPoints);
+                const newDots = ((char in joinsDotsData) && (prev in joinsDotsData[char])) ? joinsDotsData[char][prev] : null;
+                handleCharSelect(char, newPoints, newDots);
 
                 // update coloring of joins list and scroll into view
                 document.querySelectorAll('.join-list-item').forEach(item => {
@@ -360,6 +378,7 @@
                         joinchar: joiningCharacter,
                         points: selectedPoints.map(([x, y]) => [(x + gridSize / 2) / gridSize, (y + gridSize / 2) / gridSize]),
                         as_word: false,
+                        dots: dots.map(([x, y]) => [(x + gridSize / 2) / gridSize, (y + gridSize / 2) / gridSize]),
                     };
                     axios.post('/save', data)
                         .then(response => {
@@ -430,6 +449,16 @@
                 }
             });
 
+            function loadDots() {
+                axios.get('/load_dots')
+                    .then(response => {
+                        console.log(response.data)
+                        dotsData = response.data['chars']; // Store the data in the global variable
+                        joinsDotsData = response.data['joins']; // Store the data in the global variable
+                    });
+            }
+
+
             function loadCharacters() {
                 axios.get('/load_characters')
                     .then(response => {
@@ -455,6 +484,7 @@
                             charactersList.appendChild(listItem);
                         }
                     });
+                loadDots();
             }
 
             function loadJoins() {

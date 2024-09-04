@@ -21,6 +21,10 @@
                 </button>
                 <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
                     <li class="dropdown-item button-container align-items-center">
+                        <input type="checkbox" id="show_dots" name="show_dots" style="max-height: 20px; max-width: 20px; min-width: 20px" checked>
+                        <label for="show_dots" style="flex: 6;">Show dots for "i")</label>
+                    </li>
+                    <li class="dropdown-item button-container align-items-center">
                         <input type="checkbox" id="remove_duplicates" name="remove_duplicates" style="max-height: 20px; max-width: 20px; min-width: 20px" checked>
                         <label for="remove_duplicates" style="flex: 6;">Remove consecutive duplicates (except "ee")</label>
                     </li>
@@ -79,7 +83,7 @@
             debouncedUpdatePlot();
         });
 
-        $('#show_knot_points, #elevate_th, #remove_duplicates, #oa_mn_rule').on('change', function() {
+        $('#show_knot_points, #elevate_th, #show_dots, #remove_duplicates, #oa_mn_rule').on('change', function() {
             updatePlot();  // Call updatePlot immediately when checkboxes are modified
         });
 

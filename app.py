@@ -18,9 +18,13 @@ app = Flask(__name__)
 CHAR_FILE = 'static/data/characters.json'
 JOINS_FILE = 'static/data/joins.json'
 WORDS_FILE = 'static/data/words.json'
+CHAR_DOTS_FILE = 'static/data/characters_dots.json'
+JOINS_DOTS_FILE = 'static/data/joins_dots.json'
 characters_dict = {}
 joins_dict = {}
 words_dict = {}
+char_dots_dict = {}
+joins_dots_dict = {}
 
 def adjust_points(points, adjustment):
     """Adjust points by adding or subtracting a constant."""
@@ -60,6 +64,47 @@ def save():
     joinchar = data['joinchar']
     points = data['points']
     as_word = data['as_word']
+    dots = data['dots']
+
+    # handle saving dots, if provided
+    if len(dots) > 0:
+        if joinchar is not None: # save as join
+            adjusted_points = adjust_points(dots, np.array([-0.5, -0.5]))
+
+            # Load existing data
+            try:
+                with open(JOINS_DOTS_FILE, 'r') as f:
+                    existing_data = json.load(f)
+            except FileNotFoundError:
+                existing_data = {}
+
+            # Update or add new entry
+            # data[character][join] is the array of points used when "character" is preceded by "join"
+            if character not in existing_data:
+                existing_data[character] = {joinchar: adjusted_points}
+            else:
+                # existing_data[character] = existing_data[character].update({joiningCharacter: adjusted_points})
+                existing_data[character].update({joinchar: adjusted_points})
+
+            # Save updated data
+            with open(JOINS_DOTS_FILE, 'w') as f:
+                json.dump(existing_data, f, indent=4)
+        else:
+            adjusted_points = adjust_points(dots, np.array([-0.5, -0.5]))
+
+            # Load existing data
+            try:
+                with open(CHAR_DOTS_FILE, 'r') as f:
+                    existing_data = json.load(f)
+            except FileNotFoundError:
+                existing_data = {}
+
+            # Update or add new entry
+            existing_data[character] = adjusted_points
+
+            # Save updated data
+            with open(CHAR_DOTS_FILE, 'w') as f:
+                json.dump(existing_data, f, indent=4)
 
     if as_word:
         adjusted_points = adjust_points(points, np.array([-0.5, -0.5]))
@@ -166,6 +211,35 @@ def load_characters():
         pass
 
     return jsonify(chars)
+
+@app.route('/load_dots')
+def load_dots():
+    dots = {'chars': {}, 'joins': {}}
+
+    # Load single-character dots
+    try:
+        with open(CHAR_DOTS_FILE, 'r') as f:
+            chars_data = json.load(f)
+            dots['chars'].update({k: adjust_points(v, np.array([0.5, 0.5])) for k, v in chars_data.items()})
+    except FileNotFoundError:
+        pass
+
+    # Load join dots
+    joins = {}
+    try:
+        with open(JOINS_DOTS_FILE, 'r') as f:
+            join_data = json.load(f)
+            dots['joins'].update({
+                k: {
+                    j: adjust_points(v, np.array([0.5, 0.5]))
+                    for j, v in dct.items()
+                    }
+                for k, dct in join_data.items()
+                })
+    except FileNotFoundError:
+        pass
+
+    return jsonify(dots)
 
 
 @app.route('/load_words')
@@ -291,6 +365,20 @@ def get_data():
         for word, points in _words.items()
     }
 
+    global char_dots_dict
+    _dots = load_json_file(CHAR_DOTS_FILE)
+    char_dots_dict = {
+        char: np.array(points, dtype=np.float32)
+        for char, points in _dots.items()
+    }
+
+    global joins_dots_dict
+    _joins = load_json_file(JOINS_DOTS_FILE)
+    joins_dots_dict = {
+        char: {j: np.array(points, dtype=np.float32) for j, points in join_dict.items()}
+        for char, join_dict in _joins.items()
+    }
+
 
 def interpolate_points(points, num_points=100):
     if len(points) < 2:
@@ -312,33 +400,43 @@ def join_to_spline(char, cursor_pos, prev=None, full_word=False):
         join_points = words_dict[char].copy()
     else:
         join_points = characters_dict[char].copy()
+        join_dots = char_dots_dict[char].copy() if char in char_dots_dict else None
 
     if prev is None: # first character in word
         # shift to properly respect spaces b/w words
         join_points[:, 0] += abs(join_points[:, 0].min())
+        if join_dots is not None:
+            join_dots[:, 0] += abs(join_points[:, 0].min())
     else:
         if (char in joins_dict):
             if prev in joins_dict[char]:
                 # replace with modified version for the join
                 join_points = joins_dict[char][prev].copy()
+                join_dots = joins_dots_dict[char][prev].copy() if prev in joins_dots_dict[char] else None
             elif prev[-1] in joins_dict[char]:  # try joining to last char instead
                 join_points = joins_dict[char][prev[-1]].copy()
+                join_dots = joins_dots_dict[char][prev[-1]].copy() if prev[-1] in joins_dots_dict[char] else None
 
         # shift to align with cursor position
         join_points -= join_points[0]
+        if join_dots is not None:
+            join_dots -= join_points[0]
 
     join_points += cursor_pos  # move to cursor pos
+    if join_dots is not None:
+        join_dots += cursor_pos  # move to cursor pos
 
     x_spline, y_spline = interpolate_points(join_points)
     splines = (x_spline, y_spline)
     red_dot_points = join_points  # for optionally plotting red dots
+    black_dot_points = join_dots # for optionally plotting red dots
 
     # move cursor and word endpoint tracker
     leftmost_x = join_points[:, 0].min()
     rightmost_x = join_points[:, 0].max()
     cursor_pos = join_points[-1].copy()
 
-    return splines, red_dot_points, leftmost_x, rightmost_x, cursor_pos
+    return splines, red_dot_points, black_dot_points, leftmost_x, rightmost_x, cursor_pos
 
 def line_to_splines(
         line,
@@ -349,6 +447,7 @@ def line_to_splines(
 
     splines = []
     red_dot_points = []
+    black_dot_points = []
     word_space = 0.1
     cursor_pos = np.array([0, 0], dtype=np.float32)
     rightmost_x = 0 # for adding spaces between words
@@ -358,22 +457,31 @@ def line_to_splines(
     for word in words:
         word_splines = []
         word_red_dots = []
+        word_black_dots = []
 
         if word in words_dict:
             returns = join_to_spline(word, cursor_pos, None, full_word=True)
 
             word_splines.append(returns[0])
             word_red_dots.append(returns[1])
-            leftmost_x = returns[2]
-            rightmost_x = returns[3]
-            cursor_pos = returns[4]
+            word_black_dots.append(returns[2])
+            leftmost_x = returns[3]
+            rightmost_x = returns[4]
+            cursor_pos = returns[5]
 
             word_start = word_splines[0][0][0]  # first character, first point, x-pos
             dx = word_start - leftmost_x
             splines += [[sp[0]+dx, sp[1]] for sp in word_splines]
+
+            # shift dot points
             for p in word_red_dots:
                 p[:, 0] += dx
             red_dot_points += word_red_dots
+
+            for p in word_black_dots:
+                if p is not None:  # could be None if no black dots
+                    p[:, 0] += dx
+            black_dot_points += word_black_dots
 
             # Add space between word's rightmost point and the next word
             cursor_pos[0] = rightmost_x + word_space + dx
@@ -407,9 +515,10 @@ def line_to_splines(
 
                     word_splines.append(returns[0])
                     word_red_dots.append(returns[1])
-                    leftmost_x = min(leftmost_x, returns[2])
-                    rightmost_x = max(rightmost_x, returns[3])
-                    cursor_pos = returns[4]
+                    word_black_dots.append(returns[2])
+                    leftmost_x = min(leftmost_x, returns[3])
+                    rightmost_x = max(rightmost_x, returns[4])
+                    cursor_pos = returns[5]
 
                 i += 1  # Move to the next character
 
@@ -421,12 +530,16 @@ def line_to_splines(
                 for p in word_red_dots:
                     p[:, 0] += dx
                 red_dot_points += word_red_dots
+                for p in word_black_dots:
+                    if p is not None: # could be None if no dots for this word
+                        p[:, 0] += dx
+                black_dot_points += word_black_dots
 
                 # Add space between word's rightmost point and the next word
                 cursor_pos[0] = rightmost_x + word_space + dx
                 cursor_pos[1] = 0
 
-    return splines, red_dot_points
+    return splines, red_dot_points, black_dot_points
 
 
 def remove_consecutive_duplicates(s):
@@ -514,7 +627,7 @@ def generate_splines():
     for i, line in enumerate(text.splitlines()):
         if len(line) == 0:
             continue  # empty line
-        splines, red_dot_points = line_to_splines(line, **rules)
+        splines, red_dot_points, black_dot_points = line_to_splines(line, **rules)
 
         start_of_line = min(splines[0][0])  # leftmost x value; used for shifting
 
@@ -529,6 +642,18 @@ def generate_splines():
                 linewidth=3,
                 solid_capstyle='round'
                 )
+
+        if 'show_dots' in request.form:
+            # plot black dots
+            for points in black_dot_points:
+                if points is not None:
+                    x, y = zip(*points)
+                    plt.plot(
+                        [_x-start_of_line for _x in x],
+                        [_y-y_offset for _y in y],
+                        'ko',
+                        markersize=3
+                        )
 
         if 'show_knot_points' in request.form:
             for points in red_dot_points:
