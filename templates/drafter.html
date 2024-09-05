@@ -166,7 +166,6 @@
                 frozenCharPoints.forEach(pointsList => {
                     const shiftedPoints = pointsList.map(([x, y]) => [(x + gridSize / 2) / gridSize, (y + gridSize / 2) / gridSize]);
                     plotSpline(shiftedPoints, colorDisabled, () => drawPoints(pointsList, colorDisabled));
-
                 });
 
                 // Calculate the shift required to align the joining char to the selected char
