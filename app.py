@@ -412,10 +412,10 @@ def join_to_spline(char, cursor_pos, prev=None, full_word=False):
             if prev in joins_dict[char]:
                 # replace with modified version for the join
                 join_points = joins_dict[char][prev].copy()
-                join_dots = joins_dots_dict[char][prev].copy() if prev in joins_dots_dict[char] else None
+                join_dots = joins_dots_dict[char][prev].copy() if (char in joins_dots_dict) and (prev in joins_dots_dict[char]) else None
             elif prev[-1] in joins_dict[char]:  # try joining to last char instead
                 join_points = joins_dict[char][prev[-1]].copy()
-                join_dots = joins_dots_dict[char][prev[-1]].copy() if prev[-1] in joins_dots_dict[char] else None
+                join_dots = joins_dots_dict[char][prev[-1]].copy() if (char in joins_dots_dict) and (prev[-1] in joins_dots_dict[char]) else None
 
         # shift to align with cursor position
         join_points -= join_points[0]
