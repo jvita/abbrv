@@ -42,7 +42,7 @@ def spline():
     y = points[:, 1] * 76 - 38
     t = np.linspace(0, 1, len(points))
 
-    num_plot_points = 100
+    num_plot_points = points.shape[0]*20
 
     x_dense = CubicSpline(t, x, bc_type='natural')(np.linspace(0, 1, num_plot_points))
     y_dense = CubicSpline(t, y, bc_type='natural')(np.linspace(0, 1, num_plot_points))
