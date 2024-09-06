@@ -232,12 +232,14 @@
 
                 const isCtrlPressed = event.ctrlKey;
 
-                if (isCtrlPressed) {
-                    // to be replaced later with other ctrl-click functionality
-                    // probably adding dots
-                    dots.push([gridX, gridY]);
+                if (isCtrlPressed) {  // remove point
+                    const pointIndex = selectedPoints.findLastIndex(([px, py]) => Math.round(px) === gridX && Math.round(py) === gridY);
+                    // Ctrl+click: Remove the point if it exists
+                    if (pointIndex !== -1) {
+                        selectedPoints.splice(pointIndex, 1);
+                    }
                 } else {
-                    // Regular click
+                    // add point
                     selectedPoints.push([gridX, gridY]);
                 }
 
@@ -263,13 +265,10 @@
                     if (pointIndex !== -1) {
                         dots.splice(pointIndex, 1);
                     }
-                } else {  // remove from selected points
-                    const pointIndex = selectedPoints.findLastIndex(([px, py]) => Math.round(px) === gridX && Math.round(py) === gridY);
-                    // Ctrl+click: Remove the point if it exists
-                    if (pointIndex !== -1) {
-                        selectedPoints.splice(pointIndex, 1);
-                    }
+                } else {  // add dot
+                    dots.push([gridX, gridY]);
                 }
+
                 updatePointsField();
             });
 
