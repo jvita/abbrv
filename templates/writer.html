@@ -11,7 +11,7 @@
     <body> -->
         <form id="text-form" class="d-flex flex-column justify-content-start">
             <textarea id="text" name="text" placeholder="Enter text here..."></textarea>
-            
+
             <div id="output"></div>
 
             <!-- Dropdown Menu -->
@@ -20,10 +20,6 @@
                     Options
                 </button>
                 <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                    <li class="dropdown-item button-container align-items-center">
-                        <input type="checkbox" id="show_dots" name="show_dots" style="max-height: 20px; max-width: 20px; min-width: 20px" checked>
-                        <label for="show_dots" style="flex: 6;">Show dots for "i")</label>
-                    </li>
                     <li class="dropdown-item button-container align-items-center">
                         <input type="checkbox" id="remove_duplicates" name="remove_duplicates" style="max-height: 20px; max-width: 20px; min-width: 20px" checked>
                         <label for="remove_duplicates" style="flex: 6;">Remove consecutive duplicates (except "ee")</label>
@@ -35,6 +31,10 @@
                     <li class="dropdown-item button-container align-items-center">
                         <input type="checkbox" id="oa_mn_rule" name="oa_mn_rule" style="max-height: 20px; max-width: 20px; min-width: 20px">
                         <label for="oa_mn_rule" style="flex: 6;">Remove "o" and "a" before "m" and "n"</label>
+                    </li>
+                    <li class="dropdown-item button-container align-items-center">
+                        <input type="checkbox" id="show_dots" name="show_dots" style="max-height: 20px; max-width: 20px; min-width: 20px">
+                        <label for="show_dots" style="flex: 6;">Show dots for "i"</label>
                     </li>
                     <li class="dropdown-item button-container align-items-center">
                         <input type="checkbox" id="show_knot_points" name="show_knot_points" style="max-height: 20px; max-width: 20px; min-width: 20px">
