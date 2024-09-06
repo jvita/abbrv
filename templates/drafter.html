@@ -233,11 +233,7 @@
                 const isCtrlPressed = event.ctrlKey;
 
                 if (isCtrlPressed) {  // remove point
-                    const pointIndex = selectedPoints.findLastIndex(([px, py]) => Math.round(px) === gridX && Math.round(py) === gridY);
-                    // Ctrl+click: Remove the point if it exists
-                    if (pointIndex !== -1) {
-                        selectedPoints.splice(pointIndex, 1);
-                    }
+                    dots.push([gridX, gridY]);
                 } else {
                     // add point
                     selectedPoints.push([gridX, gridY]);
@@ -248,6 +244,8 @@
             });
 
             gridCanvas.addEventListener('contextmenu', (event) => {
+                // For deleting points using right-click
+
                 // Deletes the point
                 event.preventDefault();  // don't open the usual right-click menu
 
@@ -266,10 +264,15 @@
                         dots.splice(pointIndex, 1);
                     }
                 } else {  // add dot
-                    dots.push([gridX, gridY]);
+                    const pointIndex = selectedPoints.findLastIndex(([px, py]) => Math.round(px) === gridX && Math.round(py) === gridY);
+                    // Ctrl+click: Remove the point if it exists
+                    if (pointIndex !== -1) {
+                        selectedPoints.splice(pointIndex, 1);
+                    }
                 }
 
                 updatePointsField();
+                refreshSaveButton();
             });
 
 
@@ -424,6 +427,7 @@
 
             clearButton.addEventListener('click', () => {
                 selectedPoints = [];
+                dots = [];
                 updatePointsField();
                 refreshSaveButton();
             });
@@ -617,7 +621,7 @@
             }
 
             function refreshSaveButton() {
-                const anySelected = selectedPoints.length == 0
+                const anySelected = (selectedPoints.length === 0) && (dots.length === 0)
                 saveButton.disabled = anySelected
                 saveDropdown.disabled = anySelected
                 clearButton.disabled = anySelected
