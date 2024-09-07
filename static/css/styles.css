@@ -229,9 +229,9 @@ html, body {
     cursor: pointer;
 }
 
-.char-list-item:hover {
+/* .char-list-item:hover {
     background-color: var(--accent-color);
-}
+} */
 
 .char-list-item.selected {
     background-color: var(--selected-color);

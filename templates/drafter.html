@@ -1,757 +1,644 @@
 {% extends "index.html" %}
 
 {% block content %}
-<!-- <div class="container">
-    <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Draft</title>
-    </head>
-    <body> -->
-        <!-- <div class="container"> -->
-            <div class="main-content">
-                <div class="controls">
-                    <h2>Drafting character</h2>
-                    <input type="text" id="character" placeholder="Enter character(s)" autocomplete="off">
-                    <div class="d-flex flex-row" style="margin:5px;">
-                        <div class="d-flex flex-column flex-grow-1">
-                            <h2>Characters</h2>
-                            <div id="charactersList" class="spline-list" style="margin-right: 5px;"></div>
-                        </div>
-                        <div class="d-flex flex-column flex-grow-1">
-                            <h2 style="margin-left: 5px">Joins</h2>
-                            <div id="joinsList" class="spline-list" style="margin-left: 5px;"></div>
-                        </div>
-                        <div class="d-flex flex-column flex-grow-1">
-                            <h2 style="margin-left: 5px">Words</h2>
-                            <div id="wordsList" class="spline-list" style="margin-left: 5px;"></div>
-                        </div>
-                    </div>
-                    <div class="d-flex flex-column">
-                        <div class="d-flex justify-content-between">
-                                <div class="d-flex">
-                                <div class="btn-group">
-                                    <button id="saveButton" type="button" class="btn btn-primary">Save</button>
-                                    <button id="saveDropdown" type="button" class="btn btn-primary dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
-                                        <span class="visually-hidden">Toggle Dropdown</span>
-                                    </button>
-                                    <ul class="dropdown-menu">
-                                        <li><a id="saveWord" class="dropdown-item" href="#" id="saveAsOption">Save word</a></li>
-                                    </ul>
-                                </div>
-                                <button id="clearButton" type="button" class="btn btn-primary">Clear</button>
-                                <button id="joinButton" type="button" class="btn btn-primary" disabled>Join</button>
-                            </div>
-                            <button id="freezeButton" type="button" class="btn btn-primary" disabled>Freeze</button>
-                        </div>
-                        <button id="deleteButton" type="button" class="btn btn-danger" disabled>Delete</button>
-                    </div>
-                </div>
-                <div class="grid-container">
-                    <canvas id="splineCanvas" width="1520" height="1520"></canvas>
-                    <canvas id="gridCanvas" width="1520" height="1520"></canvas>
-                </div>
+<div class="main-content">
+    <div class="controls">
+        <h2>Drafting glyph</h2>
+        <input type="text" id="character" placeholder="Enter character(s)" autocomplete="off">
+        <div class="d-flex flex-row" style="margin:5px;">
+            <div class="d-flex flex-column flex-grow-1">
+                <h2>Glyphs</h2>
+                <div id="glyphsList" class="spline-list" style="margin-right: 5px;"></div>
             </div>
-        <!-- </div> -->
-        <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-        <script>
-            let charSplineData = {}; // Global variable to store spline data
-            let dotsData = {}; // Global variable to store spline data
-            let joinsDotsData = {}; // Global variable to store spline data
-            let joinsSplineData = {}; // Global variable to store spline data
-            let wordSplineData = {}; // Global variable to store spline data
-            let wordSelected = false;  // for handling differently than char selected
-            const gridCanvas = document.getElementById('gridCanvas');
-            const gridCtx = gridCanvas.getContext('2d');
-            const splineCanvas = document.getElementById('splineCanvas');
-            const splineCtx = splineCanvas.getContext('2d');
-            const characterField = document.getElementById('character');
-            const saveButton = document.getElementById('saveButton');
-            const saveDropdown = document.getElementById('saveDropdown');
-            const saveWord = document.getElementById('saveWord');
-            const clearButton = document.getElementById('clearButton');
-            const deleteButton = document.getElementById('deleteButton');
-            const joinButton = document.getElementById('joinButton');
-            const freezeButton = document.getElementById('freezeButton');
-            const charactersList = document.getElementById('charactersList');
-            const joinsList = document.getElementById('joinsList');
+        </div>
+        <div class="d-flex flex-column">
+            <button id="deleteButton" type="button" class="btn btn-danger" disabled>Delete</button>
+            <div class="d-flex justify-content-between">
+                    <div class="btn-group">
+                        <button id="saveButton" type="button" class="btn btn-primary">Save</button>
+                        <button id="saveDropdown" type="button" class="btn btn-primary dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
+                            <span class="visually-hidden">Toggle Dropdown</span>
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li><a id="saveWord" class="dropdown-item" href="#" id="saveAsOption">as word</a></li>
+                        </ul>
+                    </div>
+                    <button id="clearButton" type="button" class="btn btn-primary" disabled>Clear</button>
+                    <!-- <button id="joinButton" type="button" class="btn btn-primary" disabled>Join</button> -->
+                    <!-- <button id="unjoinButton" type="button" class="btn btn-primary" disabled>Unjoin</button> -->
+                    <button id="freezeButton" type="button" class="btn btn-primary" disabled>Freeze</button>
+                    <button id="deselectButton" type="button" class="btn btn-primary" disabled>Deselect All</button>
+            </div>
+        </div>
+    </div>
+    <div class="grid-container">
+        <canvas id="splineCanvas" width="1520" height="1520"></canvas>
+        <canvas id="gridCanvas" width="1520" height="1520"></canvas>
+    </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<script>
+let charSplineData = {}; // Global variable to store spline data
+let dotsData = {}; // Global variable to store spline data
+const gridCanvas = document.getElementById('gridCanvas');
+const gridCtx = gridCanvas.getContext('2d');
+const splineCanvas = document.getElementById('splineCanvas');
+const splineCtx = splineCanvas.getContext('2d');
+const characterField = document.getElementById('character');
+const saveButton = document.getElementById('saveButton');
+const saveDropdown = document.getElementById('saveDropdown');
+const saveWord = document.getElementById('saveWord');
+const clearButton = document.getElementById('clearButton');
+const deleteButton = document.getElementById('deleteButton');
+// const joinButton = document.getElementById('joinButton');
+// const unjoinButton = document.getElementById('unjoinButton');
+const freezeButton = document.getElementById('freezeButton');
+const deselectButton = document.getElementById('deselectButton');
+const glyphsList = document.getElementById('glyphsList');
 
-            const rootStyles = getComputedStyle(document.documentElement);
-            const colorInk = rootStyles.getPropertyValue('--ink-color').trim()
-            const colorSelected = rootStyles.getPropertyValue('--selected-color').trim()
-            const colorDarkSelected = rootStyles.getPropertyValue('--dark-selected-color').trim()
-            const colorFreeze = rootStyles.getPropertyValue('--freeze-color').trim()
-            const colorFrozen = rootStyles.getPropertyValue('--frozen-color').trim()
-            const colorDisabled = rootStyles.getPropertyValue('--disabled-color').trim()
+const rootStyles = getComputedStyle(document.documentElement);
+const colorInk = rootStyles.getPropertyValue('--ink-color').trim()
+const colorSelected = rootStyles.getPropertyValue('--selected-color').trim()
+const colorDarkSelected = rootStyles.getPropertyValue('--dark-selected-color').trim()
+const colorFreeze = rootStyles.getPropertyValue('--freeze-color').trim()
+const colorFrozen = rootStyles.getPropertyValue('--frozen-color').trim()
+const colorDisabled = rootStyles.getPropertyValue('--disabled-color').trim()
 
-            let selectedPoints = [];
-            let joiningPoints = [];
-            let frozenCharPoints = [[], []];
-            let dots = [];
-            let frozenChar = null;
-            let selectedCharacter = null;
-            let joiningCharacter = null; // Track the currently joining spline
-            const gridSize = 76;
-            const cellSize = 20;
-            const centerOffset = Math.floor(gridSize / 2) * cellSize;
+let selectedPoints = [];
+let frozenPoints = [];
+let dots = [];
+let selectedCharacters = [];
+const gridSize = 76;
+const cellSize = 20;
+const centerOffset = Math.floor(gridSize / 2) * cellSize;
 
-            function drawGrid() {
-                gridCtx.clearRect(0, 0, gridCanvas.width, gridCanvas.height);
+function drawGrid() {
+    gridCtx.clearRect(0, 0, gridCanvas.width, gridCanvas.height);
 
-                // Draw the lighter grid lines
-                gridCtx.beginPath();
-                gridCtx.strokeStyle = 'rgba(0, 0, 0, 0.1)'; // Very light gray
-                gridCtx.lineWidth = 1; // Thin line width
-                for (let i = 0; i <= gridSize; i++) {
-                    gridCtx.moveTo(i * cellSize, 0);
-                    gridCtx.lineTo(i * cellSize, gridCanvas.height);
-                    gridCtx.moveTo(0, i * cellSize);
-                    gridCtx.lineTo(gridCanvas.width, i * cellSize);
-                }
-                gridCtx.stroke();
+    // Draw the lighter grid lines
+    gridCtx.beginPath();
+    gridCtx.strokeStyle = 'rgba(0, 0, 0, 0.1)'; // Very light gray
+    gridCtx.lineWidth = 1; // Thin line width
+    for (let i = 0; i <= gridSize; i++) {
+        gridCtx.moveTo(i * cellSize, 0);
+        gridCtx.lineTo(i * cellSize, gridCanvas.height);
+        gridCtx.moveTo(0, i * cellSize);
+        gridCtx.lineTo(gridCanvas.width, i * cellSize);
+    }
+    gridCtx.stroke();
 
-                // Draw the darker center lines
-                gridCtx.beginPath();
-                gridCtx.strokeStyle = '#000'; // Dark color for center lines
-                gridCtx.lineWidth = 1; // Thinner line width for center lines
-                const centerX = centerOffset;
-                const centerY = centerOffset;
+    // Draw the darker center lines
+    gridCtx.beginPath();
+    gridCtx.strokeStyle = '#000'; // Dark color for center lines
+    gridCtx.lineWidth = 1; // Thinner line width for center lines
+    const centerX = centerOffset;
+    const centerY = centerOffset;
 
-                // Vertical center line
-                gridCtx.moveTo(centerX, 0);
-                gridCtx.lineTo(centerX, gridCanvas.height);
+    // Vertical center line
+    gridCtx.moveTo(centerX, 0);
+    gridCtx.lineTo(centerX, gridCanvas.height);
 
-                // Horizontal center line
-                gridCtx.moveTo(0, centerY);
-                gridCtx.lineTo(gridCanvas.width, centerY);
+    // Horizontal center line
+    gridCtx.moveTo(0, centerY);
+    gridCtx.lineTo(gridCanvas.width, centerY);
 
-                gridCtx.stroke();
+    gridCtx.stroke();
 
-                // Draw the dark center squares
-                gridCtx.beginPath();
-                gridCtx.strokeStyle = '#000';
-                gridCtx.lineWidth = 1;
-                gridCtx.strokeRect(centerX - 120, centerY - 120, 240, 240);
-                gridCtx.strokeRect(centerX - 240, centerY - 240, 480, 480);
-                gridCtx.strokeRect(centerX - 360, centerY - 360, 720, 720);
-                gridCtx.strokeRect(centerX - 480, centerY - 480, 960, 960);
-                gridCtx.strokeRect(centerX - 600, centerY - 600, 1200, 1200);
-                gridCtx.strokeRect(centerX - 720, centerY - 720, 1440, 1440);
-                gridCtx.stroke();
+    // Draw the dark center squares
+    gridCtx.beginPath();
+    gridCtx.strokeStyle = '#000';
+    gridCtx.lineWidth = 1;
+    gridCtx.strokeRect(centerX - 120, centerY - 120, 240, 240);
+    gridCtx.strokeRect(centerX - 240, centerY - 240, 480, 480);
+    gridCtx.strokeRect(centerX - 360, centerY - 360, 720, 720);
+    gridCtx.strokeRect(centerX - 480, centerY - 480, 960, 960);
+    gridCtx.strokeRect(centerX - 600, centerY - 600, 1200, 1200);
+    gridCtx.strokeRect(centerX - 720, centerY - 720, 1440, 1440);
+    gridCtx.stroke();
+}
+
+function drawPoints(points = null, color = colorSelected) {
+    splineCtx.fillStyle = color; // Color for knot points
+    if (!points) {
+        selectedPoints.forEach(([x, y]) => {
+            splineCtx.beginPath();
+            splineCtx.arc(centerOffset + x * cellSize, centerOffset - y * cellSize, 5, 0, Math.PI * 2);
+            splineCtx.fill();
+        });
+    } else {
+        points.forEach(([x, y]) => {
+            splineCtx.beginPath();
+            splineCtx.arc(centerOffset + x * cellSize, centerOffset - y * cellSize, 5, 0, Math.PI * 2);
+            splineCtx.fill();
+        });
+    }
+}
+
+function updatePointsField() {
+    drawGrid(); // Redraw the grid
+    splineCtx.clearRect(0, 0, splineCanvas.width, splineCanvas.height); // Clear spline visualization
+
+    let lastPoint = null;
+    let pointsToPlot = []
+
+    // Iterate over each spline (list of points)
+    selectedPoints.forEach((points, splineIndex) => {
+        if (points.length === 0) return; // Skip empty point lists
+
+        // Shift the current spline by the last point of the previous spline
+        let shiftedPoints = points;
+        if (lastPoint) {
+            const [startX, startY] = points[0] || [0, 0]; // Ensure points[0] is defined
+            const [lastX, lastY] = lastPoint || [0, 0];   // Ensure lastPoint is defined
+            shiftedPoints = points.map(([x, y]) => [x + lastX - startX, y + lastY - startY]);
+        }
+
+        // Normalize the points
+        const normalizedPointsSelected = shiftedPoints.map(([x, y]) => [(x + gridSize / 2) / gridSize, (y + gridSize / 2) / gridSize]);
+
+        // // Plot the spline
+        // plotSpline(normalizedPointsSelected, colorInk, () => {
+        //     // Only draw points for the last spline
+        //     if (splineIndex === selectedPoints.length - 1) {
+        //         drawPoints(shiftedPoints);
+        //     }
+        // });
+
+        pointsToPlot.push(normalizedPointsSelected)
+
+        // Update lastPoint to the last point of the current spline
+        lastPoint = shiftedPoints[shiftedPoints.length - 1]; // Only update if there are points
+    });
+
+    const [lastX, lastY] = pointsToPlot[pointsToPlot.length-1][0]
+    pointsToPlot.forEach((points, splineIndex) => {
+        let shiftedSpline = points.map(([x, y]) => [x - lastX + 0.5, y - lastY + 0.5])
+        let shiftedPoints = selectedPoints[splineIndex].map(([x, y]) => [x - lastX + 0.5, y - lastY + 0.5])
+
+        plotSpline(shiftedSpline, colorInk, () => {
+            // Only draw points for the last spline
+            if (splineIndex === selectedPoints.length - 1) {
+                drawPoints(shiftedPoints);
             }
+        });
+    })
+}
 
-            function drawPoints(points = null, color = colorSelected) {
-                splineCtx.fillStyle = color; // Color for knot points
-                if (!points) {
-                    selectedPoints.forEach(([x, y]) => {
-                        splineCtx.beginPath();
-                        splineCtx.arc(centerOffset + x * cellSize, centerOffset - y * cellSize, 5, 0, Math.PI * 2);
-                        splineCtx.fill();
-                    });
-                } else {
-                    points.forEach(([x, y]) => {
-                        splineCtx.beginPath();
-                        splineCtx.arc(centerOffset + x * cellSize, centerOffset - y * cellSize, 5, 0, Math.PI * 2);
-                        splineCtx.fill();
-                    });
-                }
-            }
-
-            function updatePointsField() {
-                drawGrid(); // Redraw the grid
-                splineCtx.clearRect(0, 0, splineCanvas.width, splineCanvas.height); // Clear spline visualization
-                
-                // paint frozen join+char
-                frozenCharPoints.forEach(pointsList => {
-                    const shiftedPoints = pointsList.map(([x, y]) => [(x + gridSize / 2) / gridSize, (y + gridSize / 2) / gridSize]);
-                    plotSpline(shiftedPoints, colorDisabled, () => drawPoints(pointsList, colorDisabled));
-                });
-
-                // Calculate the shift required to align the joining char to the selected char
-                if (joiningPoints.length > 0) {
-                    let lastX = 0;
-                    let lastY = 0;
-
-                    if (selectedPoints.length > 0) {
-                        [lastX, lastY] = selectedPoints[0];
+function plotSpline(points, color = colorInk, callback = null) {
+    if (points.length > 1) {
+        axios.post('/spline', { points })
+            .then(response => {
+                splineCtx.beginPath();
+                splineCtx.lineWidth = 4; // Thicker line width for spline
+                splineCtx.strokeStyle = color;
+                const spline = response.data.spline;
+                spline.forEach(([x, y], index) => {
+                    const plotX = (x + (gridSize / 2)) * (splineCanvas.width / gridSize);
+                    const plotY = splineCanvas.height - ((y + (gridSize / 2)) * (splineCanvas.height / gridSize));
+                    if (index === 0) {
+                        splineCtx.moveTo(plotX, plotY);
+                    } else {
+                        splineCtx.lineTo(plotX, plotY);
                     }
+                });
+                splineCtx.stroke();
 
-                    const [firstX, firstY] = joiningPoints[joiningPoints.length - 1];
-                    const shiftedJoinPoints = joiningPoints.map(([x, y]) => [x - firstX + lastX, y - firstY + lastY]);
-                    const normalizedPointsJoining = shiftedJoinPoints.map(([x, y]) => [(x + gridSize / 2) / gridSize, (y + gridSize / 2) / gridSize]);
-                    plotSpline(normalizedPointsJoining, colorInk);
-                }
-
-                const normalizedPointsSelected = selectedPoints.map(([x, y]) => [(x + gridSize / 2) / gridSize, (y + gridSize / 2) / gridSize]);
-                plotSpline(normalizedPointsSelected, colorInk, () => drawPoints(selectedPoints));
-
-                drawPoints(dots, colorInk)
-            }
-
-            function plotSpline(points, color = colorInk, callback = null) {
-                if (points.length > 1) {
-                    axios.post('/spline', { points })
-                        .then(response => {
-                            splineCtx.beginPath();
-                            splineCtx.lineWidth = 4; // Thicker line width for spline
-                            splineCtx.strokeStyle = color;
-                            const spline = response.data.spline;
-                            spline.forEach(([x, y], index) => {
-                                const plotX = (x + (gridSize / 2)) * (splineCanvas.width / gridSize);
-                                const plotY = splineCanvas.height - ((y + (gridSize / 2)) * (splineCanvas.height / gridSize));
-                                if (index === 0) {
-                                    splineCtx.moveTo(plotX, plotY);
-                                } else {
-                                    splineCtx.lineTo(plotX, plotY);
-                                }
-                            });
-                            splineCtx.stroke();
-
-                            // Redraw the points
-                            if (callback) {
-                                callback();
-                            }
-                        });
-                }
-                // always draw the points, even if they'll get redrawn later
-                // to avoid no points being drawn if there's only 1
+                // Redraw the points
                 if (callback) {
                     callback();
                 }
-            }
-
-            gridCanvas.addEventListener('click', (event) => {
-                // if (joiningCharacter) return; // Prevent point selection if a spline is joining
-
-                const rect = gridCanvas.getBoundingClientRect();
-                const x = event.clientX - rect.left - centerOffset;
-                const y = rect.top + centerOffset - event.clientY;
-                const gridX = Math.round(x / cellSize);
-                const gridY = Math.round(y / cellSize);
-
-                const isCtrlPressed = event.ctrlKey;
-
-                if (isCtrlPressed) {  // remove point
-                    dots.push([gridX, gridY]);
-                } else {
-                    // add point
-                    selectedPoints.push([gridX, gridY]);
-                }
-
-                updatePointsField();
-                refreshSaveButton();
             });
+    }
+    // always draw the points, even if they'll get redrawn later
+    // to avoid no points being drawn if there's only 1
+    if (callback) {
+        callback();
+    }
+}
 
-            gridCanvas.addEventListener('contextmenu', (event) => {
-                // For deleting points using right-click
+gridCanvas.addEventListener('click', (event) => {
 
-                // Deletes the point
-                event.preventDefault();  // don't open the usual right-click menu
+    const rect = gridCanvas.getBoundingClientRect();
+    const x = event.clientX - rect.left - centerOffset;
+    const y = rect.top + centerOffset - event.clientY;
+    const gridX = Math.round(x / cellSize);
+    const gridY = Math.round(y / cellSize);
 
-                const rect = gridCanvas.getBoundingClientRect();
-                const x = event.clientX - rect.left - centerOffset;
-                const y = rect.top + centerOffset - event.clientY;
-                const gridX = Math.round(x / cellSize);
-                const gridY = Math.round(y / cellSize);
+    const isCtrlPressed = event.ctrlKey;
 
-                const isCtrlPressed = event.ctrlKey;
+    if (isCtrlPressed) {  // remove point
+        dots.push([gridX, gridY]);
+    } else {
+        // add point
+        selectedPoints[selectedPoints.length - 1].push([gridX, gridY]);
+    }
 
-                if (isCtrlPressed) {  // remove from dots
-                    const pointIndex = dots.findLastIndex(([px, py]) => Math.round(px) === gridX && Math.round(py) === gridY);
-                    // Ctrl+click: Remove the point if it exists
-                    if (pointIndex !== -1) {
-                        dots.splice(pointIndex, 1);
-                    }
-                } else {  // add dot
-                    const pointIndex = selectedPoints.findLastIndex(([px, py]) => Math.round(px) === gridX && Math.round(py) === gridY);
-                    // Ctrl+click: Remove the point if it exists
-                    if (pointIndex !== -1) {
-                        selectedPoints.splice(pointIndex, 1);
-                    }
-                }
+    updatePointsField();
+    refreshSaveButton();
+});
 
-                updatePointsField();
-                refreshSaveButton();
-            });
+gridCanvas.addEventListener('contextmenu', (event) => {
+    // For deleting points using right-click
+
+    // Deletes the point
+    event.preventDefault();  // don't open the usual right-click menu
+
+    const rect = gridCanvas.getBoundingClientRect();
+    const x = event.clientX - rect.left - centerOffset;
+    const y = rect.top + centerOffset - event.clientY;
+    const gridX = Math.round(x / cellSize);
+    const gridY = Math.round(y / cellSize);
+
+    const isCtrlPressed = event.ctrlKey;
+
+    if (isCtrlPressed) {  // remove from dots
+        const pointIndex = dots.findLastIndex(([px, py]) => Math.round(px) === gridX && Math.round(py) === gridY);
+        // Ctrl+click: Remove the point if it exists
+        if (pointIndex !== -1) {
+            dots.splice(pointIndex, 1);
+        }
+    } else {  // add dot
+        const pointIndex = selectedPoints[selectedPoints.lastIndexOf-1].findLastIndex(([px, py]) => Math.round(px) === gridX && Math.round(py) === gridY);
+        // Ctrl+click: Remove the point if it exists
+        if (pointIndex !== -1) {
+            selectedPoints[selectedPoints.lastIndexOf-1].splice(pointIndex, 1);
+        }
+    }
+
+    updatePointsField();
+    refreshSaveButton();
+});
 
 
-            function handleCharSelect(char, points = null, newDots = null) {
-                selectedCharacter = char;
-                if (wordSelected) {
-                    selectedPoints = points ? points : (char in wordSplineData ? wordSplineData[char] : [])
-                }
-                else {
-                    selectedPoints = points ? points : (char in charSplineData? charSplineData[char] : [])
-                    dots = newDots ? newDots : (char in dotsData) ? dotsData[char] : []
-                    dots = dots.map(([x, y]) => [x * gridSize - gridSize / 2, y * gridSize - gridSize / 2]);
-                    console.log(char, dots.length)
-                }
-                selectedPoints = selectedPoints.map(([x, y]) => [x * gridSize - gridSize / 2, y * gridSize - gridSize / 2]);
+function handleCharSelect(char, points = null, newDots = null) {
+    if (char === selectedCharacters[selectedCharacters.length - 1]) {
+        // de-selecting most recent character
+        selectedCharacters.pop()
+        selectedPoints.pop()
+    } else if (!selectedCharacters.includes(char)) {
+        // selecting un-selected character
+        selectedCharacters.push(char)
+        const newPoints = points ? points : (char in charSplineData ? charSplineData[char] : [])
+        const shiftedNewPoints = newPoints.map(([x, y]) => [x * gridSize - gridSize / 2, y * gridSize - gridSize / 2]);
+        selectedPoints.push(shiftedNewPoints)
+    } else {  // not allowed to multi-select characters
 
-                characterField.value = char ? char : '';
+    }
 
-                // update coloring of spline list
-                document.querySelectorAll('.char-list-item').forEach(item => {
-                    if ((item.textContent === char) && !wordSelected) {
-                        if (item.classList.contains('selected')) {  // on -> off
-                            item.classList.remove('selected');
-                        } else {  // off -> on
-                            item.classList.add('selected');
-                            item.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                        }
-                    } else {
-                        if (item.classList.contains('selected')) {  // on -> off
-                            item.classList.remove('selected');
-                        }
-                    }
-                });
+    // update plotting points
+    // TODO: change to be list of lists
+    const mostRecent = selectedCharacters[selectedCharacters.length - 1]
 
-                // TODO: handle case where word and character are the same
+    // dots = newDots ? newDots : (char in dotsData) ? dotsData[char] : []
+    // dots = dots.map(([x, y]) => [x * gridSize - gridSize / 2, y * gridSize - gridSize / 2]);
 
-                // update coloring of spline list
-                document.querySelectorAll('.word-list-item').forEach(item => {
-                    if ((item.textContent === char) && wordSelected) {
-                        if (item.classList.contains('selected')) {  // on -> off
-                        } else {  // off -> on
-                            item.classList.add('selected');
-                            item.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                        }
-                    } else {
-                        if (item.classList.contains('selected')) {  // on -> off
-                            item.classList.remove('selected');
-                        }
-                    }
-                });
+    // selectedPoints = selectedPoints.map(([x, y]) => [x * gridSize - gridSize / 2, y * gridSize - gridSize / 2]);
+
+    characterField.value = mostRecent ? mostRecent : '';
+    characterField.focus();
+
+    // update coloring of spline list
+    document.querySelectorAll('.char-list-item').forEach(item => {
+        item.classList.remove('selected');
+        item.classList.remove('joining');
+
+        if (selectedCharacters.includes(item.textContent)) {
+            if (item.textContent === mostRecent) {
+                item.classList.add('selected');
+                // item.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                scrollIfNeeded(item);
+            } else {
+                item.classList.add('joining');
             }
+        }
+    });
+}
 
-            function handleJoinSelect(prev) {
-                joiningCharacter = prev;
-                joiningPoints = prev ? charSplineData[prev] : [];
-                joiningPoints = joiningPoints.map(([x, y]) => [x * gridSize - gridSize / 2, y * gridSize - gridSize / 2]);
+function scrollIfNeeded(item) {
+    // Smarter scrollIntoView which accounts for the size of the item and its parent
+    const rect = item.getBoundingClientRect();
+    const parentRect = item.parentNode.getBoundingClientRect();
 
-                // update coloring of spline list
-                document.querySelectorAll('.char-list-item').forEach(item => {
-                    item.classList.remove('joining');
-                    if (item.textContent === prev ) {
-                        item.classList.add('joining');
-                        if (item.classList.contains('selected')) {
-                            item.classList.remove('selected');
-                        }
-                    } else {
-                        if (item.classList.contains('joining')) {
-                            item.classList.remove('joining');
-                        }
-                    }
-                });
-            }
+    // Check if item is fully visible within its parent
+    const isFullyVisible = rect.top >= parentRect.top && rect.bottom <= parentRect.bottom;
 
-            function handleJoinAndCharSelect(prev, char){
-                handleJoinSelect(prev)
+    // Scroll into view only if the item is not fully visible
+    if (!isFullyVisible) {
+        item.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+}
 
-                const newPoints = ((char in joinsSplineData) && (prev in joinsSplineData[char])) ? joinsSplineData[char][prev] : null;
-                const newDots = ((char in joinsDotsData) && (prev in joinsDotsData[char])) ? joinsDotsData[char][prev] : null;
-                handleCharSelect(char, newPoints, newDots);
+function loadCharacters() {
+    axios.get('/load_characters')
+        .then(response => {
 
-                // update coloring of joins list and scroll into view
-                document.querySelectorAll('.join-list-item').forEach(item => {
-                    item.classList.remove('selected');
-                    if (item.textContent === prev+char ) {
-                        if (item.classList.contains('selected')) {
-                            item.classList.remove('selected');
-                        } else {
-                            item.classList.add('selected');
-                            item.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                        }
-                    } else {
-                        if (item.classList.contains('selected')) {
-                            item.classList.remove('selected');
-                        }
-                    }
-                });
-            }
-
-            saveButton.addEventListener('click', () => {
-                const character = characterField.value.trim();
-                if (character && selectedPoints.length) {
-                    const data = {
-                        character: character,
-                        joinchar: joiningCharacter,
-                        points: selectedPoints.map(([x, y]) => [(x + gridSize / 2) / gridSize, (y + gridSize / 2) / gridSize]),
-                        as_word: false,
-                        dots: dots.map(([x, y]) => [(x + gridSize / 2) / gridSize, (y + gridSize / 2) / gridSize]),
-                    };
-                    axios.post('/save', data)
-                        .then(response => {
-                            if (response.data.status === 'success') {
-                                loadJoins();  // to re-add the new data
-                                loadCharacters();
-                                handleJoinAndCharSelect(null, null);
-                                refreshButtons();
-                                updatePointsField();
-                                characterField.value = '';
-                                characterField.focus();
-                            }
-                        });
-                }
-
-            });
-
-            saveWord.addEventListener('click', () => {
-                let combinedArray = [...joiningPoints, ...selectedPoints];
-
-                const character = characterField.value.trim();
-                if (character && combinedArray.length) {
-                    const data = {
-                        character: character,
-                        joinchar: joiningCharacter,
-                        points: combinedArray.map(([x, y]) => [(x + gridSize / 2) / gridSize, (y + gridSize / 2) / gridSize]),
-                        as_word: true,
-                    };
-                    axios.post('/save', data)
-                        .then(response => {
-                            if (response.data.status === 'success') {
-                                loadJoins();  // to re-add the new data
-                                loadCharacters();
-                                loadWords();
-                                handleJoinAndCharSelect(null, null);
-                                refreshButtons();
-                                updatePointsField();
-                                characterField.value = '';
-                                characterField.focus();
-                            }
-                        });
-                }
-
-            });
-
-            clearButton.addEventListener('click', () => {
-                selectedPoints = [];
-                dots = [];
-                updatePointsField();
-                refreshSaveButton();
-            });
-
-            deleteButton.addEventListener('click', () => {
-                if (selectedCharacter) {
-                    axios.post('/delete', { character: selectedCharacter , joinchar: joiningCharacter, delete_word: wordSelected})
-                        .then(response => {
-                            if (response.data.status === 'success') {
-                                loadJoins();  // to re-add the new data
-                                loadCharacters();
-                                loadWords();
-                                handleJoinAndCharSelect(null, null);
-                                refreshButtons();
-                                updatePointsField();
-                                characterField.value = '';
-                                characterField.focus();
-                            }
-                        });
-                wordSelected = !wordSelected
-                }
-            });
-
-            function loadDots() {
-                axios.get('/load_dots')
-                    .then(response => {
-                        console.log(response.data)
-                        dotsData = response.data['chars']; // Store the data in the global variable
-                        joinsDotsData = response.data['joins']; // Store the data in the global variable
-                    });
-            }
+            charSplineData = response.data; // Store the data in the global variable
+            glyphsList.innerHTML = '';
 
 
-            function loadCharacters() {
-                axios.get('/load_characters')
-                    .then(response => {
+            for (const [character, points] of Object.entries(charSplineData)) {
+                const listItem = document.createElement('div');
+                listItem.className = 'char-list-item';
+                listItem.textContent = character;
 
-                        charSplineData = response.data; // Store the data in the global variable
-                        charactersList.innerHTML = '';
-
-
-                        for (const [character, points] of Object.entries(charSplineData)) {
-                            const listItem = document.createElement('div');
-                            listItem.className = 'char-list-item';
-                            listItem.textContent = character;
-
-                            listItem.addEventListener('click', () => {
-                                const prevSelected = listItem.classList.contains('selected');
-
-                                wordSelected = false; // for handling delete
-
-                                handleJoinAndCharSelect(joiningCharacter, !prevSelected ? character : null)
-                                refreshButtons();
-                                updatePointsField();
-                            });
-                            charactersList.appendChild(listItem);
-                        }
-                    });
-                loadDots();
-            }
-
-            function loadJoins() {
-                axios.get('/load_joins')
-                    .then(response => {
-
-                        charSplineData = response.data['chars'];
-                        joinsSplineData = response.data['joins'];
-                        joinsList.innerHTML = '';
-
-                        for (const [character, charPoints] of Object.entries(charSplineData)) {
-                            if (!(character in joinsSplineData)) {
-                                continue
-                            }
-
-                            for (const [joinchar, joinPoints] of Object.entries(joinsSplineData[character])) {
-                                const listItem = document.createElement('div');
-                                listItem.className = 'join-list-item';
-                                listItem.textContent = joinchar+character;
-                                listItem.addEventListener('click', () => {
-                                    const prevSelected = listItem.classList.contains('selected');
-
-                                    handleJoinAndCharSelect(
-                                        !prevSelected ? joinchar: null,
-                                        !prevSelected ? character: null,
-                                    )
-                                    refreshButtons();
-                                    updatePointsField();
-                                });
-
-                                // Make sure selected character is always highlighted
-                                joinsList.appendChild(listItem);
-                            }
-                        }
-                    });
-            }
-
-            function loadWords() {
-                axios.get('/load_words')
-                    .then(response => {
-
-                        wordSplineData = response.data; // Store the data in the global variable
-                        wordsList.innerHTML = '';
-
-                        for (const [word, points] of Object.entries(wordSplineData)) {
-                            const listItem = document.createElement('div');
-                            listItem.className = 'word-list-item';
-                            listItem.textContent = word;
-
-                            listItem.addEventListener('click', () => {
-                                if (listItem.classList.contains('selected')) {
-                                    wordSelected = false;
-                                    handleJoinSelect(null);
-                                    handleCharSelect(null);
-                                } else {
-                                    wordSelected = true; // for handling delete
-                                    handleJoinSelect(null);
-                                    handleCharSelect(word, points);
-                                }
-                                refreshButtons();
-                                updatePointsField();
-                            });
-
-                            wordsList.appendChild(listItem);
-                        }
-                    });
-            }
-
-
-            joinButton.addEventListener('click', () => {
-
-                if (joiningCharacter && selectedCharacter) {
-                    // drop the selected, make the join the selected
-                    handleJoinAndCharSelect(null, joiningCharacter)
-                } else if (joiningCharacter) {
-                    // make the join the selected
-                    handleJoinAndCharSelect(null, joiningCharacter)
-                } else if (selectedCharacter) {
-                    // make the selected the join
-                    handleJoinAndCharSelect(selectedCharacter, null)
-                }
-
-                refreshButtons();
-                updatePointsField();
-
-                // to make it easier to continue typing a join after clicking "Join"
-                characterField.focus();
-            });
-
-            freezeButton.addEventListener('click', () => {
-                splineCtx.clearRect(0, 0, splineCanvas.width, splineCanvas.height);
-                
-                if (freezeButton.textContent === 'Freeze') { // freeze
-                    let shiftedJoiningPoints = [];
-                    // If selectedPoints is non-empty, shift joiningPoints by the first point in selectedPoints
-                    if ((selectedPoints.length > 0) && (joiningPoints.length > 0)) {
-                        let lastX = 0;
-                        let lastY = 0;
-
-                        if (selectedPoints.length > 0) {
-                            [lastX, lastY] = selectedPoints[0];
-                        }
-
-                        const [firstX, firstY] = joiningPoints[joiningPoints.length - 1];
-                        shiftedJoiningPoints = joiningPoints.map(([x, y]) => [x - firstX + lastX, y - firstY + lastY]);
-                    }
-                    
-                    // Concatenate joiningPoints and selectedPoints
-                    frozenCharPoints = [shiftedJoiningPoints, selectedPoints];
-
-                    frozenChar = (joiningCharacter ? joiningCharacter : '') + (selectedCharacter ? selectedCharacter : '');
-                    wordSelected = false;
-                    handleJoinAndCharSelect(null, null);
+                listItem.addEventListener('click', () => {
+                    handleCharSelect(character)
                     refreshButtons();
-                    
-                } else {  // unfreeze
-                    frozenChar = null;
-                    frozenCharPoints = [[], []];
-                    refreshFreezeButton();
-                }
-
-                freezeButton.textContent = (freezeButton.textContent === 'Freeze') ? 'Unfreeze' : 'Freeze';
-                updatePointsField();
-                characterField.focus();
-            });
-
-            function refreshButtons() {
-                refreshJoinButton();
-                refreshDeleteButton();
-                refreshFreezeButton();
-                refreshSaveButton();
-            }
-
-            function refreshSaveButton() {
-                const anySelected = (selectedPoints.length === 0) && (dots.length === 0)
-                saveButton.disabled = anySelected
-                saveDropdown.disabled = anySelected
-                clearButton.disabled = anySelected
-            }
-
-            function refreshJoinButton() {
-                joinButton.textContent = joiningCharacter ? 'Unjoin' : 'Join';
-
-                // check if disabled
-                joinButton.disabled = (((joiningCharacter || selectedCharacter) == null) || wordSelected)
-            }
-
-            function refreshFreezeButton() {
-                freezeButton.disabled = ((joiningCharacter || selectedCharacter) == null) && (frozenChar == null) && !wordSelected 
-            }
-
-            function refreshDeleteButton() {
-                deleteButton.disabled =  (selectedCharacter || joiningCharacter) == null
-                if (deleteButton.disabled) {
-                    if (deleteButton.classList.contains('delete-button')) {
-                        deleteButton.classList.remove('delete-button')
-                    }
-                } else {
-                    if (!deleteButton.classList.contains('delete-button')) {
-                        // deleteButton.classList.add('delete-button')
-                    }
-                }
-            }
-
-            // to avoid too-fast updates when typing into char field
-            let debounceTimeout;
-            function debounce(func, delay) {
-                return function(...args) {
-                    clearTimeout(debounceTimeout);
-                    debounceTimeout = setTimeout(() => func.apply(this, args), delay);
-                };
-            }
-
-            // Debounce the plot update to avoid too many requests
-            const debouncedKeyCheck = debounce(keyCheck, 100);  // ms?
-
-            function keyCheck(event) {
-                if (event.key === 'Control') {
-                    freezeButton.click()
-                } else if (event.key === 'Shift') {
-                    joinButton.click();
-                } else if (event.key == 'Escape') {
-                    clearButton.click()
-                }
-                else {
-                    sortAndDisplayList();
-                }
-            }
-
-            // Bind the input event on textarea and change event on checkboxes
-            characterField.addEventListener('keyup', function(event) {
-                debouncedKeyCheck(event);
-            })
-
-            function sortAndDisplayList() {
-                sortOneList(charactersList);
-                sortOneList(joinsList);
-
-                // select the top result if it exists
-                const searchTerm = document.getElementById('character').value.toLowerCase();
-
-                if ((searchTerm) && (searchTerm in charSplineData)) {  // select
-                    const topResult = charactersList.children[0];
-                    handleJoinAndCharSelect(joiningCharacter, topResult.textContent)
-                    topResult.classList.add('selected');
-                } else if (searchTerm === '') {
-                    // deselect
-                    handleJoinAndCharSelect(joiningCharacter, null)
-                }
-
-                refreshButtons();
-                updatePointsField();
-            }
-
-            function sortOneList(listToSort) {
-                // Get the value from the character input field
-                const searchTerm = document.getElementById('character').value.toLowerCase();
-
-                // Get current list items
-                let listItems = Array.from(listToSort.children);
-
-                // Function to check if an item contains the search term
-                const containsSearchTerm = text => text.toLowerCase().includes(searchTerm);
-                const startsWithSearchTerm = text => text.toLowerCase().startsWith(searchTerm);
-
-                // Separate items into those that start with the search term, those that contain it elsewhere, and those that do not contain it
-                let startsWithItems = listItems.filter(item => startsWithSearchTerm(item.textContent));
-                let containsItems = listItems.filter(item => containsSearchTerm(item.textContent) && !startsWithSearchTerm(item.textContent));
-                let nonMatchingItems = listItems.filter(item => !containsSearchTerm(item.textContent));
-
-                // Sort each array alphabetically
-                startsWithItems.sort((a, b) => a.textContent.toLowerCase().localeCompare(b.textContent.toLowerCase()));
-                containsItems.sort((a, b) => a.textContent.toLowerCase().localeCompare(b.textContent.toLowerCase()));
-                nonMatchingItems.sort((a, b) => a.textContent.toLowerCase().localeCompare(b.textContent.toLowerCase()));
-
-                // Combine the arrays: items starting with the search term first, then items containing it elsewhere, then non-matching items
-                let sortedItems = startsWithItems.concat(containsItems, nonMatchingItems);
-
-                // Clear the current list and re-append sorted items
-                listToSort.innerHTML = '';
-                sortedItems.forEach(item => {
-                    listToSort.appendChild(item);
+                    updatePointsField();
                 });
+                glyphsList.appendChild(listItem);
             }
+        });
+    loadDots();
+}
 
-            refreshButtons();
-            drawGrid();
-            loadJoins();
-            loadCharacters();
-            loadWords();
-
-            document.addEventListener("DOMContentLoaded", function() {
-                const gridContainer = document.querySelector('.grid-container');
-                const containerWidth = gridContainer.clientWidth;
-                const containerHeight = gridContainer.clientHeight;
-                const gridWidth = 1520;
-                const gridHeight = 1520;
-
-                gridContainer.scrollLeft = (gridWidth - containerWidth) / 2;
-                gridContainer.scrollTop = (gridHeight - containerHeight) / 2;
+saveButton.addEventListener('click', () => {
+    const character = characterField.value.trim();
+    if (character && selectedPoints.length) {
+        const data = {
+            character: character,
+            points: selectedPoints.map(([x, y]) => [(x + gridSize / 2) / gridSize, (y + gridSize / 2) / gridSize]),
+            as_word: false,
+            dots: dots.map(([x, y]) => [(x + gridSize / 2) / gridSize, (y + gridSize / 2) / gridSize]),
+        };
+        axios.post('/save', data)
+            .then(response => {
+                if (response.data.status === 'success') {
+                    loadCharacters();
+                    handleCharSelect(null);
+                    refreshButtons();
+                    updatePointsField();
+                    characterField.value = '';
+                    characterField.focus();
+                }
             });
+    }
 
-            characterField.focus();
-        </script>
-    <!-- </body>
-    </html>
-</div> -->
+});
+
+saveWord.addEventListener('click', () => {
+    let combinedArray = [...selectedPoints];
+
+    const character = characterField.value.trim();
+    if (character && combinedArray.length) {
+        const data = {
+            character: character,
+            points: combinedArray.map(([x, y]) => [(x + gridSize / 2) / gridSize, (y + gridSize / 2) / gridSize]),
+            as_word: true,
+        };
+        axios.post('/save', data)
+            .then(response => {
+                if (response.data.status === 'success') {
+                    loadCharacters();
+                    handleCharSelect(null);
+                    refreshButtons();
+                    updatePointsField();
+                    characterField.value = '';
+                    characterField.focus();
+                }
+            });
+    }
+
+});
+
+clearButton.addEventListener('click', () => {
+    selectedPoints[selectedPoints.length-1] = [];
+    // dots = [];
+    updatePointsField();
+    refreshSaveButton();
+});
+
+deleteButton.addEventListener('click', () => {
+    if (selectedCharacters) {
+        axios.post('/delete', { character: selectedCharacters.join('')})
+            .then(response => {
+                if (response.data.status === 'success') {
+                    loadCharacters();
+                    handleCharSelect(null);
+                    refreshButtons();
+                    updatePointsField();
+                    characterField.value = '';
+                    characterField.focus();
+                }
+            });
+    }
+});
+
+function loadDots() {
+    axios.get('/load_dots')
+        .then(response => {
+            dotsData = response.data['chars']; // Store the data in the global variable
+        });
+}
+
+// joinButton.addEventListener('click', () => {
+//     // TODO: set a "joining" flag to true, so that the next selected char is added to the list
+
+//     if (selectedCharacters) {
+//         selectedCharacters.push()
+//     }
+
+//     refreshButtons();
+//     updatePointsField();
+
+//     characterField.focus();
+// });
+
+// unjoinButton.addEventListener('click', () => {
+//     selectedCharacters.pop()
+
+//     refreshButtons();
+//     updatePointsField();
+
+//     characterField.focus();
+// });
+
+freezeButton.addEventListener('click', () => {
+    splineCtx.clearRect(0, 0, splineCanvas.width, splineCanvas.height);
+    
+    if (freezeButton.textContent === 'Freeze') { // freeze
+        // TODO: handle shifting of previous selected points
+        let lastX = 0;
+        let lastY = 0;
+
+        if (selectedPoints.length > 0) {
+            [lastX, lastY] = selectedPoints[0];
+        }
+
+        const [firstX, firstY] = joiningPoints[joiningPoints.length - 1];
+        shiftedJoiningPoints = joiningPoints.map(([x, y]) => [x - firstX + lastX, y - firstY + lastY]);
+    
+        // Concatenate joiningPoints and selectedPoints
+        frozenPoints = [shiftedJoiningPoints, selectedPoints];
+
+        handleCharSelect(null);
+        refreshButtons();
+        
+    } else {  // unfreeze
+        frozenPoints = [[], []];
+        refreshFreezeButton();
+    }
+
+    freezeButton.textContent = (freezeButton.textContent === 'Freeze') ? 'Unfreeze' : 'Freeze';
+    updatePointsField();
+    characterField.focus();
+});
+
+deselectButton.addEventListener('click', () => {
+    selectedCharacters = []
+    selectedPoints = []
+    updatePointsField();
+    refreshDeselectButton();
+
+    // refresh coloring of spline list
+    document.querySelectorAll('.char-list-item').forEach(item => {
+        item.classList.remove('selected');
+        item.classList.remove('joining');
+
+        if (selectedCharacters.includes(item.textContent)) {
+            if (item.textContent === mostRecent) {
+                item.classList.add('selected');
+                // item.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                scrollIfNeeded(item);
+            } else {
+                item.classList.add('joining');
+            }
+        }
+    });
+});
+
+function refreshButtons() {
+    refreshDeleteButton();
+    refreshFreezeButton();
+    refreshSaveButton();
+    refreshDeselectButton();
+}
+
+function refreshSaveButton() {
+    const anySelected = (selectedPoints.length === 0) && (dots.length === 0)
+    saveButton.disabled = anySelected
+    saveDropdown.disabled = anySelected
+    clearButton.disabled = anySelected
+}
+
+function refreshDeselectButton() {
+    deselectButton.disabled = selectedCharacters.length === 0
+}
+
+function refreshFreezeButton() {
+    freezeButton.disabled = (selectedCharacters.length === 0)
+}
+
+function refreshDeleteButton() {
+    deleteButton.disabled = (selectedCharacters.length === 0)
+    if (deleteButton.disabled) {
+        if (deleteButton.classList.contains('delete-button')) {
+            deleteButton.classList.remove('delete-button')
+        }
+    } else {
+        if (!deleteButton.classList.contains('delete-button')) {
+            // deleteButton.classList.add('delete-button')
+        }
+    }
+}
+
+// to avoid too-fast updates when typing into char field
+let debounceTimeout;
+function debounce(func, delay) {
+    return function(...args) {
+        clearTimeout(debounceTimeout);
+        debounceTimeout = setTimeout(() => func.apply(this, args), delay);
+    };
+}
+
+// Debounce the plot update to avoid too many requests
+const debouncedKeyCheck = debounce(keyCheck, 100);  // ms?
+
+function keyCheck(event) {
+    // handling typing in the character field,
+    // and listening for Ctrl, Shift or Esc clicks
+    if (event.key === 'Control') {
+        freezeButton.click()
+    } else if (event.key === 'Shift') {
+        // joinButton.click();
+    } else if (event.key == 'Escape') {
+        clearButton.click()
+    }
+    else {
+        sortAndDisplayList();
+    }
+}
+
+// Bind the input event on textarea and change event on checkboxes
+characterField.addEventListener('keyup', function(event) {
+    debouncedKeyCheck(event);
+})
+
+function sortAndDisplayList() {
+    sortOneList(glyphsList);
+
+    // // select the top result if it exists
+    // const searchTerm = document.getElementById('character').value.toLowerCase();
+
+    // if ((searchTerm) && (searchTerm in charSplineData)) {  // select
+    //     const topResult = glyphsList.children[0];
+    //     handleCharSelect(topResult.textContent)
+    //     topResult.classList.add('selected');
+    // } else if (searchTerm === '') {
+    //     // deselect
+    //     handleCharSelect(null)
+    // }
+
+    // refreshButtons();
+    // updatePointsField();
+}
+
+function sortOneList(listToSort) {
+    // Get the value from the character input field
+    const searchTerm = document.getElementById('character').value.toLowerCase();
+
+    // Get current list items
+    let listItems = Array.from(listToSort.children);
+
+    // Function to check if an item contains the search term
+    const containsSearchTerm = text => text.toLowerCase().includes(searchTerm);
+    const startsWithSearchTerm = text => text.toLowerCase().startsWith(searchTerm);
+
+    // Separate items into those that start with the search term, those that contain it elsewhere, and those that do not contain it
+    let startsWithItems = listItems.filter(item => startsWithSearchTerm(item.textContent));
+    let containsItems = listItems.filter(item => containsSearchTerm(item.textContent) && !startsWithSearchTerm(item.textContent));
+    let nonMatchingItems = listItems.filter(item => !containsSearchTerm(item.textContent));
+
+    // Sort each array alphabetically
+    startsWithItems.sort((a, b) => a.textContent.toLowerCase().localeCompare(b.textContent.toLowerCase()));
+    containsItems.sort((a, b) => a.textContent.toLowerCase().localeCompare(b.textContent.toLowerCase()));
+    nonMatchingItems.sort((a, b) => a.textContent.toLowerCase().localeCompare(b.textContent.toLowerCase()));
+
+    // Combine the arrays: items starting with the search term first, then items containing it elsewhere, then non-matching items
+    let sortedItems = startsWithItems.concat(containsItems, nonMatchingItems);
+
+    // Clear the current list and re-append sorted items
+    listToSort.innerHTML = '';
+    sortedItems.forEach(item => {
+        listToSort.appendChild(item);
+    });
+}
+
+refreshButtons();
+drawGrid();
+loadCharacters();
+
+document.addEventListener("DOMContentLoaded", function() {
+    const gridContainer = document.querySelector('.grid-container');
+    const containerWidth = gridContainer.clientWidth;
+    const containerHeight = gridContainer.clientHeight;
+    const gridWidth = 1520;
+    const gridHeight = 1520;
+
+    gridContainer.scrollLeft = (gridWidth - containerWidth) / 2;
+    gridContainer.scrollTop = (gridHeight - containerHeight) / 2;
+});
+
+characterField.focus();
+</script>
 {% endblock %}
