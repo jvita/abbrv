@@ -271,7 +271,7 @@ gridCanvas.addEventListener('contextmenu', (event) => {
 });
 
 
-function handleCharSelect(char, points = null, newDots = null) {
+function handleCharSelect(char, points = null, newDots = null, append = false) {
     if (char === null) {
         // deselect everything
         selectedCharacters = []
@@ -280,17 +280,27 @@ function handleCharSelect(char, points = null, newDots = null) {
 
     if (char === selectedCharacters[selectedCharacters.length - 1]) {
         // de-selecting most recent character
-        selectedCharacters.pop()
-        selectedPoints.splice(-numSplinesPerChar[char], numSplinesPerChar[char])
+        const popped = selectedCharacters.pop()
+        selectedPoints.splice(-numSplinesPerChar[popped], numSplinesPerChar[popped])
     } else if ((char !== null) && (!selectedCharacters.includes(char))) {
         // selecting un-selected character
-        selectedCharacters.push(char)
         const newPoints = points ? points : (char in charSplineData ? charSplineData[char] : [])
         // const shiftedNewPoints = newPoints.map(([x, y]) => [x * gridSize - gridSize / 2, y * gridSize - gridSize / 2]);
         const shiftedNewPoints = newPoints.map(spline => 
             spline.map(([x, y]) => [(x * gridSize  - gridSize / 2), (y * gridSize - gridSize / 2)])
             );
-        selectedPoints = selectedPoints.concat(shiftedNewPoints)
+
+        if (append) {
+            selectedCharacters.push(char)
+
+            selectedPoints = selectedPoints.concat(shiftedNewPoints)
+        } else { // overwrite most recent with new
+            const popped = selectedCharacters.pop()
+            selectedCharacters.push(char)
+
+            selectedPoints.splice(-numSplinesPerChar[popped], numSplinesPerChar[popped])
+            selectedPoints = selectedPoints.concat(shiftedNewPoints)
+        }
     } else {  // not allowed to multi-select characters
 
     }
@@ -302,7 +312,7 @@ function handleCharSelect(char, points = null, newDots = null) {
     // dots = dots.map(([x, y]) => [x * gridSize - gridSize / 2, y * gridSize - gridSize / 2]);
 
     characterField.value = mostRecent ? mostRecent : '';
-    characterField.focus();
+    // characterField.focus();
 
     // update coloring of spline list
     document.querySelectorAll('.char-list-item').forEach(item => {
@@ -384,8 +394,8 @@ function loadCharacters() {
                 listItem.className = 'char-list-item';
                 listItem.textContent = character;
 
-                listItem.addEventListener('click', () => {
-                    handleCharSelect(character)
+                listItem.addEventListener('click', (event) => {
+                    handleCharSelect(character, null, null, event.ctrlKey)
                     refreshButtons();
                     updatePointsField();
                 });
@@ -548,16 +558,16 @@ const debouncedKeyCheck = debounce(keyCheck, 100);  // ms?
 function keyCheck(event) {
     // handling typing in the character field,
     // and listening for Ctrl, Shift or Esc clicks
-    if (event.key === 'Control') {
-        freezeButton.click()
-    } else if (event.key === 'Shift') {
-        // joinButton.click();
-    } else if (event.key == 'Escape') {
-        clearButton.click()
-    }
-    else {
+    // if (event.key === 'Control') {
+    //     freezeButton.click()
+    // } else if (event.key === 'Shift') {
+    //     // joinButton.click();
+    // } else if (event.key == 'Escape') {
+    //     clearButton.click()
+    // }
+    // else {
         sortAndDisplayList();
-    }
+    // }
 }
 
 // Bind the input event on textarea and change event on checkboxes
@@ -570,7 +580,6 @@ function sortAndDisplayList() {
 
     // item.scrollIntoView({ behavior: 'smooth', block: 'start' });
     // scrollIfNeeded(item);
-    console.log('scrollTop')
     glyphsList.scrollTop = 0
 
     // // select the top result if it exists
