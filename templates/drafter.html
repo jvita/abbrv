@@ -68,6 +68,7 @@ let selectedPoints = [];
 let frozenPoints = [];
 let dots = [];
 let selectedCharacters = [];
+let numSplinesPerChar = [];
 const gridSize = 76;
 const cellSize = 20;
 const centerOffset = Math.floor(gridSize / 2) * cellSize;
@@ -281,13 +282,16 @@ function handleCharSelect(char, points = null, newDots = null) {
     if (char === selectedCharacters[selectedCharacters.length - 1]) {
         // de-selecting most recent character
         selectedCharacters.pop()
-        selectedPoints.pop()
+        selectedPoints.splice(-numSplinesPerChar[char], numSplinesPerChar[char])
     } else if ((char !== null) && (!selectedCharacters.includes(char))) {
         // selecting un-selected character
         selectedCharacters.push(char)
         const newPoints = points ? points : (char in charSplineData ? charSplineData[char] : [])
-        const shiftedNewPoints = newPoints.map(([x, y]) => [x * gridSize - gridSize / 2, y * gridSize - gridSize / 2]);
-        selectedPoints.push(shiftedNewPoints)
+        // const shiftedNewPoints = newPoints.map(([x, y]) => [x * gridSize - gridSize / 2, y * gridSize - gridSize / 2]);
+        const shiftedNewPoints = newPoints.map(spline => 
+            spline.map(([x, y]) => [(x * gridSize  - gridSize / 2), (y * gridSize - gridSize / 2)])
+            );
+        selectedPoints = selectedPoints.concat(shiftedNewPoints)
     } else {  // not allowed to multi-select characters
 
     }
@@ -374,8 +378,9 @@ function loadCharacters() {
             charSplineData = response.data; // Store the data in the global variable
             glyphsList.innerHTML = '';
 
-
             for (const [character, points] of Object.entries(charSplineData)) {
+                numSplinesPerChar[character] = points.length  // used during de-selection
+
                 const listItem = document.createElement('div');
                 listItem.className = 'char-list-item';
                 listItem.textContent = character;
@@ -392,13 +397,14 @@ function loadCharacters() {
 }
 
 saveButton.addEventListener('click', () => {
-    const character = characterField.value.trim();
-    if (character && selectedPoints.length) {
+    if (selectedCharacters.length && selectedPoints.length) {
         const data = {
-            character: character,
-            points: selectedPoints.map(([x, y]) => [(x + gridSize / 2) / gridSize, (y + gridSize / 2) / gridSize]),
-            as_word: false,
-            dots: dots.map(([x, y]) => [(x + gridSize / 2) / gridSize, (y + gridSize / 2) / gridSize]),
+            character: selectedCharacters.join(''),
+            points: selectedPoints.map(spline => 
+                spline.map(([x, y]) => [(x + gridSize / 2) / gridSize, (y + gridSize / 2) / gridSize])
+                ),
+            // as_word: false,
+            // dots: dots.map(([x, y]) => [(x + gridSize / 2) / gridSize, (y + gridSize / 2) / gridSize]),
         };
         axios.post('/save', data)
             .then(response => {

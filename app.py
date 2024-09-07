@@ -61,14 +61,16 @@ def spline():
 def save():
     data = request.json
     character = data['character']
-    joinchar = data['joinchar']
+    # joinchar = data['joinchar']
     points = data['points']
-    as_word = data['as_word']
-    dots = data['dots']
+    # as_word = data['as_word']
+    # dots = data['dots']
+    dots = []
 
     # handle saving dots, if provided
     if len(dots) > 0:
-        if joinchar is not None: # save as join
+        # if joinchar is not None: # save as join
+        if False:
             adjusted_points = adjust_points(dots, np.array([-0.5, -0.5]))
 
             # Load existing data
@@ -106,7 +108,8 @@ def save():
             with open(CHAR_DOTS_FILE, 'w') as f:
                 json.dump(existing_data, f, indent=4)
 
-    if as_word:
+    # if as_word:
+    if False:
         adjusted_points = adjust_points(points, np.array([-0.5, -0.5]))
 
         # Load existing data
@@ -125,7 +128,8 @@ def save():
 
         return jsonify({'status': 'success'})
 
-    elif joinchar is not None: # save as join
+    # elif joinchar is not None: # save as join
+    elif False:
         adjusted_points = adjust_points(points, np.array([-0.5, -0.5]))
 
         # Load existing data
@@ -150,7 +154,7 @@ def save():
         return jsonify({'status': 'success'})
 
     else: # save in characters
-        adjusted_points = adjust_points(points, np.array([-0.5, -0.5]))
+        adjusted_points = [adjust_points(p, np.array([-0.5, -0.5])) for p in points]
 
         # Load existing data
         try:
@@ -169,33 +173,33 @@ def save():
         return jsonify({'status': 'success'})
 
 
-@app.route('/load_joins')
-def load_joins():
-    # Load single-character splines
-    chars = {}
-    try:
-        with open(CHAR_FILE, 'r') as f:
-            join_data = json.load(f)
-            chars.update({k: adjust_points(v, np.array([0.5, 0.5])) for k, v in join_data.items()})
-    except FileNotFoundError:
-        pass
+# @app.route('/load_joins')
+# def load_joins():
+#     # Load single-character splines
+#     chars = {}
+#     try:
+#         with open(CHAR_FILE, 'r') as f:
+#             join_data = json.load(f)
+#             chars.update({k: adjust_points(v, np.array([0.5, 0.5])) for k, v in join_data.items()})
+#     except FileNotFoundError:
+#         pass
 
-    # Load join splines
-    joins = {}
-    try:
-        with open(JOINS_FILE, 'r') as f:
-            join_data = json.load(f)
-            joins.update({
-                k: {
-                    j: adjust_points(v, np.array([0.5, 0.5]))
-                    for j, v in dct.items()
-                    }
-                for k, dct in join_data.items()
-                })
-    except FileNotFoundError:
-        pass
+#     # Load join splines
+#     joins = {}
+#     try:
+#         with open(JOINS_FILE, 'r') as f:
+#             join_data = json.load(f)
+#             joins.update({
+#                 k: {
+#                     j: adjust_points(v, np.array([0.5, 0.5]))
+#                     for j, v in dct.items()
+#                     }
+#                 for k, dct in join_data.items()
+#                 })
+#     except FileNotFoundError:
+#         pass
 
-    return jsonify({'chars': chars, 'joins': joins})
+#     return jsonify({'chars': chars, 'joins': joins})
 
 
 @app.route('/load_characters')
@@ -206,7 +210,7 @@ def load_characters():
     try:
         with open(CHAR_FILE, 'r') as f:
             chars_data = json.load(f)
-            chars.update({k: adjust_points(v, np.array([0.5, 0.5])) for k, v in chars_data.items()})
+            chars.update({k: [adjust_points(p, np.array([0.5, 0.5])) for p in v] for k, v in chars_data.items()})
     except FileNotFoundError:
         pass
 
@@ -220,50 +224,51 @@ def load_dots():
     try:
         with open(CHAR_DOTS_FILE, 'r') as f:
             chars_data = json.load(f)
-            dots['chars'].update({k: adjust_points(v, np.array([0.5, 0.5])) for k, v in chars_data.items()})
+            dots['chars'].update({k: [adjust_points(p, np.array([0.5, 0.5])) for p in v] for k, v in chars_data.items()})
     except FileNotFoundError:
         pass
 
-    # Load join dots
-    joins = {}
-    try:
-        with open(JOINS_DOTS_FILE, 'r') as f:
-            join_data = json.load(f)
-            dots['joins'].update({
-                k: {
-                    j: adjust_points(v, np.array([0.5, 0.5]))
-                    for j, v in dct.items()
-                    }
-                for k, dct in join_data.items()
-                })
-    except FileNotFoundError:
-        pass
+    # # Load join dots
+    # joins = {}
+    # try:
+    #     with open(JOINS_DOTS_FILE, 'r') as f:
+    #         join_data = json.load(f)
+    #         dots['joins'].update({
+    #             k: {
+    #                 j: adjust_points(v, np.array([0.5, 0.5]))
+    #                 for j, v in dct.items()
+    #                 }
+    #             for k, dct in join_data.items()
+    #             })
+    # except FileNotFoundError:
+    #     pass
 
     return jsonify(dots)
 
 
-@app.route('/load_words')
-def load_words():
-    words = {}
+# @app.route('/load_words')
+# def load_words():
+#     words = {}
 
-    # Load single-character splines
-    try:
-        with open(WORDS_FILE, 'r') as f:
-            words_data = json.load(f)
-            words.update({k: adjust_points(v, np.array([0.5, 0.5])) for k, v in words_data.items()})
-    except FileNotFoundError:
-        pass
+#     # Load single-character splines
+#     try:
+#         with open(WORDS_FILE, 'r') as f:
+#             words_data = json.load(f)
+#             words.update({k: adjust_points(v, np.array([0.5, 0.5])) for k, v in words_data.items()})
+#     except FileNotFoundError:
+#         pass
 
-    return jsonify(words)
+#     return jsonify(words)
 
 @app.route('/delete', methods=['POST'])
 def delete():
     data = request.json
     character = data['character']
-    joinchar = data['joinchar']
-    delete_word = data['delete_word']
+    # joinchar = data['joinchar']
+    # delete_word = data['delete_word']
 
-    if delete_word:
+    # if delete_word:
+    if False:
         file_path = WORDS_FILE
 
         # Load existing data
@@ -305,30 +310,30 @@ def delete():
             return jsonify({'status': 'success'})
         else:
             return jsonify({'status': 'error', 'message': 'Character not found'})
-    else:  # try to delete the join
-        file_path = JOINS_FILE
+    # else:  # try to delete the join
+    #     file_path = JOINS_FILE
 
-        # Load existing data
-        try:
-            with open(file_path, 'r') as f:
-                existing_data = json.load(f)
-        except FileNotFoundError:
-            existing_data = {}
+    #     # Load existing data
+    #     try:
+    #         with open(file_path, 'r') as f:
+    #             existing_data = json.load(f)
+    #     except FileNotFoundError:
+    #         existing_data = {}
 
-        # Remove the specified character
-        if character in existing_data:
-            if joinchar in existing_data[character]:
-                del existing_data[character]
+    #     # Remove the specified character
+    #     if character in existing_data:
+    #         if joinchar in existing_data[character]:
+    #             del existing_data[character]
 
-                # Save updated data
-                with open(file_path, 'w') as f:
-                    json.dump(existing_data, f, indent=4)
+    #             # Save updated data
+    #             with open(file_path, 'w') as f:
+    #                 json.dump(existing_data, f, indent=4)
 
-                return jsonify({'status': 'success'})
-            else:
-                return jsonify({'status': 'error', 'message': 'Join not found'})
-        else:
-            return jsonify({'status': 'error', 'message': 'Character not found'})
+    #             return jsonify({'status': 'success'})
+    #         else:
+    #             return jsonify({'status': 'error', 'message': 'Join not found'})
+    #     else:
+    #         return jsonify({'status': 'error', 'message': 'Character not found'})
 
 
 def execute_on_refresh():
@@ -347,23 +352,23 @@ def get_data():
     global characters_dict
     _chars = load_json_file(CHAR_FILE)
     characters_dict = {
-        char: np.array(points, dtype=np.float32)
+        char: [np.array(p, dtype=np.float32) for p in points]
         for char, points in _chars.items()
     }
 
-    global joins_dict
-    _joins = load_json_file(JOINS_FILE)
-    joins_dict = {
-        char: {j: np.array(points, dtype=np.float32) for j, points in join_dict.items()}
-        for char, join_dict in _joins.items()
-    }
+    # global joins_dict
+    # _joins = load_json_file(JOINS_FILE)
+    # joins_dict = {
+    #     char: {j: np.array(points, dtype=np.float32) for j, points in join_dict.items()}
+    #     for char, join_dict in _joins.items()
+    # }
 
-    global words_dict
-    _words = load_json_file(WORDS_FILE)
-    words_dict = {
-        word: np.array(points, dtype=np.float32)
-        for word, points in _words.items()
-    }
+    # global words_dict
+    # _words = load_json_file(WORDS_FILE)
+    # words_dict = {
+    #     word: np.array(points, dtype=np.float32)
+    #     for word, points in _words.items()
+    # }
 
     global char_dots_dict
     _dots = load_json_file(CHAR_DOTS_FILE)
@@ -372,12 +377,12 @@ def get_data():
         for char, points in _dots.items()
     }
 
-    global joins_dots_dict
-    _joins = load_json_file(JOINS_DOTS_FILE)
-    joins_dots_dict = {
-        char: {j: np.array(points, dtype=np.float32) for j, points in join_dict.items()}
-        for char, join_dict in _joins.items()
-    }
+    # global joins_dots_dict
+    # _joins = load_json_file(JOINS_DOTS_FILE)
+    # joins_dots_dict = {
+    #     char: {j: np.array(points, dtype=np.float32) for j, points in join_dict.items()}
+    #     for char, join_dict in _joins.items()
+    # }
 
 
 def interpolate_points(points, num_points=100):
