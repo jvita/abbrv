@@ -3,11 +3,10 @@
 {% block content %}
 <div class="main-content">
     <div class="controls">
-        <h2>Drafting glyph</h2>
-        <input type="text" id="character" placeholder="Enter character(s)" autocomplete="off">
         <div class="d-flex flex-row" style="margin:5px;">
             <div class="d-flex flex-column flex-grow-1">
                 <h2>Glyphs</h2>
+                <input type="text" id="character" placeholder="Enter character(s)" autocomplete="off">
                 <div id="glyphsList" class="spline-list" style="margin-right: 5px;"></div>
             </div>
         </div>
@@ -568,6 +567,11 @@ characterField.addEventListener('keyup', function(event) {
 
 function sortAndDisplayList() {
     sortOneList(glyphsList);
+
+    // item.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    // scrollIfNeeded(item);
+    console.log('scrollTop')
+    glyphsList.scrollTop = 0
 
     // // select the top result if it exists
     // const searchTerm = document.getElementById('character').value.toLowerCase();
