@@ -13,13 +13,16 @@
         <div class="d-flex flex-column">
             <button id="deleteButton" type="button" class="btn btn-danger" disabled>Delete</button>
             <div class="d-flex justify-content-between">
-                <div>
-                    <button id="clearButton" type="button" class="btn btn-primary" disabled>Clear</button>
-                    <!-- <button id="joinButton" type="button" class="btn btn-primary" disabled>Join</button> -->
-                    <!-- <button id="unjoinButton" type="button" class="btn btn-primary" disabled>Unjoin</button> -->
-                    <button id="deselectButton" type="button" class="btn btn-primary" disabled>Deselect All</button>
-                    <button id="freezeButton" type="button" class="btn btn-primary" disabled>Freeze</button>
+                <div class="btn-group">
+                    <button id="clearButton" type="button" class="btn btn-primary">Clear</button>
+                    <button id="clearAllDropdown" type="button" class="btn btn-primary dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
+                        <span class="visually-hidden">Toggle Dropdown</span>
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a id="clearAllButton" class="dropdown-item" href="#" id="clearAllOption">all</a></li>
+                    </ul>
                 </div>
+                <button id="freezeButton" type="button" class="btn btn-primary" disabled>Freeze</button>
                 <div class="btn-group">
                     <button id="saveButton" type="button" class="btn btn-primary">Save</button>
                     <button id="saveDropdown" type="button" class="btn btn-primary dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
@@ -49,11 +52,10 @@ const saveButton = document.getElementById('saveButton');
 const saveDropdown = document.getElementById('saveDropdown');
 const saveWord = document.getElementById('saveWord');
 const clearButton = document.getElementById('clearButton');
+const clearAllButton = document.getElementById('clearAllButton');
+const clearAllDropdown = document.getElementById('clearAllDropdown');
 const deleteButton = document.getElementById('deleteButton');
-// const joinButton = document.getElementById('joinButton');
-// const unjoinButton = document.getElementById('unjoinButton');
 const freezeButton = document.getElementById('freezeButton');
-const deselectButton = document.getElementById('deselectButton');
 const glyphsList = document.getElementById('glyphsList');
 
 const rootStyles = getComputedStyle(document.documentElement);
@@ -260,6 +262,8 @@ function handleCharSelect(char, append = false) {
     if (char === null) {
         // deselect everything
         selectedPoints = []
+        numPerSelected = []
+        selectedCharacters = []
     }
 
     if (char !== null) {
@@ -300,7 +304,7 @@ function refreshButtons() {
     refreshDeleteButton();
     refreshFreezeButton();
     refreshSaveButton();
-    refreshDeselectButton();
+    refreshClearAllButton();
 
     // update coloring of spline list
     document.querySelectorAll('.char-list-item').forEach(item => {
@@ -328,8 +332,11 @@ function refreshSaveButton() {
     clearButton.disabled = noneSelected
 }
 
-function refreshDeselectButton() {
-    deselectButton.disabled = (selectedPoints.length === 0) || (selectedPoints[selectedPoints.length - 1].length === 0)
+function refreshClearAllButton() {
+    clearAllButton.disabled = (selectedPoints.length === 0) || (selectedPoints[selectedPoints.length - 1].length === 0)
+    clearAllDropdown.disabled = clearAllButton.disabled
+    // clearAllDropdown.display = clearAllDropdown.disabled ? 'none' : 'block'
+    // clearAllButton.display = clearAllButton.disabled ? 'none' : 'block'
 }
 
 function refreshFreezeButton() {
@@ -416,27 +423,27 @@ saveButton.addEventListener('click', () => {
 });
 
 saveWord.addEventListener('click', () => {
-    let combinedArray = [...selectedPoints];
+    // let combinedArray = [...selectedPoints];
 
-    const character = characterField.value.trim();
-    if (character && combinedArray.length) {
-        const data = {
-            character: character,
-            points: combinedArray.map(([x, y]) => [(x + gridSize / 2) / gridSize, (y + gridSize / 2) / gridSize]),
-            as_word: true,
-        };
-        axios.post('/save', data)
-            .then(response => {
-                if (response.data.status === 'success') {
-                    loadCharacters();
-                    handleCharSelect(null);
-                    refreshButtons();
-                    updatePointsField();
-                    characterField.value = '';
-                    characterField.focus();
-                }
-            });
-    }
+    // const character = characterField.value.trim();
+    // if (character && combinedArray.length) {
+    //     const data = {
+    //         character: character,
+    //         points: combinedArray.map(([x, y]) => [(x + gridSize / 2) / gridSize, (y + gridSize / 2) / gridSize]),
+    //         as_word: true,
+    //     };
+    //     axios.post('/save', data)
+    //         .then(response => {
+    //             if (response.data.status === 'success') {
+    //                 loadCharacters();
+    //                 handleCharSelect(null);
+    //                 refreshButtons();
+    //                 updatePointsField();
+    //                 characterField.value = '';
+    //                 characterField.focus();
+    //             }
+    //         });
+    // }
 
 });
 
@@ -479,10 +486,9 @@ freezeButton.addEventListener('click', () => {
     splineCtx.clearRect(0, 0, splineCanvas.width, splineCanvas.height);
     
     if (freezeButton.textContent === 'Freeze') { // freeze
-        // only freeze last spline
-        frozenPoints = selectedPoints//[selectedPoints.length-1];
+        frozenPoints = selectedPoints
 
-        deselectButton.click()
+        clearAllButton.click()
         refreshButtons();
         
     } else {  // unfreeze
@@ -495,20 +501,42 @@ freezeButton.addEventListener('click', () => {
     characterField.focus();
 });
 
-deselectButton.addEventListener('click', () => {
-    selectedPoints = []
+// Define the function to be called
+function additionalFunction() {
+    console.log('Another function was called!');
+    // Add your additional logic here
+}
 
-    // refresh coloring of spline list
+// Click event listener
+clearAllButton.addEventListener('click', (e) => {
+    // Clear the points, characters, and other data
+    selectedPoints = [];
+    numPerSelected = [];
+    selectedCharacters = [];
+
+    // Refresh coloring of spline list
     document.querySelectorAll('.char-list-item').forEach(item => {
         item.classList.remove('selected');
         item.classList.remove('joining');
     });
 
+    // Update the input field and focus
     characterField.value = '';
     characterField.focus();
+
+    // Update fields and buttons
     updatePointsField();
     refreshButtons();
+
+    // Forcefully close the dropdown by removing the 'show' class
+    const dropdown = document.querySelector('.dropdown-menu');
+    dropdown.classList.remove('show');
+    document.getElementById('clearAllDropdown').setAttribute('aria-expanded', 'false');
+    
+    // Prevent the default anchor behavior
+    e.preventDefault();
 });
+
 
 // to avoid too-fast updates when typing into char field
 let debounceTimeout;
