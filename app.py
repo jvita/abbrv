@@ -215,8 +215,6 @@ def line_to_splines(
 
     words = line.strip().split(' ')
     for word in words:
-        knot_points = []
-
         if (elevate_th) and (len(word) > 2) and (word[:2] == 'th'):
             cursor_pos[1] += char_height
             word = word[2:]
@@ -224,6 +222,7 @@ def line_to_splines(
         leftmost_x = cursor_pos[0]
         glyph = ''
         i = 0
+        first_glyph = True  # for disabling shift at start of word
 
         # search for the largest glyph
         while i < len(word):
@@ -241,19 +240,14 @@ def line_to_splines(
 
                 # Shift the glyph points to the current cursor position
                 glyph_points = characters_dict[glyph]
-                glyph_points = [arr - glyph_points[0][0] + cursor_pos for arr in glyph_points]
+                if not first_glyph: # first char in word
+                    glyph_points = [arr - glyph_points[0][0] for arr in glyph_points]
+                glyph_points = [arr + cursor_pos for arr in glyph_points]
 
                 # Build the spline
                 leftmost_x = 0
                 rightmost_x = 0
                 for arr in glyph_points:
-                    # # Shift so that leftmost point is aligned with the beginning of the word
-                    # shifted = arr + cursor_pos
-                    # shifted[:, 0] -= leftmost_x
-
-                    # leftmost_x = min(leftmost_x, arr[:, 0].min())
-                    # rightmost_x = max(rightmost_x, arr[:, 0].max())
-
                     x_spline, y_spline = interpolate_points(arr)
                     splines.append((x_spline, y_spline))
                     red_dot_points.append(arr)
@@ -262,29 +256,13 @@ def line_to_splines(
                 cursor_pos = glyph_points[-1][-1].copy()
 
                 i += len(glyph) - 1  # Move i to the end of the matched substring
-
-                # knot_points += [arr.copy() for arr in characters_dict[glyph]]
-                # print(glyph, knot_points)
+                first_glyph = False
 
             i += 1  # Move to the next character
-
-        # # All glyphs added to word, begin building splines
-        # leftmost_x = 0  # for handling spacing between words
-        # rightmost_x = 0
-        # # shift = knot_points[0][0]  # cursor within a single word; set to first knot so that the - arr[0] below doesn't shift first character
-        # shift = np.array([0, 0])
-        # shifted_knot_points = []
-        # for arr in knot_points:
-        #     # shift start of character to cursor pos
-        #     shifted_knot_points.append(arr + shift)
-        #     # shift = shifted_knot_points[-1][-1]
-        #     leftmost_x = min(leftmost_x, shifted_knot_points[-1][:, 0].min())
-        #     rightmost_x = max(rightmost_x, shifted_knot_points[-1][:, 0].max())
 
         cursor_pos[0] += (rightmost_x - leftmost_x) + word_space
         cursor_pos[1] = 0
 
-    print(f'{red_dot_points=}')
     return splines, red_dot_points, black_dot_points
 
 
@@ -411,7 +389,6 @@ def generate_splines():
 
         if 'show_knot_points' in request.form:
             for points in red_dot_points:
-                print(points)
                 x, y = zip(*points)
                 plt.plot([_x-start_of_line for _x in x], [_y-y_offset for _y in y], 'ro')
 
