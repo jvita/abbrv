@@ -398,48 +398,72 @@ def interpolate_points(points, num_points=100):
 
     return x_spline, y_spline
 
-def join_to_spline(char, cursor_pos, prev=None, full_word=False):
+def glyph_to_spline(char, cursor_pos, prev=None, full_word=False):
     global characters_dict, words_dict
 
-    if full_word:
+    # if full_word:
+    if False:
         join_points = words_dict[char].copy()
     else:
-        join_points = characters_dict[char].copy()
-        join_dots = char_dots_dict[char].copy() if char in char_dots_dict else None
+        join_points = [arr.copy() for arr in characters_dict[char]]
+        # join_dots = char_dots_dict[char].copy() if char in char_dots_dict else None
 
-    if prev is None: # first character in word
-        # shift to properly respect spaces b/w words
-        join_points[:, 0] += abs(join_points[:, 0].min())
-        if join_dots is not None:
-            join_dots[:, 0] += abs(join_points[:, 0].min())
-    else:
-        if (char in joins_dict):
-            if prev in joins_dict[char]:
-                # replace with modified version for the join
-                join_points = joins_dict[char][prev].copy()
-                join_dots = joins_dots_dict[char][prev].copy() if (char in joins_dots_dict) and (prev in joins_dots_dict[char]) else None
-            elif prev[-1] in joins_dict[char]:  # try joining to last char instead
-                join_points = joins_dict[char][prev[-1]].copy()
-                join_dots = joins_dots_dict[char][prev[-1]].copy() if (char in joins_dots_dict) and (prev[-1] in joins_dots_dict[char]) else None
+    # if prev is None: # first glyph in word
+    #     # shift to properly respect spaces b/w words
+    #     # join_points[:, 0] += abs(join_points[:, 0].min())
+    #     minx = abs(min([arr[:, 0].min() for arr in join_points]))
+    #     join_points = [arr + minx for arr in join_points]
 
-        # shift to align with cursor position
-        join_points -= join_points[0]
-        if join_dots is not None:
-            join_dots -= join_points[0]
+    #     # if join_dots is not None:
+    #     #     join_dots[:, 0] += abs(join_points[:, 0].min())
+    # else:
+    #     # This block is no longer necessary; this should already be the longest version of
+    #     # the glyph, so no join-based replacement is necessary
+    #     pass
+    #     # if (char in joins_dict):
+    #     #     if prev in joins_dict[char]:
+    #     #         # replace with modified version for the join
+    #     #         join_points = joins_dict[char][prev].copy()
+    #     #         # join_dots = joins_dots_dict[char][prev].copy() if (char in joins_dots_dict) and (prev in joins_dots_dict[char]) else None
+    #     #     elif prev[-1] in joins_dict[char]:  # try joining to last char instead
+    #     #         join_points = joins_dict[char][prev[-1]].copy()
+    #     #         # join_dots = joins_dots_dict[char][prev[-1]].copy() if (char in joins_dots_dict) and (prev[-1] in joins_dots_dict[char]) else None
 
-    join_points += cursor_pos  # move to cursor pos
-    if join_dots is not None:
-        join_dots += cursor_pos  # move to cursor pos
+    #     # shift to align with cursor position
+    #     start = join_points[0][0]
+    #     join_points = [arr - start for arr in join_points]
+    #     # join_points -= join_points[0]
+    #     # if join_dots is not None:
+    #     #     join_dots -= join_points[0]
 
-    x_spline, y_spline = interpolate_points(join_points)
-    splines = (x_spline, y_spline)
-    red_dot_points = join_points  # for optionally plotting red dots
-    black_dot_points = join_dots # for optionally plotting red dots
+    # join_points = [arr + cursor_pos for arr in join_points]
+    # join_points += cursor_pos  # move to cursor pos
+    # if join_dots is not None:
+    #     join_dots += cursor_pos  # move to cursor pos
+
+    # minx = abs(min([arr[:, 0].min() for arr in join_points])) if prev is None else 0
+
+    cursor_pos = join_points[0][0]
+
+    splines = []
+    red_dot_points = [] # list concatenation
+    for arr in join_points:
+        shifted = arr + cursor_pos
+        x_spline, y_spline = interpolate_points(shifted)
+
+        splines.append((x_spline, y_spline))
+        red_dot_points.append(shifted)
+
+        cursor_pos = arr[-1]
+
+    # red_dot_points = join_points  # for optionally plotting red dots
+    # black_dot_points = join_dots # for optionally plotting red dots
+    black_dot_points = []
 
     # move cursor and word endpoint tracker
-    leftmost_x = join_points[:, 0].min()
-    rightmost_x = join_points[:, 0].max()
-    cursor_pos = join_points[-1].copy()
+    leftmost_x = min([arr[:, 0].min() for arr in join_points])
+    rightmost_x = max([arr[:, 0].max() for arr in join_points])
+    cursor_pos = join_points[-1][-1].copy()
 
     return splines, red_dot_points, black_dot_points, leftmost_x, rightmost_x, cursor_pos
 
@@ -455,20 +479,20 @@ def line_to_splines(
     black_dot_points = []
     word_space = 0.1
     cursor_pos = np.array([0, 0], dtype=np.float32)
-    rightmost_x = 0 # for adding spaces between words
     char_height = 0.1
 
     words = line.split(' ')
     for word in words:
         word_splines = []
-        word_red_dots = []
+        knot_points = []
         word_black_dots = []
 
-        if word in words_dict:
-            returns = join_to_spline(word, cursor_pos, None, full_word=True)
+        # if word in words_dict:
+        if False:
+            returns = glyph_to_spline(word, cursor_pos, None, full_word=True)
 
             word_splines.append(returns[0])
-            word_red_dots.append(returns[1])
+            knot_points.append(returns[1])
             word_black_dots.append(returns[2])
             leftmost_x = returns[3]
             rightmost_x = returns[4]
@@ -479,9 +503,9 @@ def line_to_splines(
             splines += [[sp[0]+dx, sp[1]] for sp in word_splines]
 
             # shift dot points
-            for p in word_red_dots:
+            for p in knot_points:
                 p[:, 0] += dx
-            red_dot_points += word_red_dots
+            red_dot_points += knot_points
 
             for p in word_black_dots:
                 if p is not None:  # could be None if no black dots
@@ -497,52 +521,81 @@ def line_to_splines(
                 word = word[2:]
 
             leftmost_x = cursor_pos[0]
-            join = ''
+            glyph = ''
             prev = None
             i = 0
+            # search for the largest glyph
             while i < len(word):
-                temp_join = ''
+                temp_glyph = ''
                 longest_match = ''
 
                 # Check all substrings starting at index i
                 for j in range(i, len(word)):
-                    temp_join += word[j]
-                    if temp_join in characters_dict:
-                        longest_match = temp_join
+                    temp_glyph += word[j]
+                    if temp_glyph in characters_dict:
+                        longest_match = temp_glyph
 
                 if longest_match:
-                    join = longest_match
-                    i += len(join) - 1  # Move i to the end of the matched substring
+                    glyph = longest_match
+                    i += len(glyph) - 1  # Move i to the end of the matched substring
 
                     # Build spline
-                    returns = join_to_spline(join, cursor_pos, prev)
-                    prev = join
+                    # returns = glyph_to_spline(glyph, cursor_pos, prev)
+                    prev = glyph
 
-                    word_splines.append(returns[0])
-                    word_red_dots.append(returns[1])
-                    word_black_dots.append(returns[2])
-                    leftmost_x = min(leftmost_x, returns[3])
-                    rightmost_x = max(rightmost_x, returns[4])
-                    cursor_pos = returns[5]
+                    knot_points += [arr.copy() for arr in characters_dict[glyph]]
+
+                    # word_splines += returns[0]
+                    # word_red_dots += returns[1]
+                    # word_black_dots += returns[2]
+                    # leftmost_x = min(leftmost_x, returns[3])
+                    # rightmost_x = max(rightmost_x, returns[4])
+                    # cursor_pos = returns[5]
 
                 i += 1  # Move to the next character
 
-            # Shift right so that the leftmost point of the word is shifted to the word's start point
-            if word_splines:
-                word_start = word_splines[0][0][0]  # first character, first point, x-pos
-                dx = word_start - leftmost_x
-                splines += [[sp[0]+dx, sp[1]] for sp in word_splines]
-                for p in word_red_dots:
-                    p[:, 0] += dx
-                red_dot_points += word_red_dots
-                for p in word_black_dots:
-                    if p is not None: # could be None if no dots for this word
-                        p[:, 0] += dx
-                black_dot_points += word_black_dots
 
-                # Add space between word's rightmost point and the next word
-                cursor_pos[0] = rightmost_x + word_space + dx
-                cursor_pos[1] = 0
+            # All glyphs added to word, begin building splines
+            leftmost_x = 0  # for handling spacing between words
+            rightmost_x = 0
+            shift = knot_points[0][0]  # cursor within a single word; set to first knot so that the - arr[0] below doesn't shift first character
+            shifted_knot_points = []
+            for arr in knot_points:
+                # shift start of character to cursor pos
+                shifted_knot_points.append(arr - arr[0] + shift)
+                shift = shifted_knot_points[-1][-1]
+                leftmost_x = min(leftmost_x, shifted_knot_points[-1][:, 0].min())
+                rightmost_x = max(rightmost_x, shifted_knot_points[-1][:, 0].max())
+
+            # Build the spline
+            for arr in shifted_knot_points:
+                # Shift so that leftmost point is aligned with the beginning of the word
+                shifted = arr + cursor_pos
+                shifted[:, 0] -= leftmost_x
+
+                x_spline, y_spline = interpolate_points(shifted)
+                splines.append((x_spline, y_spline))
+                red_dot_points.append(shifted)
+
+            cursor_pos[0] += (rightmost_x - leftmost_x) + word_space
+            cursor_pos[1] = 0
+
+            # # Shift right so that the leftmost point of the word is shifted to the word's start point
+            # if word_splines:
+            #     word_start = word_splines[0][0][0]  # first character, first point, x-pos
+            #     dx = word_start - leftmost_x
+            #     splines += [[sp[0]+dx, sp[1]] for sp in word_splines]
+            #     for p in knot_points:
+            #         p[:, 0] += dx
+            #     red_dot_points += knot_points
+            #     for p in word_black_dots:
+            #         if p is not None: # could be None if no dots for this word
+            #             p[:, 0] += dx
+            #     black_dot_points += word_black_dots
+
+            #     # Add space between word's rightmost point and the next word
+            #     cursor_pos[0] = rightmost_x + word_space + dx
+            #     cursor_pos[1] = 0
 
     return splines, red_dot_points, black_dot_points
 
