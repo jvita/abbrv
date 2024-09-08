@@ -133,56 +133,74 @@ function drawPoints(points = null, color = colorSelected) {
         });
     }
 }
-
 function updatePointsField() {
+    console.log(selectedPoints)
     drawGrid(); // Redraw the grid
     splineCtx.clearRect(0, 0, splineCanvas.width, splineCanvas.height); // Clear spline visualization
 
-    // paint frozen stuff first; this is only ever a single spline
+    // Paint frozen stuff first; this is only ever a single spline
     if (frozenPoints) {
         const shiftedPoints = frozenPoints.map(([x, y]) => [(x + gridSize / 2) / gridSize, (y + gridSize / 2) / gridSize]);
         plotSpline(shiftedPoints, colorDisabled, null);
-        drawPoints(frozenPoints, colorDisabled)  // to enforce that it's drawn NOW, that way the next drawings will be above it
+        drawPoints(frozenPoints, colorDisabled); // Enforce drawing NOW so subsequent drawings will appear above it
     }
 
-    // now paint the other stuff
+    // Exit if no characters are selected
     if (selectedCharacters.length === 0) return;
 
-    let lastEndPoint = null;
+    let lastEndPoint = [0, 0];
     let splinesToPlot = [];
 
     // Iterate over each spline (list of points)
-    selectedPoints.forEach((points) => {
+    selectedPoints.forEach((points, splineIndex) => {
         // Shift the current spline by the last point of the previous spline
-        let shiftedPoints = lastEndPoint 
-            ? points.map(([x, y]) => [x + lastEndPoint[0] - points[0][0], y + lastEndPoint[1] - points[0][1]])
+        let shiftedPoints = lastEndPoint
+            // ? points.map(([x, y]) => [x + lastEndPoint[0] - points[0][0], y + lastEndPoint[1] - points[0][1]])
+            // ? points.map(([x, y]) => [x + lastEndPoint[0], y + lastEndPoint[1]])
+            ? points
             : points;
 
         splinesToPlot.push(shiftedPoints);
-        lastEndPoint = shiftedPoints[shiftedPoints.length - 1]; // Update lastEndPoint to the last point of current spline
+
+        if (splineIndex < selectedPoints.length - 1) {
+            lastEndPoint = shiftedPoints[shiftedPoints.length - 1]; // Update lastEndPoint to the last point of the current spline
+        }
     });
 
-    
-    let diff = [0, 0]
-    if (selectedPoints[selectedPoints.length - 1].length > 0) {
-        // in case the points have been cleared and are now empty
-        const [lastX, lastY] = splinesToPlot[splinesToPlot.length - 1][0]; // First point of the last spline
-        diff = [selectedPoints[selectedPoints.length - 1][0][0] - lastX, selectedPoints[selectedPoints.length - 1][0][1] - lastY];
-    }
+    // Calculate the shift required for the second-to-last spline to end at the origin
+    let translation = [0, 0];
+    // if (splinesToPlot.length > 1) {
+    //     const secondToLastSpline = splinesToPlot[splinesToPlot.length - 2];
+    //     const lastPointOfSecondToLastSpline = secondToLastSpline[secondToLastSpline.length - 1];
+    //     translation = [-lastPointOfSecondToLastSpline[0], -lastPointOfSecondToLastSpline[1]];
+    // }
+    // translation = [-lastEndPoint[0], 0]
 
+    // Shift all splines prior to the last one
     splinesToPlot.forEach((points, splineIndex) => {
-        // Shift all splines such that the last spline starts at its original position
-        const normalizedPoints = points.map(([x, y]) => [(x + diff[0] + gridSize / 2) / gridSize, (y + diff[1] + gridSize / 2) / gridSize]);
+        let normalizedPoints;
 
-        plotSpline(normalizedPoints, colorInk, () => {
-            // Only draw points for the last spline
-            if (splineIndex === splinesToPlot.length - 1) {
-                drawPoints(selectedPoints[splineIndex]);
-            }
-        });
+        // normalizedPoints = points.map(([x, y]) => [(x + translation[0] + gridSize / 2) / gridSize, (y + translation[1] + gridSize / 2) / gridSize]);
+        if (splineIndex < selectedPoints.length - 1) {
+            // Shift all splines except the last one so that the second-to-last ends at the origin
+            normalizedPoints = points.map(([x, y]) => [(x + translation[0] + gridSize / 2) / gridSize, (y + translation[1] + gridSize / 2) / gridSize]);
+        } else {
+            // Keep the last spline unshifted
+            normalizedPoints = selectedPoints[splineIndex].map(([x, y]) => [(x + gridSize / 2) / gridSize, (y + gridSize / 2) / gridSize]);
+        }
+
+        if (normalizedPoints.length > 1){
+            plotSpline(normalizedPoints, colorInk, () => {
+                // Only draw points for the last spline
+                if (splineIndex === selectedPoints.length - 1) {
+                    drawPoints(selectedPoints[splineIndex]);
+                }
+            });
+        } else {
+            drawPoints(points, colorInk)
+        }
     });
 }
-
 
 function plotSpline(points, color = colorInk, callback = null) {
     if (points.length > 1) {
@@ -227,10 +245,13 @@ gridCanvas.addEventListener('click', (event) => {
 
     const isCtrlPressed = event.ctrlKey;
 
-    if (isCtrlPressed) {  // remove point
-        dots.push([gridX, gridY]);
+    if ((isCtrlPressed) || (selectedPoints.length === 0)) {  // start a new spline
+        // dots.push([gridX, gridY]);
+        selectedPoints.push([[gridX, gridY]]);
+        selectedCharacters.push('')
     } else {
         // add point
+
         selectedPoints[selectedPoints.length - 1].push([gridX, gridY]);
     }
 
@@ -339,14 +360,16 @@ function refreshButtons() {
 }
 
 function refreshSaveButton() {
-    const anySelected = (selectedPoints.length === 0) && (dots.length === 0)
-    saveButton.disabled = anySelected
-    saveDropdown.disabled = anySelected
-    clearButton.disabled = anySelected
+    // can't do things if no points selected, or character of selected points is not specified
+    saveButton.disabled = (selectedPoints.length === 0) || ((selectedCharacters[selectedCharacters.length-1] === '') && (characterField.value === ''))
+    saveDropdown.disabled = saveButton.disabled
+
+    const noneSelected = selectedPoints.length === 0
+    clearButton.disabled = noneSelected
 }
 
 function refreshDeselectButton() {
-    deselectButton.disabled = selectedCharacters.length === 0
+    deselectButton.disabled = (selectedCharacters.length === 0) || (selectedCharacters[selectedCharacters.length - 1] === '')
 }
 
 function refreshFreezeButton() {
@@ -354,7 +377,8 @@ function refreshFreezeButton() {
 }
 
 function refreshDeleteButton() {
-    deleteButton.disabled = (selectedCharacters.length === 0)
+    deleteButton.disabled = (selectedCharacters.length === 0) || (selectedCharacters[selectedCharacters.length - 1] === '')
+
     if (deleteButton.disabled) {
         if (deleteButton.classList.contains('delete-button')) {
             deleteButton.classList.remove('delete-button')
@@ -407,8 +431,13 @@ function loadCharacters() {
 
 saveButton.addEventListener('click', () => {
     if (selectedCharacters.length && selectedPoints.length) {
+        // if (selectedCharacters[selectedCharacters.length-1] === '') {
+        //     selectedCharacters[selectedCharacters.length-1] = characterField.value
+        // }
+
         const data = {
-            character: selectedCharacters.join(''),
+            // character: selectedCharacters.join(''),
+            character: characterField.value.trim(),
             points: selectedPoints.map(spline => 
                 spline.map(([x, y]) => [(x + gridSize / 2) / gridSize, (y + gridSize / 2) / gridSize])
                 ),
@@ -514,7 +543,7 @@ freezeButton.addEventListener('click', () => {
         // only freeze last spline
         frozenPoints = selectedPoints[selectedPoints.length-1];
 
-        handleCharSelect(null);
+        handleCharSelect(selectedCharacters[selectedCharacters.length-1]);
         refreshButtons();
         
     } else {  // unfreeze
@@ -573,6 +602,7 @@ function keyCheck(event) {
 // Bind the input event on textarea and change event on checkboxes
 characterField.addEventListener('keyup', function(event) {
     debouncedKeyCheck(event);
+    refreshButtons();
 })
 
 function sortAndDisplayList() {

@@ -186,7 +186,8 @@ def get_data():
 
 def interpolate_points(points, num_points=100):
     if len(points) < 2:
-        return np.array([]), np.array([])
+        return (points[:, 0], points[:, 1])
+        # return np.array([]), np.array([])
 
     x = points[:, 0]
     y = points[:, 1]
@@ -237,38 +238,53 @@ def line_to_splines(
 
             if longest_match:
                 glyph = longest_match
+
+                # Shift the glyph points to the current cursor position
+                glyph_points = characters_dict[glyph]
+                glyph_points = [arr - glyph_points[0][0] + cursor_pos for arr in glyph_points]
+
+                # Build the spline
+                leftmost_x = 0
+                rightmost_x = 0
+                for arr in glyph_points:
+                    # # Shift so that leftmost point is aligned with the beginning of the word
+                    # shifted = arr + cursor_pos
+                    # shifted[:, 0] -= leftmost_x
+
+                    # leftmost_x = min(leftmost_x, arr[:, 0].min())
+                    # rightmost_x = max(rightmost_x, arr[:, 0].max())
+
+                    x_spline, y_spline = interpolate_points(arr)
+                    splines.append((x_spline, y_spline))
+                    red_dot_points.append(arr)
+
+                # Update cursor pos
+                cursor_pos = glyph_points[-1][-1].copy()
+
                 i += len(glyph) - 1  # Move i to the end of the matched substring
 
-                knot_points += [arr.copy() for arr in characters_dict[glyph]]
-                print(glyph, len(knot_points))
+                # knot_points += [arr.copy() for arr in characters_dict[glyph]]
+                # print(glyph, knot_points)
 
             i += 1  # Move to the next character
 
-        # All glyphs added to word, begin building splines
-        leftmost_x = 0  # for handling spacing between words
-        rightmost_x = 0
-        shift = knot_points[0][0]  # cursor within a single word; set to first knot so that the - arr[0] below doesn't shift first character
-        shifted_knot_points = []
-        for arr in knot_points:
-            # shift start of character to cursor pos
-            shifted_knot_points.append(arr - arr[0] + shift)
-            shift = shifted_knot_points[-1][-1]
-            leftmost_x = min(leftmost_x, shifted_knot_points[-1][:, 0].min())
-            rightmost_x = max(rightmost_x, shifted_knot_points[-1][:, 0].max())
-
-        # Build the spline
-        for arr in shifted_knot_points:
-            # Shift so that leftmost point is aligned with the beginning of the word
-            shifted = arr + cursor_pos
-            shifted[:, 0] -= leftmost_x
-
-            x_spline, y_spline = interpolate_points(shifted)
-            splines.append((x_spline, y_spline))
-            red_dot_points.append(shifted)
+        # # All glyphs added to word, begin building splines
+        # leftmost_x = 0  # for handling spacing between words
+        # rightmost_x = 0
+        # # shift = knot_points[0][0]  # cursor within a single word; set to first knot so that the - arr[0] below doesn't shift first character
+        # shift = np.array([0, 0])
+        # shifted_knot_points = []
+        # for arr in knot_points:
+        #     # shift start of character to cursor pos
+        #     shifted_knot_points.append(arr + shift)
+        #     # shift = shifted_knot_points[-1][-1]
+        #     leftmost_x = min(leftmost_x, shifted_knot_points[-1][:, 0].min())
+        #     rightmost_x = max(rightmost_x, shifted_knot_points[-1][:, 0].max())
 
         cursor_pos[0] += (rightmost_x - leftmost_x) + word_space
         cursor_pos[1] = 0
 
+    print(f'{red_dot_points=}')
     return splines, red_dot_points, black_dot_points
 
 
@@ -366,12 +382,20 @@ def generate_splines():
             y_offset += abs(max([max(sp_tup[1]) for sp_tup in splines]))
 
         for x_spline, y_spline in splines:
-            plt.plot(
-                x_spline-start_of_line, y_spline-y_offset,
-                'k',
-                linewidth=3,
-                solid_capstyle='round'
-                )
+            if x_spline.shape[0] == 1 and 'show_dots' in request.form:
+                plt.plot(
+                    [_x-start_of_line for _x in x_spline],
+                    [_y-y_offset for _y in y_spline],
+                    'ko',
+                    markersize=3
+                    )
+            else:
+                plt.plot(
+                    x_spline-start_of_line, y_spline-y_offset,
+                    'k',
+                    linewidth=3,
+                    solid_capstyle='round'
+                    )
 
         if 'show_dots' in request.form:
             # plot black dots
@@ -387,6 +411,7 @@ def generate_splines():
 
         if 'show_knot_points' in request.form:
             for points in red_dot_points:
+                print(points)
                 x, y = zip(*points)
                 plt.plot([_x-start_of_line for _x in x], [_y-y_offset for _y in y], 'ro')
 
