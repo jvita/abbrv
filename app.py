@@ -219,7 +219,6 @@ def line_to_splines(
             cursor_pos[1] += char_height
             word = word[2:]
 
-        leftmost_x = cursor_pos[0]
         glyph = ''
         i = 0
         first_glyph = True  # for disabling shift at start of word
@@ -228,6 +227,9 @@ def line_to_splines(
         while i < len(word):
             temp_glyph = ''
             longest_match = ''
+            leftshift = 0
+            leftmost_x = 0
+            rightmost_x = 0
 
             # Check all substrings starting at index i
             for j in range(i, len(word)):
@@ -242,12 +244,19 @@ def line_to_splines(
                 glyph_points = characters_dict[glyph]
                 if not first_glyph: # first char in word
                     glyph_points = [arr - glyph_points[0][0] for arr in glyph_points]
+                else:
+                    minx = glyph_points[0][:, 0].min()
+                    for arr in glyph_points:
+                        arr[:, 0] -= minx
                 glyph_points = [arr + cursor_pos for arr in glyph_points]
 
+                # glyph_width = max([arr[:, 0].max() for arr in glyph_points]) - min([arr[:, 0].min() for arr in glyph_points])
+
                 # Build the spline
-                leftmost_x = 0
-                rightmost_x = 0
                 for arr in glyph_points:
+                    leftmost_x = min(leftmost_x, arr[:, 0].min())
+                    rightmost_x = max(rightmost_x, arr[:, 0].max())
+
                     x_spline, y_spline = interpolate_points(arr)
                     splines.append((x_spline, y_spline))
                     red_dot_points.append(arr)
@@ -260,7 +269,9 @@ def line_to_splines(
 
             i += 1  # Move to the next character
 
-        cursor_pos[0] += (rightmost_x - leftmost_x) + word_space
+        # Update cursor pos
+        # cursor_pos[0] += word_space
+        cursor_pos[0] = rightmost_x + word_space
         cursor_pos[1] = 0
 
     return splines, red_dot_points, black_dot_points
