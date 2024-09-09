@@ -198,6 +198,9 @@ def interpolate_points(points, num_points=100):
 
     return x_spline, y_spline
 
+def split_into_words(text):
+    # Regular expression to split text by words, digits, and punctuation
+    return re.findall(r'[A-Za-z]+|\d|[^\w\s]', text)
 
 def line_to_splines(
         line,
@@ -213,7 +216,8 @@ def line_to_splines(
     cursor_pos = np.array([0, 0], dtype=np.float32)
     char_height = 0.1
 
-    words = line.strip().split(' ')
+    # words = line.strip().split(' ')
+    words = [w.strip() for w in split_into_words(line.strip())]
     for word in words:
         if (elevate_th) and (len(word) > 2) and (word[:2] == 'th'):
             cursor_pos[1] += char_height
@@ -290,9 +294,8 @@ def remove_consecutive_duplicates(s):
         else:
             e_count = 0  # Reset the count if the character is not 'e'
 
-        if char != result[-1] or (char == 'e' and e_count <= 2):
-            result.append(char)
-        elif char != 'e' and char != result[-1]:
+        # Skip if char is the same as the last one (except for digits)
+        if char != result[-1] or char.isdigit() or (char == 'e' and e_count <= 2):
             result.append(char)
 
     return ''.join(result)
