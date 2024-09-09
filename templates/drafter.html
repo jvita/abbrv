@@ -394,8 +394,8 @@ function loadCharacters() {
                 listItem.textContent = character;
 
                 listItem.addEventListener('click', (event) => {
-                    characterField.value = listItem.textContent
                     characterField.focus()
+                    characterField.value = ''
                     handleCharSelect(character, event.ctrlKey)
                     refreshButtons();
                     updatePointsField();
