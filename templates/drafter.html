@@ -145,7 +145,7 @@ function updatePointsField() {
         frozenPoints.forEach((points) => {
             const shiftedPoints = points.map(([x, y]) => [(x + gridSize / 2) / gridSize, (y + gridSize / 2) / gridSize]);
             plotSpline(shiftedPoints, colorDisabled, null);
-            drawPoints(frozenPoints, colorDisabled); // Enforce drawing NOW so subsequent drawings will appear above it
+            drawPoints(points, colorDisabled); // Enforce drawing NOW so subsequent drawings will appear above it
         })
     }
 
@@ -270,7 +270,7 @@ function handleCharSelect(char, append = false) {
         // selecting un-selected character
         const newPoints = char in charSplineData ? charSplineData[char] : []
         // const shiftedNewPoints = newPoints.map(([x, y]) => [x * gridSize - gridSize / 2, y * gridSize - gridSize / 2]);
-        const shiftedNewPoints = newPoints.map(spline => 
+        const shiftedNewPoints = newPoints.map(spline =>
             spline.map(([x, y]) => [(x * gridSize  - gridSize / 2), (y * gridSize - gridSize / 2)])
             );
 
@@ -286,7 +286,7 @@ function handleCharSelect(char, append = false) {
             const lastSpline = selectedPoints[selectedPoints.length - 1]
             const lastPoint = lastSpline[lastSpline.length - 1]
             const firstPoint = shiftedAppendPoints[0][0]
-            shiftedAppendPoints = shiftedAppendPoints.map(spline => 
+            shiftedAppendPoints = shiftedAppendPoints.map(spline =>
                 spline.map(([x, y]) => [x - firstPoint[0] + lastPoint[0], y - firstPoint[1] + lastPoint[1]])
                 );
         }
@@ -386,6 +386,7 @@ function loadCharacters() {
                 listItem.textContent = character;
 
                 listItem.addEventListener('click', (event) => {
+                    characterField.value = listItem.textContent
                     handleCharSelect(character, event.ctrlKey)
                     refreshButtons();
                     updatePointsField();
@@ -401,7 +402,7 @@ saveButton.addEventListener('click', () => {
 
         const data = {
             character: characterField.value.trim(),
-            points: selectedPoints.map(spline => 
+            points: selectedPoints.map(spline =>
                 spline.map(([x, y]) => [(x + gridSize / 2) / gridSize, (y + gridSize / 2) / gridSize])
                 ),
             // as_word: false,
@@ -484,13 +485,13 @@ function loadDots() {
 
 freezeButton.addEventListener('click', () => {
     splineCtx.clearRect(0, 0, splineCanvas.width, splineCanvas.height);
-    
+
     if (freezeButton.textContent === 'Freeze') { // freeze
         frozenPoints = selectedPoints
 
         clearAllButton.click()
         refreshButtons();
-        
+
     } else {  // unfreeze
         frozenPoints = [];
         refreshFreezeButton();
@@ -532,7 +533,7 @@ clearAllButton.addEventListener('click', (e) => {
     const dropdown = document.querySelector('.dropdown-menu');
     dropdown.classList.remove('show');
     document.getElementById('clearAllDropdown').setAttribute('aria-expanded', 'false');
-    
+
     // Prevent the default anchor behavior
     e.preventDefault();
 });
