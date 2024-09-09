@@ -251,6 +251,14 @@ gridCanvas.addEventListener('contextmenu', (event) => {
     // Ctrl+click: Remove the point if it exists
     if (pointIndex !== -1) {
         selectedPoints[selectedPoints.length-1].splice(pointIndex, 1);
+        if (selectedPoints[selectedPoints.length-1].length === 0) {
+            selectedPoints.pop()
+            numPerSelected[numPerSelected.length - 1] -= 1
+            if (numPerSelected[numPerSelected.length - 1] === 0) {
+                numPerSelected.pop()
+                selectedCharacters.pop()
+            }
+        }
     }
 
     updatePointsField();
