@@ -312,6 +312,8 @@ def process_text(
         oa_mn_rule=False
         ):
 
+    text = text.lower()
+
     if remove_dups:
         text = remove_consecutive_duplicates(text)
     if oa_mn_rule:
