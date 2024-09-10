@@ -6,10 +6,14 @@
         <div class="d-flex flex-row" style="margin:5px;">
             <div class="d-flex flex-column flex-grow-1">
                 <h2 id="glyphsTitle">Glyphs</h2>
-                <input type="text" id="character" placeholder="Enter character(s)" autocomplete="off">
                 <div id="glyphsList" class="spline-list" style="margin-right: 5px;"></div>
             </div>
+            <div class="d-flex flex-column flex-grow-1">
+                <h2 id="wordsTitle">Words</h2>
+                <div id="wordsList" class="spline-list"></div>
+            </div>
         </div>
+        <input type="text" id="character" placeholder="Enter character(s)" autocomplete="off">
         <div class="d-flex flex-column">
             <button id="deleteButton" type="button" class="btn btn-danger" disabled>Delete</button>
             <div class="d-flex justify-content-between">
@@ -582,7 +586,7 @@ function sortAndDisplayList() {
 
     // item.scrollIntoView({ behavior: 'smooth', block: 'start' });
     // scrollIfNeeded(item);
-    glyphsList.scrollTop = 0
+    glyphsList.scrollTop = glyphsList.scrollHeight
 
     // // select the top result if it exists
     // const searchTerm = document.getElementById('character').value.toLowerCase();
@@ -626,7 +630,7 @@ function sortOneList(listToSort) {
 
     // Clear the current list and re-append sorted items
     listToSort.innerHTML = '';
-    sortedItems.forEach(item => {
+    sortedItems.slice().reverse().forEach(item => {
         listToSort.appendChild(item);
     });
 }

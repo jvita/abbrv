@@ -15,12 +15,12 @@ import base64
 
 app = Flask(__name__)
 
-app.config['SECRET_KEY'] = 'lorem ipsum'
-app.config['DEBUG_TB_PROFILER_ENABLED'] = True  # Enable the profiler
-app.config['DEBUG_TB_INTERCEPT_REDIRECTS'] = False  # Optional: avoid toolbar intercepting redirects
+# app.config['SECRET_KEY'] = 'lorem ipsum'
+# app.config['DEBUG_TB_PROFILER_ENABLED'] = True  # Enable the profiler
+# app.config['DEBUG_TB_INTERCEPT_REDIRECTS'] = False  # Optional: avoid toolbar intercepting redirects
 
-app.debug = True  # Required for debug toolbar to work
-toolbar = DebugToolbarExtension(app)
+# app.debug = True  # Required for debug toolbar to work
+# toolbar = DebugToolbarExtension(app)
 
 # File paths for single-character and multi-character splines
 CHAR_FILE = 'static/data/characters.json'
