@@ -29,8 +29,24 @@
                         <label for="elevate_th" style="flex: 6;">Elevate "th"</label>
                     </li>
                     <li class="dropdown-item button-container align-items-center">
-                        <input type="checkbox" id="oa_mn_rule" name="oa_mn_rule" style="max-height: 20px; max-width: 20px; min-width: 20px">
-                        <label for="oa_mn_rule" style="flex: 6;">Remove "o" and "a" before "m" and "n"</label>
+                        <input type="checkbox" id="ao_mn_rule" name="ao_mn_rule" style="max-height: 20px; max-width: 20px; min-width: 20px">
+                        <label for="ao_mn_rule" style="flex: 6;">Omit "a" and "o" before "m" and "n"</label>
+                    </li>
+                    <li class="dropdown-item button-container align-items-center">
+                        <input type="checkbox" id="acq_rule" name="acq_rule" style="max-height: 20px; max-width: 20px; min-width: 20px">
+                        <label for="acq_rule" style="flex: 6;">Omit "c" in "acq"</label>
+                    </li>
+                    <li class="dropdown-item button-container align-items-center">
+                        <input type="checkbox" id="adj_rule" name="adj_rule" style="max-height: 20px; max-width: 20px; min-width: 20px">
+                        <label for="adj_rule" style="flex: 6;">Omit "d" in "adj"</label>
+                    </li>
+                    <li class="dropdown-item button-container align-items-center">
+                        <input type="checkbox" id="tch_rule" name="tch_rule" style="max-height: 20px; max-width: 20px; min-width: 20px">
+                        <label for="tch_rule" style="flex: 6;">Omit "t" before "ch"</label>
+                    </li>
+                    <li class="dropdown-item button-container align-items-center">
+                        <input type="checkbox" id="ex_rule" name="ex_rule" style="max-height: 20px; max-width: 20px; min-width: 20px">
+                        <label for="ex_rule" style="flex: 6;">Omit "e" before "x"</label>
                     </li>
                     <li class="dropdown-item button-container align-items-center">
                         <input type="checkbox" id="show_dots" name="show_dots" style="max-height: 20px; max-width: 20px; min-width: 20px">
@@ -83,7 +99,7 @@
             debouncedUpdatePlot();
         });
 
-        $('#show_knot_points, #elevate_th, #show_dots, #remove_duplicates, #oa_mn_rule').on('change', function() {
+        $('#show_knot_points, #elevate_th, #show_dots, #remove_duplicates, #ao_mn_rule, #acq_rule, #adj_rule, #tch_rule, #ex_rule').on('change', function() {
             updatePlot();  // Call updatePlot immediately when checkboxes are modified
         });
 

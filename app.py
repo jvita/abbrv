@@ -4,6 +4,7 @@ import json
 from scipy.interpolate import CubicSpline, BSpline
 import os
 import re
+from flask_debugtoolbar import DebugToolbarExtension
 
 import matplotlib
 matplotlib.use('Agg')
@@ -13,6 +14,13 @@ import io
 import base64
 
 app = Flask(__name__)
+
+app.config['SECRET_KEY'] = 'lorem ipsum'
+app.config['DEBUG_TB_PROFILER_ENABLED'] = True  # Enable the profiler
+app.config['DEBUG_TB_INTERCEPT_REDIRECTS'] = False  # Optional: avoid toolbar intercepting redirects
+
+app.debug = True  # Required for debug toolbar to work
+toolbar = DebugToolbarExtension(app)
 
 # File paths for single-character and multi-character splines
 CHAR_FILE = 'static/data/characters.json'
@@ -300,24 +308,46 @@ def remove_consecutive_duplicates(s):
 
     return ''.join(result)
 
+def omit_a_o_before_m_n(input_string):
+    return re.sub(r'([ao])(?=[mn])', '', input_string)
 
-def remove_a_o_before_m_n(text):
-    # Use a regular expression to find "a" or "o" before "m" or "n", not at the start of a word
-    result = re.sub(r'(?<!\b)[ao](?=[mn])', '', text)
-    return result
+def omit_c_in_acq(input_string):
+    return input_string.replace('acq', 'aq')
+
+def omit_d_in_adj(input_string):
+    return input_string.replace('adj', 'aj')
+
+def omit_t_before_ch(input_string):
+    return input_string.replace('tch', 'ch')
+
+def omit_e_before_x(input_string):
+    return input_string.replace('ex', 'x')
+
 
 def process_text(
         text,
         remove_dups=False,
-        oa_mn_rule=False
+        ao_mn_rule=False,
+        acq_rule=False,
+        adj_rule=False,
+        tch_rule=False,
+        ex_rule=False,
         ):
 
     text = text.lower()
 
     if remove_dups:
         text = remove_consecutive_duplicates(text)
-    if oa_mn_rule:
-        text = remove_a_o_before_m_n(text)
+    if ao_mn_rule:
+        text = omit_a_o_before_m_n(text)
+    if acq_rule:
+        text = omit_c_in_acq(text)
+    if adj_rule:
+        text = omit_d_in_adj(text)
+    if tch_rule:
+        text = omit_t_before_ch(text)
+    if ex_rule:
+        text = omit_e_before_x(text)
 
     return text
 
@@ -344,7 +374,6 @@ def generate_splines():
     text = request.form['text']
     if text == '':
         text = 'a b c d e f g h i j k l m n o p q r s t u v w x y z'
-    # text = process_text(text)
 
     if 'remove_duplicates' in request.form:
         text = remove_consecutive_duplicates(text)
@@ -352,7 +381,11 @@ def generate_splines():
     text = process_text(
         text,
         remove_dups='remove_duplicates' in request.form,
-        oa_mn_rule='oa_mn_rule' in request.form
+        ao_mn_rule='ao_mn_rule' in request.form,
+        acq_rule='acq_rule' in request.form,
+        adj_rule='adj_rule' in request.form,
+        tch_rule='tch_rule' in request.form,
+        ex_rule='ex_rule' in request.form,
         )
 
     rules = {

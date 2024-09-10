@@ -5,7 +5,7 @@
     <div class="controls">
         <div class="d-flex flex-row" style="margin:5px;">
             <div class="d-flex flex-column flex-grow-1">
-                <h2>Glyphs</h2>
+                <h2 id="glyphsTitle">Glyphs</h2>
                 <input type="text" id="character" placeholder="Enter character(s)" autocomplete="off">
                 <div id="glyphsList" class="spline-list" style="margin-right: 5px;"></div>
             </div>
@@ -47,6 +47,7 @@ const gridCanvas = document.getElementById('gridCanvas');
 const gridCtx = gridCanvas.getContext('2d');
 const splineCanvas = document.getElementById('splineCanvas');
 const splineCtx = splineCanvas.getContext('2d');
+const glyphsTitle = document.getElementById('glyphsTitle');
 const characterField = document.getElementById('character');
 const saveButton = document.getElementById('saveButton');
 const saveDropdown = document.getElementById('saveDropdown');
@@ -385,6 +386,7 @@ function loadCharacters() {
 
             charSplineData = response.data; // Store the data in the global variable
             glyphsList.innerHTML = '';
+            glyphsTitle.textContent = 'Glyphs (' + Object.keys(charSplineData).length + ')'
 
             for (const [character, points] of Object.entries(charSplineData)) {
                 numSplinesPerChar[character] = points.length  // used during de-selection
@@ -510,12 +512,6 @@ freezeButton.addEventListener('click', () => {
     updatePointsField();
     characterField.focus();
 });
-
-// Define the function to be called
-function additionalFunction() {
-    console.log('Another function was called!');
-    // Add your additional logic here
-}
 
 // Click event listener
 clearAllButton.addEventListener('click', (e) => {
