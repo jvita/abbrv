@@ -210,6 +210,10 @@ def line_to_splines(
             cursor_pos[1] += char_height
             word = word[2:]
 
+        if (remap_words) and (len(word) >= 3) and (word[:3] == 'you'):
+            cursor_pos[1] += char_height
+            word = 'y' + word[3:]
+
         if remap_words and (word in words_dict):
             # Entire word exists, so just add it
             leftmost_x = 0
