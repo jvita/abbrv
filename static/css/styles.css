@@ -70,13 +70,9 @@ html, body {
 }
 
 #character {
-    /* width: 100%; */
     margin-left: 5px;
     margin-right: 5px;
-    padding-top: 5px;
-    padding-bottom: 5px;
-    /* padding-left: 5px;
-    padding-right: 100px; */
+    padding: 5px;
 }
 
 .button-container {
@@ -321,4 +317,39 @@ img {
     height: auto;
     border: 1px solid #ccc;
     border-radius: 4px;
+}
+
+.multi-column {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr); /* Creates two equal-width columns */
+    gap: 10px; /* Adds space between the columns */
+    padding: 10px;
+}
+
+.multi-column .dropdown-item {
+    display: flex;
+    align-items: center;
+}
+
+/* Reset any display property being overridden */
+.dropdown-menu {
+    display: none; /* Ensure the dropdown is hidden by default */
+}
+
+/* Use Bootstrap's default .show class for visible dropdowns */
+.dropdown-menu.show {
+    display: block; /* This is Bootstrap's behavior when the dropdown is opened */
+}
+
+/* Apply the multi-column layout only when the dropdown is shown */
+.dropdown-menu.show.multi-column {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr); /* Two columns */
+    gap: 10px;
+    padding: 10px;
+}
+
+.dropdown-menu .dropdown-item {
+    display: flex;
+    align-items: center;
 }
