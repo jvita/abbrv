@@ -24,15 +24,9 @@ app = Flask(__name__)
 
 # File paths for single-character and multi-character splines
 CHAR_FILE = 'static/data/characters.json'
-JOINS_FILE = 'static/data/joins.json'
 WORDS_FILE = 'static/data/words.json'
-CHAR_DOTS_FILE = 'static/data/characters_dots.json'
-JOINS_DOTS_FILE = 'static/data/joins_dots.json'
 characters_dict = {}
-joins_dict = {}
 words_dict = {}
-char_dots_dict = {}
-joins_dots_dict = {}
 
 def adjust_points(points, adjustment):
     """Adjust points by adding or subtracting a constant."""
@@ -70,33 +64,15 @@ def save():
     data = request.json
     character = data['character']
     points = data['points']
-    # dots = data['dots']
-    dots = []
-
-    # handle saving dots, if provided
-    if len(dots) > 0:
-
-        adjusted_points = adjust_points(dots, np.array([-0.5, -0.5]))
-
-        # Load existing data
-        try:
-            with open(CHAR_DOTS_FILE, 'r') as f:
-                existing_data = json.load(f)
-        except FileNotFoundError:
-            existing_data = {}
-
-        # Update or add new entry
-        existing_data[character] = adjusted_points
-
-        # Save updated data
-        with open(CHAR_DOTS_FILE, 'w') as f:
-            json.dump(existing_data, f, indent=4)
+    as_word = data['as_word']
 
     adjusted_points = [adjust_points(p, np.array([-0.5, -0.5])) for p in points]
 
+    file_name = WORDS_FILE if as_word else CHAR_FILE
+
     # Load existing data
     try:
-        with open(CHAR_FILE, 'r') as f:
+        with open(file_name, 'r') as f:
             existing_data = json.load(f)
     except FileNotFoundError:
         existing_data = {}
@@ -105,7 +81,7 @@ def save():
     existing_data[character] = adjusted_points
 
     # Save updated data
-    with open(CHAR_FILE, 'w') as f:
+    with open(file_name, 'w') as f:
         json.dump(existing_data, f, indent=4)
 
     return jsonify({'status': 'success'})
@@ -124,26 +100,28 @@ def load_characters():
 
     return jsonify(chars)
 
-@app.route('/load_dots')
-def load_dots():
-    dots = {'chars': {}, 'joins': {}}
+@app.route('/load_words')
+def load_words():
+    words = {}
 
-    # Load single-character dots
+    # Load single-character splines
     try:
-        with open(CHAR_DOTS_FILE, 'r') as f:
-            chars_data = json.load(f)
-            dots['chars'].update({k: [adjust_points(p, np.array([0.5, 0.5])) for p in v] for k, v in chars_data.items()})
+        with open(WORDS_FILE, 'r') as f:
+            words_data = json.load(f)
+            words.update({k: [adjust_points(p, np.array([0.5, 0.5])) for p in v] for k, v in words_data.items()})
     except FileNotFoundError:
         pass
 
-    return jsonify(dots)
+    return jsonify(words)
+
 
 @app.route('/delete', methods=['POST'])
 def delete():
     data = request.json
     character = data['character']
+    as_word = data['as_word']
 
-    file_path = CHAR_FILE
+    file_path = WORDS_FILE if as_word else CHAR_FILE
 
     # Load existing data
     try:
@@ -184,11 +162,11 @@ def get_data():
         for char, points in _chars.items()
     }
 
-    global char_dots_dict
-    _dots = load_json_file(CHAR_DOTS_FILE)
-    char_dots_dict = {
-        char: np.array(points, dtype=np.float32)
-        for char, points in _dots.items()
+    global words_dict
+    _words = load_json_file(WORDS_FILE)
+    words_dict = {
+        word: [np.array(p, dtype=np.float32) for p in points]
+        for word, points in _words.items()
     }
 
 
@@ -231,6 +209,32 @@ def line_to_splines(
             cursor_pos[1] += char_height
             word = word[2:]
 
+        if word in words_dict:
+            # Entire word exists, so just add it
+            leftmost_x = 0
+            rightmost_x = 0
+
+            # Shift the glyph points to the current cursor position
+            glyph_points = words_dict[word]
+            minx = glyph_points[0][:, 0].min()
+            for arr in glyph_points:
+                arr[:, 0] -= minx
+            glyph_points = [arr + cursor_pos for arr in glyph_points]
+
+            for arr in glyph_points:
+                leftmost_x = min(leftmost_x, arr[:, 0].min())
+                rightmost_x = max(rightmost_x, arr[:, 0].max())
+
+                x_spline, y_spline = interpolate_points(arr)
+                splines.append((x_spline, y_spline))
+                red_dot_points.append(arr)
+
+            # Update cursor pos
+            cursor_pos = glyph_points[-1][-1].copy() + word_space
+            cursor_pos[1] = 0
+
+            continue  # go to next word
+
         glyph = ''
         i = 0
         first_glyph = True  # for disabling shift at start of word
@@ -239,7 +243,6 @@ def line_to_splines(
         while i < len(word):
             temp_glyph = ''
             longest_match = ''
-            leftshift = 0
             leftmost_x = 0
             rightmost_x = 0
 
@@ -309,7 +312,8 @@ def remove_consecutive_duplicates(s):
     return ''.join(result)
 
 def omit_a_o_before_m_n(input_string):
-    return re.sub(r'([ao])(?=[mn])', '', input_string)
+    # does not apply at the beginning of a word
+    return re.sub(r'(?<!\b)([ao])(?=[mn])', '', input_string)
 
 def omit_c_in_acq(input_string):
     return input_string.replace('acq', 'aq')

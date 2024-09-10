@@ -15,8 +15,8 @@
         </div>
         <input type="text" id="character" placeholder="Enter character(s)" autocomplete="off">
         <div class="d-flex flex-column">
-            <button id="deleteButton" type="button" class="btn btn-danger" disabled>Delete</button>
             <div class="d-flex justify-content-between">
+                <button id="freezeButton" type="button" class="btn btn-primary" disabled>Freeze</button>
                 <div class="btn-group">
                     <button id="clearButton" type="button" class="btn btn-primary">Clear</button>
                     <button id="clearAllDropdown" type="button" class="btn btn-primary dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
@@ -26,7 +26,6 @@
                         <li><a id="clearAllButton" class="dropdown-item" href="#" id="clearAllOption">all</a></li>
                     </ul>
                 </div>
-                <button id="freezeButton" type="button" class="btn btn-primary" disabled>Freeze</button>
                 <div class="btn-group">
                     <button id="saveButton" type="button" class="btn btn-primary">Save</button>
                     <button id="saveDropdown" type="button" class="btn btn-primary dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
@@ -36,6 +35,15 @@
                         <li><a id="saveWord" class="dropdown-item" href="#" id="saveAsOption">as word</a></li>
                     </ul>
                 </div>
+            </div>
+            <div class="btn-group d-flex">
+                <button id="deleteButton" type="button" class="btn btn-danger flex-grow-1">Delete</button>
+                <button id="deleteDropdown" type="button" class="btn btn-danger dropdown-toggle dropdown-toggle-split flex-grow-0" data-bs-toggle="dropdown" aria-expanded="false">
+                    <span class="visually-hidden">Toggle Dropdown</span>
+                </button>
+                <ul class="dropdown-menu">
+                    <li><a id="deleteWord" class="dropdown-item" href="#" id="deleteAsOption">as word</a></li>
+                </ul>
             </div>
         </div>
     </div>
@@ -47,11 +55,11 @@
 <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 <script>
 let charSplineData = {}; // Global variable to store spline data
+let wordSplineData = {}; // Global variable to store spline data
 const gridCanvas = document.getElementById('gridCanvas');
 const gridCtx = gridCanvas.getContext('2d');
 const splineCanvas = document.getElementById('splineCanvas');
 const splineCtx = splineCanvas.getContext('2d');
-const glyphsTitle = document.getElementById('glyphsTitle');
 const characterField = document.getElementById('character');
 const saveButton = document.getElementById('saveButton');
 const saveDropdown = document.getElementById('saveDropdown');
@@ -60,8 +68,13 @@ const clearButton = document.getElementById('clearButton');
 const clearAllButton = document.getElementById('clearAllButton');
 const clearAllDropdown = document.getElementById('clearAllDropdown');
 const deleteButton = document.getElementById('deleteButton');
+const deleteDropdown = document.getElementById('deleteDropdown');
+const deleteword = document.getElementById('deleteword');
 const freezeButton = document.getElementById('freezeButton');
+const glyphsTitle = document.getElementById('glyphsTitle');
 const glyphsList = document.getElementById('glyphsList');
+const wordsTitle = document.getElementById('wordsTitle');
+const wordsList = document.getElementById('wordsList');
 
 const rootStyles = getComputedStyle(document.documentElement);
 const colorInk = rootStyles.getPropertyValue('--ink-color').trim()
@@ -271,7 +284,7 @@ gridCanvas.addEventListener('contextmenu', (event) => {
 });
 
 
-function handleCharSelect(char, append = false) {
+function handleCharSelect(char, charPoints = null, append = false) {
     if (char === null) {
         // deselect everything
         selectedPoints = []
@@ -281,7 +294,7 @@ function handleCharSelect(char, append = false) {
 
     if (char !== null) {
         // selecting un-selected character
-        const newPoints = char in charSplineData ? charSplineData[char] : []
+        const newPoints = charPoints ? charPoints : (char in charSplineData ? charSplineData[char] : [])
         // const shiftedNewPoints = newPoints.map(([x, y]) => [x * gridSize - gridSize / 2, y * gridSize - gridSize / 2]);
         const shiftedNewPoints = newPoints.map(spline =>
             spline.map(([x, y]) => [(x * gridSize  - gridSize / 2), (y * gridSize - gridSize / 2)])
@@ -368,6 +381,8 @@ function refreshDeleteButton() {
             // deleteButton.classList.add('delete-button')
         }
     }
+
+    deleteDropdown.disabled = deleteButton.disabled
 }
 
 function scrollIfNeeded(item) {
@@ -402,15 +417,42 @@ function loadCharacters() {
                 listItem.addEventListener('click', (event) => {
                     characterField.focus()
                     characterField.value = ''
-                    handleCharSelect(character, event.ctrlKey)
+                    handleCharSelect(character, null, event.ctrlKey)
                     refreshButtons();
                     updatePointsField();
                 });
                 glyphsList.appendChild(listItem);
             }
         });
-    loadDots();
 }
+
+function loadWords() {
+    axios.get('/load_words')
+        .then(response => {
+
+            wordSplineData = response.data; // Store the data in the global variable
+            wordsList.innerHTML = '';
+            wordsTitle.textContent = 'Words (' + Object.keys(wordSplineData).length + ')'
+
+            for (const [word, points] of Object.entries(wordSplineData)) {
+                numSplinesPerChar[word] = points.length  // used during de-selection
+
+                const listItem = document.createElement('div');
+                listItem.className = 'char-list-item';
+                listItem.textContent = word;
+
+                listItem.addEventListener('click', (event) => {
+                    characterField.focus()
+                    characterField.value = ''
+                    handleCharSelect(word, points)
+                    refreshButtons();
+                    updatePointsField();
+                });
+                wordsList.appendChild(listItem);
+            }
+        });
+}
+
 
 saveButton.addEventListener('click', () => {
     if (selectedPoints.length) {
@@ -420,7 +462,7 @@ saveButton.addEventListener('click', () => {
             points: selectedPoints.map(spline =>
                 spline.map(([x, y]) => [(x + gridSize / 2) / gridSize, (y + gridSize / 2) / gridSize])
                 ),
-            // as_word: false,
+            as_word: false,
             // dots: dots.map(([x, y]) => [(x + gridSize / 2) / gridSize, (y + gridSize / 2) / gridSize]),
         };
         axios.post('/save', data)
@@ -439,28 +481,27 @@ saveButton.addEventListener('click', () => {
 });
 
 saveWord.addEventListener('click', () => {
-    // let combinedArray = [...selectedPoints];
+    if (selectedPoints.length) {
 
-    // const character = characterField.value.trim();
-    // if (character && combinedArray.length) {
-    //     const data = {
-    //         character: character,
-    //         points: combinedArray.map(([x, y]) => [(x + gridSize / 2) / gridSize, (y + gridSize / 2) / gridSize]),
-    //         as_word: true,
-    //     };
-    //     axios.post('/save', data)
-    //         .then(response => {
-    //             if (response.data.status === 'success') {
-    //                 loadCharacters();
-    //                 handleCharSelect(null);
-    //                 refreshButtons();
-    //                 updatePointsField();
-    //                 characterField.value = '';
-    //                 characterField.focus();
-    //             }
-    //         });
-    // }
-
+        const data = {
+            character: characterField.value.trim(),
+            points: selectedPoints.map(spline =>
+                spline.map(([x, y]) => [(x + gridSize / 2) / gridSize, (y + gridSize / 2) / gridSize])
+                ),
+            as_word: true,
+        };
+        axios.post('/save', data)
+            .then(response => {
+                if (response.data.status === 'success') {
+                    loadWords();
+                    handleCharSelect(null);
+                    refreshButtons();
+                    updatePointsField();
+                    characterField.value = '';
+                    characterField.focus();
+                }
+            });
+    }
 });
 
 clearButton.addEventListener('click', () => {
@@ -477,7 +518,7 @@ clearButton.addEventListener('click', () => {
 
 deleteButton.addEventListener('click', () => {
     if (selectedPoints) {
-        axios.post('/delete', { character: characterField.value.trim()})
+        axios.post('/delete', { character: characterField.value.trim(), as_word: false})
             .then(response => {
                 if (response.data.status === 'success') {
                     loadCharacters();
@@ -491,12 +532,21 @@ deleteButton.addEventListener('click', () => {
     }
 });
 
-function loadDots() {
-    axios.get('/load_dots')
-        .then(response => {
-            dotsData = response.data['chars']; // Store the data in the global variable
-        });
-}
+deleteWord.addEventListener('click', () => {
+    if (selectedPoints) {
+        axios.post('/delete', { character: characterField.value.trim(), as_word: true})
+            .then(response => {
+                if (response.data.status === 'success') {
+                    loadWords();
+                    handleCharSelect(null);
+                    refreshButtons();
+                    updatePointsField();
+                    characterField.value = '';
+                    characterField.focus();
+                }
+            });
+    }
+});
 
 freezeButton.addEventListener('click', () => {
     splineCtx.clearRect(0, 0, splineCanvas.width, splineCanvas.height);
@@ -583,25 +633,10 @@ characterField.addEventListener('keyup', function(event) {
 
 function sortAndDisplayList() {
     sortOneList(glyphsList);
-
-    // item.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    // scrollIfNeeded(item);
     glyphsList.scrollTop = glyphsList.scrollHeight
 
-    // // select the top result if it exists
-    // const searchTerm = document.getElementById('character').value.toLowerCase();
-
-    // if ((searchTerm) && (searchTerm in charSplineData)) {  // select
-    //     const topResult = glyphsList.children[0];
-    //     handleCharSelect(topResult.textContent)
-    //     topResult.classList.add('selected');
-    // } else if (searchTerm === '') {
-    //     // deselect
-    //     handleCharSelect(null)
-    // }
-
-    // refreshButtons();
-    // updatePointsField();
+    sortOneList(wordsList);
+    wordsList.scrollTop = wordsList.scrollHeight
 }
 
 function sortOneList(listToSort) {
@@ -638,6 +673,7 @@ function sortOneList(listToSort) {
 refreshButtons();
 drawGrid();
 loadCharacters();
+loadWords();
 
 document.addEventListener("DOMContentLoaded", function() {
     const gridContainer = document.querySelector('.grid-container');
