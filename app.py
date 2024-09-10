@@ -190,7 +190,8 @@ def split_into_words(text):
 
 def line_to_splines(
         line,
-        elevate_th=False
+        elevate_th=False,
+        remap_words=False
     ):
 
     global characters_dict
@@ -209,7 +210,7 @@ def line_to_splines(
             cursor_pos[1] += char_height
             word = word[2:]
 
-        if word in words_dict:
+        if remap_words and (word in words_dict):
             # Entire word exists, so just add it
             leftmost_x = 0
             rightmost_x = 0
@@ -393,6 +394,7 @@ def generate_splines():
         )
 
     rules = {
+        'remap_words': 'remap_words' in request.form,
         'elevate_th': 'elevate_th' in request.form,
     }
 

@@ -21,6 +21,10 @@
                 </button>
                 <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
                     <li class="dropdown-item button-container align-items-center">
+                        <input type="checkbox" id="remap_words" name="remap_words" style="max-height: 20px; max-width: 20px; min-width: 20px" checked>
+                        <label for="elevate_th" style="flex: 6;">Abbreviate common words</label>
+                    </li>
+                    <li class="dropdown-item button-container align-items-center">
                         <input type="checkbox" id="remove_duplicates" name="remove_duplicates" style="max-height: 20px; max-width: 20px; min-width: 20px" checked>
                         <label for="remove_duplicates" style="flex: 6;">Remove consecutive duplicates (except "ee")</label>
                     </li>
@@ -99,7 +103,7 @@
             debouncedUpdatePlot();
         });
 
-        $('#show_knot_points, #elevate_th, #show_dots, #remove_duplicates, #ao_mn_rule, #acq_rule, #adj_rule, #tch_rule, #ex_rule').on('change', function() {
+        $('#show_knot_points, #remap_words, #elevate_th, #show_dots, #remove_duplicates, #ao_mn_rule, #acq_rule, #adj_rule, #tch_rule, #ex_rule').on('change', function() {
             updatePlot();  // Call updatePlot immediately when checkboxes are modified
         });
 
