@@ -4,7 +4,6 @@ import json
 from scipy.interpolate import CubicSpline, BSpline
 import os
 import re
-from flask_debugtoolbar import DebugToolbarExtension
 
 import matplotlib
 matplotlib.use('Agg')
@@ -15,6 +14,7 @@ import base64
 
 app = Flask(__name__)
 
+# from flask_debugtoolbar import DebugToolbarExtension
 # app.config['SECRET_KEY'] = 'lorem ipsum'
 # app.config['DEBUG_TB_PROFILER_ENABLED'] = True  # Enable the profiler
 # app.config['DEBUG_TB_INTERCEPT_REDIRECTS'] = False  # Optional: avoid toolbar intercepting redirects
@@ -203,7 +203,6 @@ def line_to_splines(
     cursor_pos = np.array([0, 0], dtype=np.float32)
     char_height = 0.1
 
-    # words = line.strip().split(' ')
     words = [w.strip() for w in split_into_words(line.strip())]
     for word in words:
         if (elevate_th) and (len(word) > 2) and (word[:2] == 'th'):
