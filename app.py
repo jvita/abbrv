@@ -234,7 +234,7 @@ def line_to_splines(
                 red_dot_points.append(arr)
 
             # Update cursor pos
-            cursor_pos = glyph_points[-1][-1].copy() + word_space
+            cursor_pos[0] = rightmost_x + word_space
             cursor_pos[1] = 0
 
             continue  # go to next word
