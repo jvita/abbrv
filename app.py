@@ -462,11 +462,11 @@ def generate_splines():
     plt.axis('off')
 
     img = io.BytesIO()
-    plt.savefig(img, format='png', bbox_inches='tight')
+    plt.savefig(img, format='svg', bbox_inches='tight')
     img.seek(0)
-    img_base64 = base64.b64encode(img.getvalue()).decode()
+    svg_content = img.getvalue().decode()
 
-    return jsonify({'image': img_base64})
+    return jsonify({'image': svg_content})
 
 @app.route('/')
 @app.route('/writer')
