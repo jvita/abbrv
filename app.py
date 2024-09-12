@@ -236,7 +236,6 @@ def line_to_splines(
             # Update cursor pos
             cursor_pos[0] = rightmost_x + word_space
             cursor_pos[1] = 0
-            print(f'{cursor_pos=}')
 
             continue  # go to next word
 
@@ -288,10 +287,8 @@ def line_to_splines(
             i += 1  # Move to the next character
 
         # Update cursor pos
-        print(f'before {cursor_pos=}, {rightmost_x=}, {word_space=}')
         cursor_pos[0] = rightmost_x + word_space
         cursor_pos[1] = 0
-        print(f'after {cursor_pos=}')
 
     return splines, red_dot_points, black_dot_points
 
@@ -459,7 +456,7 @@ def generate_splines():
     for y in line_positions:
         plt.plot(xlims, [-y, -y], '--', color='lightgrey', zorder=0)
     plt.gca().set_aspect('equal', adjustable='box')
-    # plt.axis('off')
+    plt.axis('off')
 
     img = io.BytesIO()
     plt.savefig(img, format='svg', bbox_inches='tight')
