@@ -328,6 +328,35 @@ def omit_t_before_ch(input_string):
 def omit_e_before_x(input_string):
     return input_string.replace('ex', 'x')
 
+def split_text_with_linebreaks(text, max_width):
+    # Split by lines first to preserve existing line breaks
+    lines = text.splitlines()
+    result = []
+
+    for line in lines:
+        words = line.split()
+        current_line = []
+        current_length = 0
+
+        for word in words:
+            # Check if adding the next word exceeds the max_width
+            if current_length + len(word) + (len(current_line) > 0) > max_width:
+                # Join the current line into a string and append it to the result
+                result.append(' '.join(current_line))
+                # Start a new line with the current word
+                current_line = [word]
+                current_length = len(word)
+            else:
+                # Add the word to the current line
+                current_line.append(word)
+                current_length += len(word) + (len(current_line) > 1)
+
+        # Append the last processed line
+        if current_line:
+            result.append(' '.join(current_line))
+
+    return result
+
 
 def process_text(
         text,
@@ -353,6 +382,12 @@ def process_text(
         text = omit_t_before_ch(text)
     if ex_rule:
         text = omit_e_before_x(text)
+
+    # remove unsupported punctuation
+    for p in ["'"]:
+        text = text.replace(p, '')
+    for p in ['/', '\\', '-']:
+        text = text.replace(p, ' ')
 
     return text
 
@@ -400,10 +435,11 @@ def generate_splines():
 
     y_offset = 0.
     line_positions = []
-    lines = text.splitlines()
+    # lines = text.splitlines()
+    lines = split_text_with_linebreaks(text, 26)
     nlines = len(lines)
     plt.figure(figsize=(15, 3*nlines))
-    for i, line in enumerate(text.splitlines()):
+    for i, line in enumerate(lines):
         if len(line) == 0:
             continue  # empty line
         splines, red_dot_points, black_dot_points = line_to_splines(line, **rules)
@@ -453,8 +489,14 @@ def generate_splines():
 
     xlims = plt.gca().get_xlim()
     xlims = (xlims[0]-0.15, xlims[-1]+0.15) # make them extend just past a normal character length
+    print(f'{xlims=}')
+    xlims = (-.26, 2.4)
+    # xlims = (min(-0.15, xlims[0]), max(1.0, xlims[1]))
     for y in line_positions:
         plt.plot(xlims, [-y, -y], '--', color='lightgrey', zorder=0)
+    # ylims = plt.gca().get_ylim()
+    # ylims = (min(-0.3, ylims[0]), max(0.3, ylims[1]))
+    # plt.ylim(ylims)
     plt.gca().set_aspect('equal', adjustable='box')
     plt.axis('off')
 
