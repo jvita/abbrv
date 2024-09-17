@@ -435,8 +435,8 @@ def generate_splines():
 
     y_offset = 0.
     line_positions = []
-    # lines = text.splitlines()
-    lines = split_text_with_linebreaks(text, 26)
+    lines = text.splitlines()
+    # lines = split_text_with_linebreaks(text, 26)
     nlines = len(lines)
     plt.figure(figsize=(15, 3*nlines))
     for i, line in enumerate(lines):
@@ -489,8 +489,8 @@ def generate_splines():
 
     xlims = plt.gca().get_xlim()
     xlims = (xlims[0]-0.15, xlims[-1]+0.15) # make them extend just past a normal character length
-    print(f'{xlims=}')
-    xlims = (-.26, 2.4)
+    # print(f'{xlims=}')
+    # xlims = (-.26, 2.4)
     # xlims = (min(-0.15, xlims[0]), max(1.0, xlims[1]))
     for y in line_positions:
         plt.plot(xlims, [-y, -y], '--', color='lightgrey', zorder=0)
