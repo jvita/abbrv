@@ -162,6 +162,20 @@ def get_data():
         for char, points in _chars.items()
     }
 
+    global suffixes_dict
+    suffixes_dict = {}
+    to_del = []
+    for k,v in characters_dict.items():
+        if k[0] == '-' and len(k) > 1:
+            # for things like -hood and -less
+            _k = remove_consecutive_duplicates(k)
+            suffixes_dict[_k] = v
+            to_del.append(k)
+
+
+    for k in to_del:
+        del characters_dict[k]
+
     global words_dict
     _words = load_json_file(WORDS_FILE)
     words_dict = {
@@ -191,10 +205,11 @@ def split_into_words(text):
 def line_to_splines(
         line,
         elevate_th=False,
-        remap_words=False
+        remap_words=False,
+        abbreviate_suffixes=False,
     ):
 
-    global characters_dict
+    global characters_dict, suffixes_dict
 
     splines = []
     red_dot_points = []
@@ -205,6 +220,7 @@ def line_to_splines(
 
     words = [w.strip() for w in split_into_words(line.strip())]
     for word in words:
+        # Apply rules that would modify the entire word
         if (elevate_th) and (len(word) > 2) and (word[:2] == 'th'):
             cursor_pos[1] += char_height
             word = word[2:]
@@ -238,6 +254,19 @@ def line_to_splines(
             cursor_pos[1] = 0
 
             continue  # go to next word
+
+        if abbreviate_suffixes:
+            # Search for suffixes
+            suffix_found = False
+            suffix_points = []
+            for suffix in suffixes_dict:
+                if word.endswith(suffix[1:]):
+                    suffix_points = [arr.copy() for arr in suffixes_dict[suffix]]
+                    suffix_points = [arr - suffix_points[0][0] for arr in suffix_points]
+
+                    word = word[:-len(suffix[1:])]
+                    suffix_found = True
+                    break  # Only handle one suffix per word
 
         glyph = ''
         i = 0
@@ -286,12 +315,26 @@ def line_to_splines(
 
             i += 1  # Move to the next character
 
+        if abbreviate_suffixes:
+            # Append any suffix points
+            if suffix_found:
+                for arr in suffix_points:
+                    arr += cursor_pos
+
+                    leftmost_x = min(leftmost_x, arr[:, 0].min())
+                    rightmost_x = max(rightmost_x, arr[:, 0].max())
+
+                    x_spline, y_spline = interpolate_points(arr)
+                    splines.append((x_spline, y_spline))
+                    red_dot_points.append(arr)
+
+                cursor_pos = arr[-1].copy()
+
         # Update cursor pos
         cursor_pos[0] = rightmost_x + word_space
         cursor_pos[1] = 0
 
     return splines, red_dot_points, black_dot_points
-
 
 def remove_consecutive_duplicates(s):
     if not s:
@@ -431,6 +474,7 @@ def generate_splines():
     rules = {
         'remap_words': 'remap_words' in request.form,
         'elevate_th': 'elevate_th' in request.form,
+        'abbreviate_suffixes': 'abbreviate_suffixes' in request.form,
     }
 
     y_offset = 0.
@@ -489,9 +533,8 @@ def generate_splines():
 
     xlims = plt.gca().get_xlim()
     xlims = (xlims[0]-0.15, xlims[-1]+0.15) # make them extend just past a normal character length
-    # print(f'{xlims=}')
     # xlims = (-.26, 2.4)
-    # xlims = (min(-0.15, xlims[0]), max(1.0, xlims[1]))
+    # xlims = (min(-0.26, xlims[0]), max(2.4, xlims[1]))
     for y in line_positions:
         plt.plot(xlims, [-y, -y], '--', color='lightgrey', zorder=0)
     # ylims = plt.gca().get_ylim()

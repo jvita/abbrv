@@ -11,14 +11,19 @@
         <button class="btn btn-primary dropdown-toggle" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
             Options
         </button>
-        <ul class="dropdown-menu multi-column" aria-labelledby="dropdownMenuButton">
+        <!-- <ul class="dropdown-menu multi-column" aria-labelledby="dropdownMenuButton"></ul> -->
+        <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+            <li class="dropdown-item button-container align-items-center">
+                <input type="checkbox" id="remove_duplicates" name="remove_duplicates" style="max-height: 20px; max-width: 20px; min-width: 20px" checked>
+                <label for="remove_duplicates" style="flex: 6;">Remove consecutive duplicates (except "ee")</label>
+            </li>
             <li class="dropdown-item button-container align-items-center">
                 <input type="checkbox" id="remap_words" name="remap_words" style="max-height: 20px; max-width: 20px; min-width: 20px" checked>
                 <label for="remap_words" style="flex: 6;">Abbreviate common words</label>
             </li>
             <li class="dropdown-item button-container align-items-center">
-                <input type="checkbox" id="remove_duplicates" name="remove_duplicates" style="max-height: 20px; max-width: 20px; min-width: 20px" checked>
-                <label for="remove_duplicates" style="flex: 6;">Remove consecutive duplicates (except "ee")</label>
+                <input type="checkbox" id="abbreviate_suffixes" name="abbreviate_suffixes" style="max-height: 20px; max-width: 20px; min-width: 20px" checked>
+                <label for="abbreviate_suffixes" style="flex: 6;">Abbreviate common suffixes</label>
             </li>
             <li class="dropdown-item button-container align-items-center">
                 <input type="checkbox" id="elevate_th" name="elevate_th" style="max-height: 20px; max-width: 20px; min-width: 20px" checked>
@@ -94,7 +99,7 @@
             debouncedUpdatePlot();
         });
 
-        $('#show_knot_points, #remap_words, #elevate_th, #show_dots, #remove_duplicates, #ao_mn_rule, #acq_rule, #adj_rule, #tch_rule, #ex_rule').on('change', function() {
+        $('#show_knot_points, #remap_words, #abbreviate_suffixes, #elevate_th, #show_dots, #remove_duplicates, #ao_mn_rule, #acq_rule, #adj_rule, #tch_rule, #ex_rule').on('change', function() {
             updatePlot();  // Call updatePlot immediately when checkboxes are modified
         });
 
