@@ -14,17 +14,19 @@ import base64
 
 app = Flask(__name__)
 
+# from flask_debugtoolbar import DebugToolbarExtension
+# app.config['SECRET_KEY'] = 'lorem ipsum'
+# app.config['DEBUG_TB_PROFILER_ENABLED'] = True  # Enable the profiler
+# app.config['DEBUG_TB_INTERCEPT_REDIRECTS'] = False  # Optional: avoid toolbar intercepting redirects
+
+# app.debug = True  # Required for debug toolbar to work
+# toolbar = DebugToolbarExtension(app)
+
 # File paths for single-character and multi-character splines
 CHAR_FILE = 'static/data/characters.json'
-JOINS_FILE = 'static/data/joins.json'
 WORDS_FILE = 'static/data/words.json'
-CHAR_DOTS_FILE = 'static/data/characters_dots.json'
-JOINS_DOTS_FILE = 'static/data/joins_dots.json'
 characters_dict = {}
-joins_dict = {}
 words_dict = {}
-char_dots_dict = {}
-joins_dots_dict = {}
 
 def adjust_points(points, adjustment):
     """Adjust points by adding or subtracting a constant."""
@@ -61,142 +63,28 @@ def spline():
 def save():
     data = request.json
     character = data['character']
-    joinchar = data['joinchar']
     points = data['points']
     as_word = data['as_word']
-    dots = data['dots']
 
-    # handle saving dots, if provided
-    if len(dots) > 0:
-        if joinchar is not None: # save as join
-            adjusted_points = adjust_points(dots, np.array([-0.5, -0.5]))
+    adjusted_points = [adjust_points(p, np.array([-0.5, -0.5])) for p in points]
 
-            # Load existing data
-            try:
-                with open(JOINS_DOTS_FILE, 'r') as f:
-                    existing_data = json.load(f)
-            except FileNotFoundError:
-                existing_data = {}
+    file_name = WORDS_FILE if as_word else CHAR_FILE
 
-            # Update or add new entry
-            # data[character][join] is the array of points used when "character" is preceded by "join"
-            if character not in existing_data:
-                existing_data[character] = {joinchar: adjusted_points}
-            else:
-                # existing_data[character] = existing_data[character].update({joiningCharacter: adjusted_points})
-                existing_data[character].update({joinchar: adjusted_points})
-
-            # Save updated data
-            with open(JOINS_DOTS_FILE, 'w') as f:
-                json.dump(existing_data, f, indent=4)
-        else:
-            adjusted_points = adjust_points(dots, np.array([-0.5, -0.5]))
-
-            # Load existing data
-            try:
-                with open(CHAR_DOTS_FILE, 'r') as f:
-                    existing_data = json.load(f)
-            except FileNotFoundError:
-                existing_data = {}
-
-            # Update or add new entry
-            existing_data[character] = adjusted_points
-
-            # Save updated data
-            with open(CHAR_DOTS_FILE, 'w') as f:
-                json.dump(existing_data, f, indent=4)
-
-    if as_word:
-        adjusted_points = adjust_points(points, np.array([-0.5, -0.5]))
-
-        # Load existing data
-        try:
-            with open(WORDS_FILE, 'r') as f:
-                existing_data = json.load(f)
-        except FileNotFoundError:
-            existing_data = {}
-
-        # Update or add new entry
-        existing_data[character] = adjusted_points
-
-        # Save updated data
-        with open(WORDS_FILE, 'w') as f:
-            json.dump(existing_data, f, indent=4)
-
-        return jsonify({'status': 'success'})
-
-    elif joinchar is not None: # save as join
-        adjusted_points = adjust_points(points, np.array([-0.5, -0.5]))
-
-        # Load existing data
-        try:
-            with open(JOINS_FILE, 'r') as f:
-                existing_data = json.load(f)
-        except FileNotFoundError:
-            existing_data = {}
-
-        # Update or add new entry
-        # data[character][join] is the array of points used when "character" is preceded by "join"
-        if character not in existing_data:
-            existing_data[character] = {joinchar: adjusted_points}
-        else:
-            # existing_data[character] = existing_data[character].update({joiningCharacter: adjusted_points})
-            existing_data[character].update({joinchar: adjusted_points})
-
-        # Save updated data
-        with open(JOINS_FILE, 'w') as f:
-            json.dump(existing_data, f, indent=4)
-
-        return jsonify({'status': 'success'})
-
-    else: # save in characters
-        adjusted_points = adjust_points(points, np.array([-0.5, -0.5]))
-
-        # Load existing data
-        try:
-            with open(CHAR_FILE, 'r') as f:
-                existing_data = json.load(f)
-        except FileNotFoundError:
-            existing_data = {}
-
-        # Update or add new entry
-        existing_data[character] = adjusted_points
-
-        # Save updated data
-        with open(CHAR_FILE, 'w') as f:
-            json.dump(existing_data, f, indent=4)
-
-        return jsonify({'status': 'success'})
-
-
-@app.route('/load_joins')
-def load_joins():
-    # Load single-character splines
-    chars = {}
+    # Load existing data
     try:
-        with open(CHAR_FILE, 'r') as f:
-            join_data = json.load(f)
-            chars.update({k: adjust_points(v, np.array([0.5, 0.5])) for k, v in join_data.items()})
+        with open(file_name, 'r') as f:
+            existing_data = json.load(f)
     except FileNotFoundError:
-        pass
+        existing_data = {}
 
-    # Load join splines
-    joins = {}
-    try:
-        with open(JOINS_FILE, 'r') as f:
-            join_data = json.load(f)
-            joins.update({
-                k: {
-                    j: adjust_points(v, np.array([0.5, 0.5]))
-                    for j, v in dct.items()
-                    }
-                for k, dct in join_data.items()
-                })
-    except FileNotFoundError:
-        pass
+    # Update or add new entry
+    existing_data[character] = adjusted_points
 
-    return jsonify({'chars': chars, 'joins': joins})
+    # Save updated data
+    with open(file_name, 'w') as f:
+        json.dump(existing_data, f, indent=4)
 
+    return jsonify({'status': 'success'})
 
 @app.route('/load_characters')
 def load_characters():
@@ -206,41 +94,11 @@ def load_characters():
     try:
         with open(CHAR_FILE, 'r') as f:
             chars_data = json.load(f)
-            chars.update({k: adjust_points(v, np.array([0.5, 0.5])) for k, v in chars_data.items()})
+            chars.update({k: [adjust_points(p, np.array([0.5, 0.5])) for p in v] for k, v in chars_data.items()})
     except FileNotFoundError:
         pass
 
     return jsonify(chars)
-
-@app.route('/load_dots')
-def load_dots():
-    dots = {'chars': {}, 'joins': {}}
-
-    # Load single-character dots
-    try:
-        with open(CHAR_DOTS_FILE, 'r') as f:
-            chars_data = json.load(f)
-            dots['chars'].update({k: adjust_points(v, np.array([0.5, 0.5])) for k, v in chars_data.items()})
-    except FileNotFoundError:
-        pass
-
-    # Load join dots
-    joins = {}
-    try:
-        with open(JOINS_DOTS_FILE, 'r') as f:
-            join_data = json.load(f)
-            dots['joins'].update({
-                k: {
-                    j: adjust_points(v, np.array([0.5, 0.5]))
-                    for j, v in dct.items()
-                    }
-                for k, dct in join_data.items()
-                })
-    except FileNotFoundError:
-        pass
-
-    return jsonify(dots)
-
 
 @app.route('/load_words')
 def load_words():
@@ -250,86 +108,39 @@ def load_words():
     try:
         with open(WORDS_FILE, 'r') as f:
             words_data = json.load(f)
-            words.update({k: adjust_points(v, np.array([0.5, 0.5])) for k, v in words_data.items()})
+            words.update({k: [adjust_points(p, np.array([0.5, 0.5])) for p in v] for k, v in words_data.items()})
     except FileNotFoundError:
         pass
 
     return jsonify(words)
 
+
 @app.route('/delete', methods=['POST'])
 def delete():
     data = request.json
     character = data['character']
-    joinchar = data['joinchar']
-    delete_word = data['delete_word']
+    as_word = data['as_word']
 
-    if delete_word:
-        file_path = WORDS_FILE
+    file_path = WORDS_FILE if as_word else CHAR_FILE
 
-        # Load existing data
-        try:
-            with open(file_path, 'r') as f:
-                existing_data = json.load(f)
-        except FileNotFoundError:
-            existing_data = {}
+    # Load existing data
+    try:
+        with open(file_path, 'r') as f:
+            existing_data = json.load(f)
+    except FileNotFoundError:
+        existing_data = {}
 
-        # Remove the specified character
-        if character in existing_data:
-            del existing_data[character]
+    # Remove the specified character
+    if character in existing_data:
+        del existing_data[character]
 
-            # Save updated data
-            with open(file_path, 'w') as f:
-                json.dump(existing_data, f, indent=4)
+        # Save updated data
+        with open(file_path, 'w') as f:
+            json.dump(existing_data, f, indent=4)
 
-            return jsonify({'status': 'success'})
-        else:
-            return jsonify({'status': 'error', 'message': 'Character not found'})
-    elif joinchar is None: # delete the single character
-        file_path = CHAR_FILE
-
-        # Load existing data
-        try:
-            with open(file_path, 'r') as f:
-                existing_data = json.load(f)
-        except FileNotFoundError:
-            existing_data = {}
-
-        # Remove the specified character
-        if character in existing_data:
-            del existing_data[character]
-
-            # Save updated data
-            with open(file_path, 'w') as f:
-                json.dump(existing_data, f, indent=4)
-
-            return jsonify({'status': 'success'})
-        else:
-            return jsonify({'status': 'error', 'message': 'Character not found'})
-    else:  # try to delete the join
-        file_path = JOINS_FILE
-
-        # Load existing data
-        try:
-            with open(file_path, 'r') as f:
-                existing_data = json.load(f)
-        except FileNotFoundError:
-            existing_data = {}
-
-        # Remove the specified character
-        if character in existing_data:
-            if joinchar in existing_data[character]:
-                del existing_data[character]
-
-                # Save updated data
-                with open(file_path, 'w') as f:
-                    json.dump(existing_data, f, indent=4)
-
-                return jsonify({'status': 'success'})
-            else:
-                return jsonify({'status': 'error', 'message': 'Join not found'})
-        else:
-            return jsonify({'status': 'error', 'message': 'Character not found'})
-
+        return jsonify({'status': 'success'})
+    else:
+        return jsonify({'status': 'error', 'message': 'Character not found'})
 
 def execute_on_refresh():
     get_data()
@@ -347,42 +158,36 @@ def get_data():
     global characters_dict
     _chars = load_json_file(CHAR_FILE)
     characters_dict = {
-        char: np.array(points, dtype=np.float32)
+        char: [np.array(p, dtype=np.float32) for p in points]
         for char, points in _chars.items()
     }
 
-    global joins_dict
-    _joins = load_json_file(JOINS_FILE)
-    joins_dict = {
-        char: {j: np.array(points, dtype=np.float32) for j, points in join_dict.items()}
-        for char, join_dict in _joins.items()
-    }
+    global suffixes_dict
+    suffixes_dict = {}
+    to_del = []
+    for k,v in characters_dict.items():
+        if k[0] == '-' and len(k) > 1:
+            # for things like -hood and -less
+            _k = remove_consecutive_duplicates(k)
+            suffixes_dict[_k] = v
+            to_del.append(k)
+
+
+    for k in to_del:
+        del characters_dict[k]
 
     global words_dict
     _words = load_json_file(WORDS_FILE)
     words_dict = {
-        word: np.array(points, dtype=np.float32)
+        word: [np.array(p, dtype=np.float32) for p in points]
         for word, points in _words.items()
-    }
-
-    global char_dots_dict
-    _dots = load_json_file(CHAR_DOTS_FILE)
-    char_dots_dict = {
-        char: np.array(points, dtype=np.float32)
-        for char, points in _dots.items()
-    }
-
-    global joins_dots_dict
-    _joins = load_json_file(JOINS_DOTS_FILE)
-    joins_dots_dict = {
-        char: {j: np.array(points, dtype=np.float32) for j, points in join_dict.items()}
-        for char, join_dict in _joins.items()
     }
 
 
 def interpolate_points(points, num_points=100):
     if len(points) < 2:
-        return np.array([]), np.array([])
+        return (points[:, 0], points[:, 1])
+        # return np.array([]), np.array([])
 
     x = points[:, 0]
     y = points[:, 1]
@@ -393,154 +198,143 @@ def interpolate_points(points, num_points=100):
 
     return x_spline, y_spline
 
-def join_to_spline(char, cursor_pos, prev=None, full_word=False):
-    global characters_dict, words_dict
-
-    if full_word:
-        join_points = words_dict[char].copy()
-    else:
-        join_points = characters_dict[char].copy()
-        join_dots = char_dots_dict[char].copy() if char in char_dots_dict else None
-
-    if prev is None: # first character in word
-        # shift to properly respect spaces b/w words
-        join_points[:, 0] += abs(join_points[:, 0].min())
-        if join_dots is not None:
-            join_dots[:, 0] += abs(join_points[:, 0].min())
-    else:
-        if (char in joins_dict):
-            if prev in joins_dict[char]:
-                # replace with modified version for the join
-                join_points = joins_dict[char][prev].copy()
-                join_dots = joins_dots_dict[char][prev].copy() if (char in joins_dots_dict) and (prev in joins_dots_dict[char]) else None
-            elif prev[-1] in joins_dict[char]:  # try joining to last char instead
-                join_points = joins_dict[char][prev[-1]].copy()
-                join_dots = joins_dots_dict[char][prev[-1]].copy() if (char in joins_dots_dict) and (prev[-1] in joins_dots_dict[char]) else None
-
-        # shift to align with cursor position
-        join_points -= join_points[0]
-        if join_dots is not None:
-            join_dots -= join_points[0]
-
-    join_points += cursor_pos  # move to cursor pos
-    if join_dots is not None:
-        join_dots += cursor_pos  # move to cursor pos
-
-    x_spline, y_spline = interpolate_points(join_points)
-    splines = (x_spline, y_spline)
-    red_dot_points = join_points  # for optionally plotting red dots
-    black_dot_points = join_dots # for optionally plotting red dots
-
-    # move cursor and word endpoint tracker
-    leftmost_x = join_points[:, 0].min()
-    rightmost_x = join_points[:, 0].max()
-    cursor_pos = join_points[-1].copy()
-
-    return splines, red_dot_points, black_dot_points, leftmost_x, rightmost_x, cursor_pos
+def split_into_words(text):
+    # Regular expression to split text by words, digits, and punctuation
+    return re.findall(r'[A-Za-z]+|\d|[^\w\s]', text)
 
 def line_to_splines(
         line,
-        elevate_th=False
+        elevate_th=False,
+        remap_words=False,
+        abbreviate_suffixes=False,
     ):
 
-    global characters_dict
+    global characters_dict, suffixes_dict
 
     splines = []
     red_dot_points = []
     black_dot_points = []
     word_space = 0.1
     cursor_pos = np.array([0, 0], dtype=np.float32)
-    rightmost_x = 0 # for adding spaces between words
     char_height = 0.1
 
-    words = line.split(' ')
+    words = [w.strip() for w in split_into_words(line.strip())]
     for word in words:
-        word_splines = []
-        word_red_dots = []
-        word_black_dots = []
+        # Apply rules that would modify the entire word
+        if (elevate_th) and (len(word) > 2) and (word[:2] == 'th'):
+            cursor_pos[1] += char_height
+            word = word[2:]
 
-        if word in words_dict:
-            returns = join_to_spline(word, cursor_pos, None, full_word=True)
+        if (remap_words) and (len(word) >= 3) and (word[:3] == 'you'):
+            cursor_pos[1] += char_height
+            word = 'y' + word[3:]
 
-            word_splines.append(returns[0])
-            word_red_dots.append(returns[1])
-            word_black_dots.append(returns[2])
-            leftmost_x = returns[3]
-            rightmost_x = returns[4]
-            cursor_pos = returns[5]
+        if remap_words and (word in words_dict):
+            # Entire word exists, so just add it
+            leftmost_x = 0
+            rightmost_x = 0
 
-            word_start = word_splines[0][0][0]  # first character, first point, x-pos
-            dx = word_start - leftmost_x
-            splines += [[sp[0]+dx, sp[1]] for sp in word_splines]
+            # Shift the glyph points to the current cursor position
+            glyph_points = words_dict[word]
+            minx = glyph_points[0][:, 0].min()
+            for arr in glyph_points:
+                arr[:, 0] -= minx
+            glyph_points = [arr + cursor_pos for arr in glyph_points]
 
-            # shift dot points
-            for p in word_red_dots:
-                p[:, 0] += dx
-            red_dot_points += word_red_dots
+            for arr in glyph_points:
+                leftmost_x = min(leftmost_x, arr[:, 0].min())
+                rightmost_x = max(rightmost_x, arr[:, 0].max())
 
-            for p in word_black_dots:
-                if p is not None:  # could be None if no black dots
-                    p[:, 0] += dx
-            black_dot_points += word_black_dots
+                x_spline, y_spline = interpolate_points(arr)
+                splines.append((x_spline, y_spline))
+                red_dot_points.append(arr)
 
-            # Add space between word's rightmost point and the next word
-            cursor_pos[0] = rightmost_x + word_space + dx
+            # Update cursor pos
+            cursor_pos[0] = rightmost_x + word_space
             cursor_pos[1] = 0
-        else:
-            if (elevate_th) and (len(word) > 2) and (word[:2] == 'th'):
-                cursor_pos[1] += char_height
-                word = word[2:]
 
-            leftmost_x = cursor_pos[0]
-            join = ''
-            prev = None
-            i = 0
-            while i < len(word):
-                temp_join = ''
-                longest_match = ''
+            continue  # go to next word
 
-                # Check all substrings starting at index i
-                for j in range(i, len(word)):
-                    temp_join += word[j]
-                    if temp_join in characters_dict:
-                        longest_match = temp_join
+        if abbreviate_suffixes:
+            # Search for suffixes
+            suffix_found = False
+            suffix_points = []
+            for suffix in suffixes_dict:
+                if word.endswith(suffix[1:]):
+                    suffix_points = [arr.copy() for arr in suffixes_dict[suffix]]
+                    suffix_points = [arr - suffix_points[0][0] for arr in suffix_points]
 
-                if longest_match:
-                    join = longest_match
-                    i += len(join) - 1  # Move i to the end of the matched substring
+                    word = word[:-len(suffix[1:])]
+                    suffix_found = True
+                    break  # Only handle one suffix per word
 
-                    # Build spline
-                    returns = join_to_spline(join, cursor_pos, prev)
-                    prev = join
+        glyph = ''
+        i = 0
+        first_glyph = True  # for disabling shift at start of word
+        leftmost_x = 0
+        rightmost_x = 0
 
-                    word_splines.append(returns[0])
-                    word_red_dots.append(returns[1])
-                    word_black_dots.append(returns[2])
-                    leftmost_x = min(leftmost_x, returns[3])
-                    rightmost_x = max(rightmost_x, returns[4])
-                    cursor_pos = returns[5]
+        # search for the largest glyph
+        while i < len(word):
+            temp_glyph = ''
+            longest_match = ''
 
-                i += 1  # Move to the next character
+            # Check all substrings starting at index i
+            for j in range(i, len(word)):
+                temp_glyph += word[j]
+                if temp_glyph in characters_dict:
+                    longest_match = temp_glyph
 
-            # Shift right so that the leftmost point of the word is shifted to the word's start point
-            if word_splines:
-                word_start = word_splines[0][0][0]  # first character, first point, x-pos
-                dx = word_start - leftmost_x
-                splines += [[sp[0]+dx, sp[1]] for sp in word_splines]
-                for p in word_red_dots:
-                    p[:, 0] += dx
-                red_dot_points += word_red_dots
-                for p in word_black_dots:
-                    if p is not None: # could be None if no dots for this word
-                        p[:, 0] += dx
-                black_dot_points += word_black_dots
+            if longest_match:
+                glyph = longest_match
 
-                # Add space between word's rightmost point and the next word
-                cursor_pos[0] = rightmost_x + word_space + dx
-                cursor_pos[1] = 0
+                # Shift the glyph points to the current cursor position
+                glyph_points = characters_dict[glyph]
+                if not first_glyph: # first char in word
+                    glyph_points = [arr - glyph_points[0][0] for arr in glyph_points]
+                else:
+                    minx = glyph_points[0][:, 0].min()
+                    for arr in glyph_points:
+                        arr[:, 0] -= minx
+                glyph_points = [arr + cursor_pos for arr in glyph_points]
+
+                # Build the spline
+                for arr in glyph_points:
+                    leftmost_x = min(leftmost_x, arr[:, 0].min())
+                    rightmost_x = max(rightmost_x, arr[:, 0].max())
+
+                    x_spline, y_spline = interpolate_points(arr)
+                    splines.append((x_spline, y_spline))
+                    red_dot_points.append(arr)
+
+                # Update cursor pos
+                cursor_pos = glyph_points[-1][-1].copy()
+
+                i += len(glyph) - 1  # Move i to the end of the matched substring
+                first_glyph = False
+
+            i += 1  # Move to the next character
+
+        if abbreviate_suffixes:
+            # Append any suffix points
+            if suffix_found:
+                for arr in suffix_points:
+                    arr += cursor_pos
+
+                    leftmost_x = min(leftmost_x, arr[:, 0].min())
+                    rightmost_x = max(rightmost_x, arr[:, 0].max())
+
+                    x_spline, y_spline = interpolate_points(arr)
+                    splines.append((x_spline, y_spline))
+                    red_dot_points.append(arr)
+
+                cursor_pos = arr[-1].copy()
+
+        # Update cursor pos
+        cursor_pos[0] = rightmost_x + word_space
+        cursor_pos[1] = 0
 
     return splines, red_dot_points, black_dot_points
-
 
 def remove_consecutive_duplicates(s):
     if not s:
@@ -555,29 +349,88 @@ def remove_consecutive_duplicates(s):
         else:
             e_count = 0  # Reset the count if the character is not 'e'
 
-        if char != result[-1] or (char == 'e' and e_count <= 2):
-            result.append(char)
-        elif char != 'e' and char != result[-1]:
+        # Skip if char is the same as the last one (except for digits)
+        if char != result[-1] or char.isdigit() or (char == 'e' and e_count <= 2):
             result.append(char)
 
     return ''.join(result)
 
+def omit_a_o_before_m_n(input_string):
+    # does not apply at the beginning of a word
+    return re.sub(r'(?<!\b)([ao])(?=[mn])', '', input_string)
 
-def remove_a_o_before_m_n(text):
-    # Use a regular expression to find "a" or "o" before "m" or "n", not at the start of a word
-    result = re.sub(r'(?<!\b)[ao](?=[mn])', '', text)
+def omit_c_in_acq(input_string):
+    return input_string.replace('acq', 'aq')
+
+def omit_d_in_adj(input_string):
+    return input_string.replace('adj', 'aj')
+
+def omit_t_before_ch(input_string):
+    return input_string.replace('tch', 'ch')
+
+def omit_e_before_x(input_string):
+    return input_string.replace('ex', 'x')
+
+def split_text_with_linebreaks(text, max_width):
+    # Split by lines first to preserve existing line breaks
+    lines = text.splitlines()
+    result = []
+
+    for line in lines:
+        words = line.split()
+        current_line = []
+        current_length = 0
+
+        for word in words:
+            # Check if adding the next word exceeds the max_width
+            if current_length + len(word) + (len(current_line) > 0) > max_width:
+                # Join the current line into a string and append it to the result
+                result.append(' '.join(current_line))
+                # Start a new line with the current word
+                current_line = [word]
+                current_length = len(word)
+            else:
+                # Add the word to the current line
+                current_line.append(word)
+                current_length += len(word) + (len(current_line) > 1)
+
+        # Append the last processed line
+        if current_line:
+            result.append(' '.join(current_line))
+
     return result
+
 
 def process_text(
         text,
         remove_dups=False,
-        oa_mn_rule=False
+        ao_mn_rule=False,
+        acq_rule=False,
+        adj_rule=False,
+        tch_rule=False,
+        ex_rule=False,
         ):
+
+    text = text.lower()
 
     if remove_dups:
         text = remove_consecutive_duplicates(text)
-    if oa_mn_rule:
-        text = remove_a_o_before_m_n(text)
+    if ao_mn_rule:
+        text = omit_a_o_before_m_n(text)
+    if acq_rule:
+        text = omit_c_in_acq(text)
+    if adj_rule:
+        text = omit_d_in_adj(text)
+    if tch_rule:
+        text = omit_t_before_ch(text)
+    if ex_rule:
+        text = omit_e_before_x(text)
+
+    # remove unsupported punctuation
+    for p in ["'"]:
+        text = text.replace(p, '')
+    for p in ['/', '\\', '-']:
+        text = text.replace(p, ' ')
 
     return text
 
@@ -604,7 +457,6 @@ def generate_splines():
     text = request.form['text']
     if text == '':
         text = 'a b c d e f g h i j k l m n o p q r s t u v w x y z'
-    # text = process_text(text)
 
     if 'remove_duplicates' in request.form:
         text = remove_consecutive_duplicates(text)
@@ -612,19 +464,26 @@ def generate_splines():
     text = process_text(
         text,
         remove_dups='remove_duplicates' in request.form,
-        oa_mn_rule='oa_mn_rule' in request.form
+        ao_mn_rule='ao_mn_rule' in request.form,
+        acq_rule='acq_rule' in request.form,
+        adj_rule='adj_rule' in request.form,
+        tch_rule='tch_rule' in request.form,
+        ex_rule='ex_rule' in request.form,
         )
 
     rules = {
+        'remap_words': 'remap_words' in request.form,
         'elevate_th': 'elevate_th' in request.form,
+        'abbreviate_suffixes': 'abbreviate_suffixes' in request.form,
     }
 
     y_offset = 0.
     line_positions = []
     lines = text.splitlines()
+    # lines = split_text_with_linebreaks(text, 26)
     nlines = len(lines)
     plt.figure(figsize=(15, 3*nlines))
-    for i, line in enumerate(text.splitlines()):
+    for i, line in enumerate(lines):
         if len(line) == 0:
             continue  # empty line
         splines, red_dot_points, black_dot_points = line_to_splines(line, **rules)
@@ -636,12 +495,20 @@ def generate_splines():
             y_offset += abs(max([max(sp_tup[1]) for sp_tup in splines]))
 
         for x_spline, y_spline in splines:
-            plt.plot(
-                x_spline-start_of_line, y_spline-y_offset,
-                'k',
-                linewidth=3,
-                solid_capstyle='round'
-                )
+            if x_spline.shape[0] == 1 and 'show_dots' in request.form:
+                plt.plot(
+                    [_x-start_of_line for _x in x_spline],
+                    [_y-y_offset for _y in y_spline],
+                    'ko',
+                    markersize=3
+                    )
+            else:
+                plt.plot(
+                    x_spline-start_of_line, y_spline-y_offset,
+                    'k',
+                    linewidth=3,
+                    solid_capstyle='round'
+                    )
 
         if 'show_dots' in request.form:
             # plot black dots
@@ -666,17 +533,22 @@ def generate_splines():
 
     xlims = plt.gca().get_xlim()
     xlims = (xlims[0]-0.15, xlims[-1]+0.15) # make them extend just past a normal character length
+    # xlims = (-.26, 2.4)
+    # xlims = (min(-0.26, xlims[0]), max(2.4, xlims[1]))
     for y in line_positions:
         plt.plot(xlims, [-y, -y], '--', color='lightgrey', zorder=0)
+    # ylims = plt.gca().get_ylim()
+    # ylims = (min(-0.3, ylims[0]), max(0.3, ylims[1]))
+    # plt.ylim(ylims)
     plt.gca().set_aspect('equal', adjustable='box')
     plt.axis('off')
 
     img = io.BytesIO()
-    plt.savefig(img, format='png', bbox_inches='tight')
+    plt.savefig(img, format='svg', bbox_inches='tight')
     img.seek(0)
-    img_base64 = base64.b64encode(img.getvalue()).decode()
+    svg_content = img.getvalue().decode()
 
-    return jsonify({'image': img_base64})
+    return jsonify({'image': svg_content})
 
 @app.route('/')
 @app.route('/writer')
