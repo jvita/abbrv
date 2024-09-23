@@ -451,104 +451,294 @@ def process_text(
 
 #     return svg
 
+def text_to_splines(text, regex_dict):
+    global characters_dict
+
+    # Initialize an empty list to store the mapped integers
+    glyphs = []
+    
+    i = 0
+    while i < len(text):
+        matched = False
+        
+        # Step 1: Try matching each regex pattern starting at the current index
+        for regex, value in regex_dict.items():
+            pattern = re.compile(regex)
+            match = pattern.match(text, i)  # Check if the regex matches at the current position
+            if match:
+                # Add the corresponding integer value to the list
+                glyphs.append(value)
+                # Move the index forward by the length of the matched substring
+                i += len(match.group(0))
+                matched = True
+                break
+
+        # Step 2: If no regex pattern matched, check the longest match in char_dict
+        if not matched:
+            max_key_len = 0
+            best_match = None
+            best_value = None
+
+            # Iterate over each key in char_dict to find the longest match at the current position
+            for key, value in characters_dict.items():
+                if text[i:i + len(key)] == key and len(key) > max_key_len:
+                    max_key_len = len(key)
+                    best_match = key
+                    best_value = value
+
+            if best_match:
+                # Add the corresponding integer value to the list
+                glyphs.append(best_value)
+                # Move the index forward by the length of the matched key
+                i += max_key_len
+            else:
+                # Handle unmapped characters (e.g., spaces or punctuation)
+                glyphs.append(None)  # You can change None to any other default value if needed
+                i += 1
+
+    return glyphs
+
+def merge_word_splines(char_splines):
+    # Initialize a list to store the concatenated points for each word
+    words = []
+    current_word = []
+    
+    # Initialize the shift to [0, 0] for the first character
+    current_shift = np.array([0, 0])
+    first_char_in_word = True
+    for char_arrays in char_splines:
+        if char_arrays is None:
+            # If None is encountered, it marks the end of a word
+            if current_word:
+                words.append(current_word)  # Add the current word to the words list
+                current_word = []  # Reset for the next word
+            current_shift = np.array([0, 0])  # Reset the shift for the next word
+            first_char_in_word = True
+        else:
+            # Process each array in the list of arrays for the current character
+            for pi, points_array in enumerate(char_arrays):
+                shifted_points = points_array + current_shift
+                if pi == 0 and not first_char_in_word:
+                    # If not the first character in the word, shift the first array so that its first point is at [0, 0]
+                    shifted_points -= points_array[0]
+
+                current_word.append(shifted_points)
+            
+            # Update the shift to the last point of the last array in the current character
+            current_shift = current_word[-1][-1]  # Last point of the last array
+            first_char_in_word = False
+    
+    # After the loop, add the last word if it's not empty
+    if current_word:
+        words.append(current_word)
+    
+    return words
 
 @app.route('/generate_splines', methods=['POST'])
 def generate_splines():
+    """
+    Plots the points for each word with a specified space between words.
+    Handles line breaks in the text by shifting each line vertically downwards.
+    
+    Parameters:
+    text (str): The text input for generating splines.
+    space_between_words (float): Distance between the right-most point of one word 
+                                 and the left-most point of the next word.
+    """
     text = request.form['text']
-    if text == '':
-        text = 'a b c d e f g h i j k l m n o p q r s t u v w x y z'
+    space_between_words = 0.2
+    line_spacing = 0.2  # Distance between lines
 
-    if 'remove_duplicates' in request.form:
-        text = remove_consecutive_duplicates(text)
+    glyph_splines = text_to_splines(text, {})
+    word_splines = merge_word_splines(glyph_splines)
 
-    text = process_text(
-        text,
-        remove_dups='remove_duplicates' in request.form,
-        ao_mn_rule='ao_mn_rule' in request.form,
-        acq_rule='acq_rule' in request.form,
-        adj_rule='adj_rule' in request.form,
-        tch_rule='tch_rule' in request.form,
-        ex_rule='ex_rule' in request.form,
-        )
-
-    rules = {
-        'remap_words': 'remap_words' in request.form,
-        'elevate_th': 'elevate_th' in request.form,
-        'abbreviate_suffixes': 'abbreviate_suffixes' in request.form,
-    }
-
-    y_offset = 0.
-    line_positions = []
+    # Initialize figure
+    plt.figure(figsize=(8, 4))
+    
+    # Track the vertical position for each line
+    line_positions = []  # Store the y-position of each line
+    
+    # Split text into lines
     lines = text.splitlines()
-    # lines = split_text_with_linebreaks(text, 26)
-    nlines = len(lines)
-    plt.figure(figsize=(15, 3*nlines))
-    for i, line in enumerate(lines):
-        if len(line) == 0:
-            continue  # empty line
-        splines, red_dot_points, black_dot_points = line_to_splines(line, **rules)
+    
+    # Initialize for the first line
+    current_vertical_offset = 0
 
-        start_of_line = min(splines[0][0])  # leftmost x value; used for shifting
+    for line in lines:
+        word_splines = merge_word_splines(text_to_splines(line, {}))
+        current_shift = np.array([0, 0])
+        right_most_point = left_most_point = 0  # Reset for each line
 
-        if i > 0:  # not the first line
-            # shift based on how tall you are
-            y_offset += abs(max([max(sp_tup[1]) for sp_tup in splines]))
+        # Collect points to calculate line height
+        splines_to_plot = []
 
-        for x_spline, y_spline in splines:
-            if x_spline.shape[0] == 1 and 'show_dots' in request.form:
-                plt.plot(
-                    [_x-start_of_line for _x in x_spline],
-                    [_y-y_offset for _y in y_spline],
-                    'ko',
-                    markersize=3
-                    )
+        for word in word_splines:
+            for points in word:
+                shifted_points = points + current_shift
+                splines_to_plot.append(shifted_points)
+                
+                # Update right and left most points for the current line
+                right_most_point = max(shifted_points[:, 0].max(), right_most_point)
+                left_most_point = min(shifted_points[:, 0].min(), left_most_point)
+            
+            # Update the shift to the right-most point of the current word plus the space
+            current_shift = np.array([right_most_point + space_between_words, 0])
+
+        # Calculate the highest and lowest points in the current line
+        highest_point_current_line = max(point[:, 1].max() for point in splines_to_plot)
+        lowest_point_current_line = min(point[:, 1].min() for point in splines_to_plot)
+
+        # If there are previous lines, adjust the vertical offset
+        if line_positions:
+            # Adjust the current vertical offset based on the lowest point of the previous line
+            lowest_point_previous_line = min(line_positions)
+            current_vertical_offset = lowest_point_previous_line - highest_point_current_line - line_spacing
+        else:
+            current_vertical_offset = 0  # For the first line
+
+        # Ensure there's enough space below for the current line
+        current_vertical_offset = min(current_vertical_offset, lowest_point_current_line - line_spacing)
+
+        # Plot the points with the updated vertical offset
+        for points in splines_to_plot:
+            shifted_points = points + np.array([0, current_vertical_offset])
+            if points.shape[0] == 1:
+                # A dot; so use scatter instead
+                plt.plot(shifted_points[:, 0], shifted_points[:, 1], 'ko', markersize=2.1)
             else:
-                plt.plot(
-                    x_spline-start_of_line, y_spline-y_offset,
-                    'k',
-                    linewidth=3,
-                    solid_capstyle='round'
-                    )
+                # Interpolate points for smoother plotting
+                x, y = interpolate_points(shifted_points)
 
-        if 'show_dots' in request.form:
-            # plot black dots
-            for points in black_dot_points:
-                if points is not None:
-                    x, y = zip(*points)
-                    plt.plot(
-                        [_x-start_of_line for _x in x],
-                        [_y-y_offset for _y in y],
-                        'ko',
-                        markersize=3
-                        )
+                # Plot the word's points with a fixed line width
+                plt.plot(x, y, 'k', linewidth=3, solid_capstyle='round')
 
-        if 'show_knot_points' in request.form:
-            for points in red_dot_points:
-                x, y = zip(*points)
-                plt.plot([_x-start_of_line for _x in x], [_y-y_offset for _y in y], 'ro')
+        # Store the vertical position of the current line
+        line_positions.append(current_vertical_offset)
 
-        # shift based on the y-position of the lowest point
-        line_positions.append(y_offset)
-        y_offset += 0.15 + abs(min([min(sp_tup[1]) for sp_tup in splines]))
+    # Set plot parameters
+    xlims = [left_most_point - space_between_words, right_most_point + space_between_words]
 
-    xlims = plt.gca().get_xlim()
-    xlims = (xlims[0]-0.15, xlims[-1]+0.15) # make them extend just past a normal character length
-    # xlims = (-.26, 2.4)
-    # xlims = (min(-0.26, xlims[0]), max(2.4, xlims[1]))
-    for y in line_positions:
-        plt.plot(xlims, [-y, -y], '--', color='lightgrey', zorder=0)
-    # ylims = plt.gca().get_ylim()
-    # ylims = (min(-0.3, ylims[0]), max(0.3, ylims[1]))
-    # plt.ylim(ylims)
+    for v in line_positions:
+        plt.plot(xlims, [v, v], '--', color='lightgrey', zorder=0)  # Line for baseline
+
+    plt.xlim(xlims)
     plt.gca().set_aspect('equal', adjustable='box')
     plt.axis('off')
 
+    # Save the plot as SVG
     img = io.BytesIO()
     plt.savefig(img, format='svg', bbox_inches='tight')
     img.seek(0)
     svg_content = img.getvalue().decode()
+    
+    plt.close()  # Close the figure after saving to free up memory
 
     return jsonify({'image': svg_content})
+
+
+
+# @app.route('/generate_splines', methods=['POST'])
+# def generate_splines():
+#     text = request.form['text']
+#     if text == '':
+#         text = 'a b c d e f g h i j k l m n o p q r s t u v w x y z'
+
+#     if 'remove_duplicates' in request.form:
+#         text = remove_consecutive_duplicates(text)
+
+#     text = process_text(
+#         text,
+#         remove_dups='remove_duplicates' in request.form,
+#         ao_mn_rule='ao_mn_rule' in request.form,
+#         acq_rule='acq_rule' in request.form,
+#         adj_rule='adj_rule' in request.form,
+#         tch_rule='tch_rule' in request.form,
+#         ex_rule='ex_rule' in request.form,
+#         )
+
+#     glyph_splines = text_to_splines(text, {})
+#     print(f'{glyph_splines=}')
+#     word_splines = merge_word_splines(glyph_splines)
+#     print(f'{word_splines=}')
+
+#     rules = {
+#         'remap_words': 'remap_words' in request.form,
+#         'elevate_th': 'elevate_th' in request.form,
+#         'abbreviate_suffixes': 'abbreviate_suffixes' in request.form,
+#     }
+
+#     y_offset = 0.
+#     line_positions = []
+#     lines = text.splitlines()
+#     # lines = split_text_with_linebreaks(text, 26)
+#     nlines = len(lines)
+#     plt.figure(figsize=(15, 3*nlines))
+#     for i, line in enumerate(lines):
+#         if len(line) == 0:
+#             continue  # empty line
+#         splines, red_dot_points, black_dot_points = line_to_splines(line, **rules)
+
+#         start_of_line = min(splines[0][0])  # leftmost x value; used for shifting
+
+#         if i > 0:  # not the first line
+#             # shift based on how tall you are
+#             y_offset += abs(max([max(sp_tup[1]) for sp_tup in splines]))
+
+#         for x_spline, y_spline in splines:
+#             if x_spline.shape[0] == 1 and 'show_dots' in request.form:
+#                 plt.plot(
+#                     [_x-start_of_line for _x in x_spline],
+#                     [_y-y_offset for _y in y_spline],
+#                     'ko',
+#                     markersize=3
+#                     )
+#             else:
+#                 plt.plot(
+#                     x_spline-start_of_line, y_spline-y_offset,
+#                     'k',
+#                     linewidth=3,
+#                     solid_capstyle='round'
+#                     )
+
+#         if 'show_dots' in request.form:
+#             # plot black dots
+#             for points in black_dot_points:
+#                 if points is not None:
+#                     x, y = zip(*points)
+#                     plt.plot(
+#                         [_x-start_of_line for _x in x],
+#                         [_y-y_offset for _y in y],
+#                         'ko',
+#                         markersize=3
+#                         )
+
+#         if 'show_knot_points' in request.form:
+#             for points in red_dot_points:
+#                 x, y = zip(*points)
+#                 plt.plot([_x-start_of_line for _x in x], [_y-y_offset for _y in y], 'ro')
+
+#         # shift based on the y-position of the lowest point
+#         line_positions.append(y_offset)
+#         y_offset += 0.15 + abs(min([min(sp_tup[1]) for sp_tup in splines]))
+
+#     xlims = plt.gca().get_xlim()
+#     xlims = (xlims[0]-0.15, xlims[-1]+0.15) # make them extend just past a normal character length
+#     # xlims = (-.26, 2.4)
+#     # xlims = (min(-0.26, xlims[0]), max(2.4, xlims[1]))
+#     for y in line_positions:
+#         plt.plot(xlims, [-y, -y], '--', color='lightgrey', zorder=0)
+#     # ylims = plt.gca().get_ylim()
+#     # ylims = (min(-0.3, ylims[0]), max(0.3, ylims[1]))
+#     # plt.ylim(ylims)
+#     plt.gca().set_aspect('equal', adjustable='box')
+#     plt.axis('off')
+
+#     img = io.BytesIO()
+#     plt.savefig(img, format='svg', bbox_inches='tight')
+#     img.seek(0)
+#     svg_content = img.getvalue().decode()
+
+#     return jsonify({'image': svg_content})
 
 @app.route('/')
 @app.route('/writer')
