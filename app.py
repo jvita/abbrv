@@ -456,11 +456,11 @@ def text_to_splines(text, regex_dict):
 
     # Initialize an empty list to store the mapped integers
     glyphs = []
-    
+
     i = 0
     while i < len(text):
         matched = False
-        
+
         # Step 1: Try matching each regex pattern starting at the current index
         for regex, value in regex_dict.items():
             pattern = re.compile(regex)
@@ -502,7 +502,7 @@ def merge_word_splines(char_splines):
     # Initialize a list to store the concatenated points for each word
     words = []
     current_word = []
-    
+
     # Initialize the shift to [0, 0] for the first character
     current_shift = np.array([0, 0])
     first_char_in_word = True
@@ -523,28 +523,19 @@ def merge_word_splines(char_splines):
                     shifted_points -= points_array[0]
 
                 current_word.append(shifted_points)
-            
+
             # Update the shift to the last point of the last array in the current character
             current_shift = current_word[-1][-1]  # Last point of the last array
             first_char_in_word = False
-    
+
     # After the loop, add the last word if it's not empty
     if current_word:
         words.append(current_word)
-    
+
     return words
 
 @app.route('/generate_splines', methods=['POST'])
 def generate_splines():
-    """
-    Plots the points for each word with a specified space between words.
-    Handles line breaks in the text by shifting each line vertically downwards.
-    
-    Parameters:
-    text (str): The text input for generating splines.
-    space_between_words (float): Distance between the right-most point of one word 
-                                 and the left-most point of the next word.
-    """
     text = request.form['text']
     space_between_words = 0.2
     line_spacing = 0.2  # Distance between lines
@@ -554,20 +545,21 @@ def generate_splines():
 
     # Initialize figure
     plt.figure(figsize=(8, 4))
-    
+
     # Track the vertical position for each line
     line_positions = []  # Store the y-position of each line
-    
+
     # Split text into lines
     lines = text.splitlines()
-    
+
     # Initialize for the first line
     current_vertical_offset = 0
 
-    for line in lines:
+    for li, line in enumerate(lines):
         word_splines = merge_word_splines(text_to_splines(line, {}))
         current_shift = np.array([0, 0])
         right_most_point = left_most_point = 0  # Reset for each line
+        highest_point = lowest_point = 0
 
         # Collect points to calculate line height
         splines_to_plot = []
@@ -576,61 +568,80 @@ def generate_splines():
             for points in word:
                 shifted_points = points + current_shift
                 splines_to_plot.append(shifted_points)
-                
-                # Update right and left most points for the current line
+
+                # Update line boundaries
                 right_most_point = max(shifted_points[:, 0].max(), right_most_point)
                 left_most_point = min(shifted_points[:, 0].min(), left_most_point)
-            
+                highest_point = max(points[:, 1].max(), highest_point)
+                lowest_point = min(points[:, 1].min(), lowest_point)
+
             # Update the shift to the right-most point of the current word plus the space
             current_shift = np.array([right_most_point + space_between_words, 0])
 
-        # Calculate the highest and lowest points in the current line
-        highest_point_current_line = max(point[:, 1].max() for point in splines_to_plot)
-        lowest_point_current_line = min(point[:, 1].min() for point in splines_to_plot)
+        # # Calculate the highest and lowest points in the current line
+        # highest_point_current_line = max(point[:, 1].max() for point in splines_to_plot)
+        # lowest_point_current_line = min(point[:, 1].min() for point in splines_to_plot)
 
-        # If there are previous lines, adjust the vertical offset
-        if line_positions:
-            # Adjust the current vertical offset based on the lowest point of the previous line
-            lowest_point_previous_line = min(line_positions)
-            current_vertical_offset = lowest_point_previous_line - highest_point_current_line - line_spacing
-        else:
-            current_vertical_offset = 0  # For the first line
+        # current_vertical_offset = lowest_point_current_line - line_spacing
+        if li > 0:
+            current_vertical_offset += abs(highest_point)
+
+        # # If there are previous lines, adjust the vertical offset
+        # if line_positions:
+        #     # Adjust the current vertical offset based on the lowest point of the previous line
+        #     lowest_point_previous_line = min(line_positions)
+        #     # current_vertical_offset = lowest_point_previous_line - highest_point_current_line - line_spacing
+        # else:
+        #     current_vertical_offset = 0  # For the first line
 
         # Ensure there's enough space below for the current line
-        current_vertical_offset = min(current_vertical_offset, lowest_point_current_line - line_spacing)
+        # current_vertical_offset = min(current_vertical_offset, lowest_point_current_line - line_spacing)
 
         # Plot the points with the updated vertical offset
         for points in splines_to_plot:
-            shifted_points = points + np.array([0, current_vertical_offset])
+            shifted_points = points - np.array([0, current_vertical_offset])
             if points.shape[0] == 1:
                 # A dot; so use scatter instead
-                plt.plot(shifted_points[:, 0], shifted_points[:, 1], 'ko', markersize=2.1)
+                plt.plot(
+                    shifted_points[:, 0],
+                    shifted_points[:, 1],
+                    'ko',
+                    markersize=2.1
+                    )
             else:
                 # Interpolate points for smoother plotting
                 x, y = interpolate_points(shifted_points)
 
                 # Plot the word's points with a fixed line width
-                plt.plot(x, y, 'k', linewidth=3, solid_capstyle='round')
+                plt.plot(
+                    x,
+                    y,
+                    'k',
+                    linewidth=3,
+                    solid_capstyle='round'
+                    )
 
+        print(f'{current_vertical_offset=}')
         # Store the vertical position of the current line
         line_positions.append(current_vertical_offset)
+        current_vertical_offset += 0.15 + abs(lowest_point)
 
     # Set plot parameters
     xlims = [left_most_point - space_between_words, right_most_point + space_between_words]
 
     for v in line_positions:
-        plt.plot(xlims, [v, v], '--', color='lightgrey', zorder=0)  # Line for baseline
+        plt.plot(xlims, [-v, -v], '--', color='lightgrey', zorder=0)  # Line for baseline
 
     plt.xlim(xlims)
     plt.gca().set_aspect('equal', adjustable='box')
-    plt.axis('off')
+    # plt.axis('off')
 
     # Save the plot as SVG
     img = io.BytesIO()
     plt.savefig(img, format='svg', bbox_inches='tight')
     img.seek(0)
     svg_content = img.getvalue().decode()
-    
+
     plt.close()  # Close the figure after saving to free up memory
 
     return jsonify({'image': svg_content})
