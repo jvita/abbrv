@@ -26,10 +26,6 @@
                 <label for="abbreviate_suffixes" style="flex: 6;">Abbreviate common suffixes</label>
             </li>
             <li class="dropdown-item button-container align-items-center">
-                <input type="checkbox" id="elevate_th" name="elevate_th" style="max-height: 20px; max-width: 20px; min-width: 20px" checked>
-                <label for="elevate_th" style="flex: 6;">Elevate "th"</label>
-            </li>
-            <li class="dropdown-item button-container align-items-center">
                 <input type="checkbox" id="show_dots" name="show_dots" style="max-height: 20px; max-width: 20px; min-width: 20px">
                 <label for="show_dots" style="flex: 6;">Show dots</label>
             </li>
@@ -99,7 +95,7 @@
             debouncedUpdatePlot();
         });
 
-        $('#show_knot_points, #remap_words, #abbreviate_suffixes, #elevate_th, #show_dots, #remove_duplicates, #ao_mn_rule, #acq_rule, #adj_rule, #tch_rule, #ex_rule').on('change', function() {
+        $('#show_knot_points, #remap_words, #abbreviate_suffixes, #show_dots, #remove_duplicates, #ao_mn_rule, #acq_rule, #adj_rule, #tch_rule, #ex_rule').on('change', function() {
             updatePlot();  // Call updatePlot immediately when checkboxes are modified
         });
 

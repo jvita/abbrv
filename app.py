@@ -202,140 +202,6 @@ def split_into_words(text):
     # Regular expression to split text by words, digits, and punctuation
     return re.findall(r'[A-Za-z]+|\d|[^\w\s]', text)
 
-def line_to_splines(
-        line,
-        elevate_th=False,
-        remap_words=False,
-        abbreviate_suffixes=False,
-    ):
-
-    global characters_dict, suffixes_dict
-
-    splines = []
-    red_dot_points = []
-    black_dot_points = []
-    word_space = 0.1
-    cursor_pos = np.array([0, 0], dtype=np.float32)
-    char_height = 0.1
-
-    words = [w.strip() for w in split_into_words(line.strip())]
-    for word in words:
-        # Apply rules that would modify the entire word
-        if (elevate_th) and (len(word) > 2) and (word[:2] == 'th'):
-            cursor_pos[1] += char_height
-            word = word[2:]
-
-        if (remap_words) and (len(word) >= 3) and (word[:3] == 'you'):
-            cursor_pos[1] += char_height
-            word = 'y' + word[3:]
-
-        if remap_words and (word in modes_dict):
-            # Entire word exists, so just add it
-            leftmost_x = 0
-            rightmost_x = 0
-
-            # Shift the glyph points to the current cursor position
-            glyph_points = modes_dict[word]
-            minx = glyph_points[0][:, 0].min()
-            for arr in glyph_points:
-                arr[:, 0] -= minx
-            glyph_points = [arr + cursor_pos for arr in glyph_points]
-
-            for arr in glyph_points:
-                leftmost_x = min(leftmost_x, arr[:, 0].min())
-                rightmost_x = max(rightmost_x, arr[:, 0].max())
-
-                x_spline, y_spline = interpolate_points(arr)
-                splines.append((x_spline, y_spline))
-                red_dot_points.append(arr)
-
-            # Update cursor pos
-            cursor_pos[0] = rightmost_x + word_space
-            cursor_pos[1] = 0
-
-            continue  # go to next word
-
-        if abbreviate_suffixes:
-            # Search for suffixes
-            suffix_found = False
-            suffix_points = []
-            for suffix in suffixes_dict:
-                if word.endswith(suffix[1:]):
-                    suffix_points = [arr.copy() for arr in suffixes_dict[suffix]]
-                    suffix_points = [arr - suffix_points[0][0] for arr in suffix_points]
-
-                    word = word[:-len(suffix[1:])]
-                    suffix_found = True
-                    break  # Only handle one suffix per word
-
-        glyph = ''
-        i = 0
-        first_glyph = True  # for disabling shift at start of word
-        leftmost_x = 0
-        rightmost_x = 0
-
-        # search for the largest glyph
-        while i < len(word):
-            temp_glyph = ''
-            longest_match = ''
-
-            # Check all substrings starting at index i
-            for j in range(i, len(word)):
-                temp_glyph += word[j]
-                if temp_glyph in characters_dict:
-                    longest_match = temp_glyph
-
-            if longest_match:
-                glyph = longest_match
-
-                # Shift the glyph points to the current cursor position
-                glyph_points = characters_dict[glyph]
-                if not first_glyph: # first char in word
-                    glyph_points = [arr - glyph_points[0][0] for arr in glyph_points]
-                else:
-                    minx = glyph_points[0][:, 0].min()
-                    for arr in glyph_points:
-                        arr[:, 0] -= minx
-                glyph_points = [arr + cursor_pos for arr in glyph_points]
-
-                # Build the spline
-                for arr in glyph_points:
-                    leftmost_x = min(leftmost_x, arr[:, 0].min())
-                    rightmost_x = max(rightmost_x, arr[:, 0].max())
-
-                    x_spline, y_spline = interpolate_points(arr)
-                    splines.append((x_spline, y_spline))
-                    red_dot_points.append(arr)
-
-                # Update cursor pos
-                cursor_pos = glyph_points[-1][-1].copy()
-
-                i += len(glyph) - 1  # Move i to the end of the matched substring
-                first_glyph = False
-
-            i += 1  # Move to the next character
-
-        if abbreviate_suffixes:
-            # Append any suffix points
-            if suffix_found:
-                for arr in suffix_points:
-                    arr += cursor_pos
-
-                    leftmost_x = min(leftmost_x, arr[:, 0].min())
-                    rightmost_x = max(rightmost_x, arr[:, 0].max())
-
-                    x_spline, y_spline = interpolate_points(arr)
-                    splines.append((x_spline, y_spline))
-                    red_dot_points.append(arr)
-
-                cursor_pos = arr[-1].copy()
-
-        # Update cursor pos
-        cursor_pos[0] = rightmost_x + word_space
-        cursor_pos[1] = 0
-
-    return splines, red_dot_points, black_dot_points
-
 def remove_consecutive_duplicates(s):
     if not s:
         return ""
@@ -451,8 +317,8 @@ def process_text(
 
 #     return svg
 
-def text_to_splines(text, regex_dict):
-    global characters_dict
+def text_to_splines(text):
+    global characters_dict, modes_dict
 
     # Initialize an empty list to store the mapped integers
     glyphs = []
@@ -462,7 +328,7 @@ def text_to_splines(text, regex_dict):
         matched = False
         
         # Step 1: Try matching each regex pattern starting at the current index
-        for regex, value in regex_dict.items():
+        for regex, value in modes_dict.items():
             pattern = re.compile(regex)
             match = pattern.match(text, i)  # Check if the regex matches at the current position
             if match:
@@ -546,6 +412,8 @@ def generate_splines():
     text = request.form['text']
     space_between_words, line_spacing = 0.2, 0.2
 
+    show_dots = 'show_dots' in request.form
+
     plt.figure(figsize=(8, 8))  # Initialize figure
 
     # Variables to track positions for each line
@@ -554,7 +422,7 @@ def generate_splines():
     
     # Process each line of the text
     for line in text.splitlines():
-        word_splines = merge_word_splines(text_to_splines(line, {}))
+        word_splines = merge_word_splines(text_to_splines(line))
         current_shift = np.array([0, 0])
         line_x_pos, splines_to_plot = 0, []
 
@@ -582,7 +450,7 @@ def generate_splines():
         # Plot the splines for this line
         for points in splines_to_plot:
             shifted_points = points + np.array([0, current_vertical_offset])
-            plot_spline(shifted_points)  # Reusable plot helper function
+            plot_spline(shifted_points, show_dots)  # Reusable plot helper function
 
         # Adjust vertical offset for the next line
         line_positions.append(current_vertical_offset)
@@ -595,9 +463,9 @@ def generate_splines():
     return jsonify({'image': save_plot_as_svg()})
 
 # Helper functions
-def plot_spline(points):
+def plot_spline(points, show_dots=True):
     """Plots individual splines."""
-    if points.shape[0] == 1:
+    if points.shape[0] == 1 and show_dots:
         plt.plot(points[:, 0], points[:, 1], 'ko', markersize=2.1)
     else:
         x, y = interpolate_points(points)
@@ -620,110 +488,6 @@ def save_plot_as_svg():
     svg_content = img.getvalue().decode()
     plt.close()  # Close the figure after saving to free memory
     return svg_content
-
-
-# @app.route('/generate_splines', methods=['POST'])
-# def generate_splines():
-#     text = request.form['text']
-#     if text == '':
-#         text = 'a b c d e f g h i j k l m n o p q r s t u v w x y z'
-
-#     if 'remove_duplicates' in request.form:
-#         text = remove_consecutive_duplicates(text)
-
-#     text = process_text(
-#         text,
-#         remove_dups='remove_duplicates' in request.form,
-#         ao_mn_rule='ao_mn_rule' in request.form,
-#         acq_rule='acq_rule' in request.form,
-#         adj_rule='adj_rule' in request.form,
-#         tch_rule='tch_rule' in request.form,
-#         ex_rule='ex_rule' in request.form,
-#         )
-
-#     glyph_splines = text_to_splines(text, {})
-#     print(f'{glyph_splines=}')
-#     word_splines = merge_word_splines(glyph_splines)
-#     print(f'{word_splines=}')
-
-#     rules = {
-#         'remap_words': 'remap_words' in request.form,
-#         'elevate_th': 'elevate_th' in request.form,
-#         'abbreviate_suffixes': 'abbreviate_suffixes' in request.form,
-#     }
-
-#     y_offset = 0.
-#     line_positions = []
-#     lines = text.splitlines()
-#     # lines = split_text_with_linebreaks(text, 26)
-#     nlines = len(lines)
-#     plt.figure(figsize=(15, 3*nlines))
-#     for i, line in enumerate(lines):
-#         if len(line) == 0:
-#             continue  # empty line
-#         splines, red_dot_points, black_dot_points = line_to_splines(line, **rules)
-
-#         start_of_line = min(splines[0][0])  # leftmost x value; used for shifting
-
-#         if i > 0:  # not the first line
-#             # shift based on how tall you are
-#             y_offset += abs(max([max(sp_tup[1]) for sp_tup in splines]))
-
-#         for x_spline, y_spline in splines:
-#             if x_spline.shape[0] == 1 and 'show_dots' in request.form:
-#                 plt.plot(
-#                     [_x-start_of_line for _x in x_spline],
-#                     [_y-y_offset for _y in y_spline],
-#                     'ko',
-#                     markersize=3
-#                     )
-#             else:
-#                 plt.plot(
-#                     x_spline-start_of_line, y_spline-y_offset,
-#                     'k',
-#                     linewidth=3,
-#                     solid_capstyle='round'
-#                     )
-
-#         if 'show_dots' in request.form:
-#             # plot black dots
-#             for points in black_dot_points:
-#                 if points is not None:
-#                     x, y = zip(*points)
-#                     plt.plot(
-#                         [_x-start_of_line for _x in x],
-#                         [_y-y_offset for _y in y],
-#                         'ko',
-#                         markersize=3
-#                         )
-
-#         if 'show_knot_points' in request.form:
-#             for points in red_dot_points:
-#                 x, y = zip(*points)
-#                 plt.plot([_x-start_of_line for _x in x], [_y-y_offset for _y in y], 'ro')
-
-#         # shift based on the y-position of the lowest point
-#         line_positions.append(y_offset)
-#         y_offset += 0.15 + abs(min([min(sp_tup[1]) for sp_tup in splines]))
-
-#     xlims = plt.gca().get_xlim()
-#     xlims = (xlims[0]-0.15, xlims[-1]+0.15) # make them extend just past a normal character length
-#     # xlims = (-.26, 2.4)
-#     # xlims = (min(-0.26, xlims[0]), max(2.4, xlims[1]))
-#     for y in line_positions:
-#         plt.plot(xlims, [-y, -y], '--', color='lightgrey', zorder=0)
-#     # ylims = plt.gca().get_ylim()
-#     # ylims = (min(-0.3, ylims[0]), max(0.3, ylims[1]))
-#     # plt.ylim(ylims)
-#     plt.gca().set_aspect('equal', adjustable='box')
-#     plt.axis('off')
-
-#     img = io.BytesIO()
-#     plt.savefig(img, format='svg', bbox_inches='tight')
-#     img.seek(0)
-#     svg_content = img.getvalue().decode()
-
-#     return jsonify({'image': svg_content})
 
 @app.route('/')
 @app.route('/writer')
