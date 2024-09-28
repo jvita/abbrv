@@ -9,8 +9,8 @@
                 <div id="glyphsList" class="spline-list" style="margin-right: 5px;"></div>
             </div>
             <div class="d-flex flex-column flex-grow-1">
-                <h2 id="wordsTitle">Words</h2>
-                <div id="wordsList" class="spline-list"></div>
+                <h2 id="modesTitle">Modes</h2>
+                <div id="modesList" class="spline-list"></div>
             </div>
         </div>
         <input type="text" id="character" placeholder="Enter character(s)" autocomplete="off">
@@ -32,7 +32,7 @@
                         <span class="visually-hidden">Toggle Dropdown</span>
                     </button>
                     <ul class="dropdown-menu">
-                        <li><a id="saveWord" class="dropdown-item" href="#" id="saveAsOption">as word</a></li>
+                        <li><a id="saveMode" class="dropdown-item" href="#" id="saveAsOption">as mode</a></li>
                     </ul>
                 </div>
             </div>
@@ -42,7 +42,7 @@
                     <span class="visually-hidden">Toggle Dropdown</span>
                 </button>
                 <ul class="dropdown-menu">
-                    <li><a id="deleteWord" class="dropdown-item" href="#" id="deleteAsOption">as word</a></li>
+                    <li><a id="deleteMode" class="dropdown-item" href="#" id="deleteAsOption">as mode</a></li>
                 </ul>
             </div>
         </div>
@@ -55,7 +55,7 @@
 <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 <script>
 let charSplineData = {}; // Global variable to store spline data
-let wordSplineData = {}; // Global variable to store spline data
+let modeSplineData = {}; // Global variable to store spline data
 const gridCanvas = document.getElementById('gridCanvas');
 const gridCtx = gridCanvas.getContext('2d');
 const splineCanvas = document.getElementById('splineCanvas');
@@ -63,18 +63,18 @@ const splineCtx = splineCanvas.getContext('2d');
 const characterField = document.getElementById('character');
 const saveButton = document.getElementById('saveButton');
 const saveDropdown = document.getElementById('saveDropdown');
-const saveWord = document.getElementById('saveWord');
+const saveMode = document.getElementById('saveMode');
 const clearButton = document.getElementById('clearButton');
 const clearAllButton = document.getElementById('clearAllButton');
 const clearAllDropdown = document.getElementById('clearAllDropdown');
 const deleteButton = document.getElementById('deleteButton');
 const deleteDropdown = document.getElementById('deleteDropdown');
-const deleteword = document.getElementById('deleteword');
+const deleteMode = document.getElementById('deleteMode');
 const freezeButton = document.getElementById('freezeButton');
 const glyphsTitle = document.getElementById('glyphsTitle');
 const glyphsList = document.getElementById('glyphsList');
-const wordsTitle = document.getElementById('wordsTitle');
-const wordsList = document.getElementById('wordsList');
+const modesTitle = document.getElementById('modesTitle');
+const modesList = document.getElementById('modesList');
 
 const rootStyles = getComputedStyle(document.documentElement);
 const colorInk = rootStyles.getPropertyValue('--ink-color').trim()
@@ -442,29 +442,29 @@ function loadCharacters() {
         });
 }
 
-function loadWords() {
-    axios.get('/load_words')
+function loadModes() {
+    axios.get('/load_modes')
         .then(response => {
 
-            wordSplineData = response.data; // Store the data in the global variable
-            wordsList.innerHTML = '';
-            wordsTitle.textContent = 'Words (' + Object.keys(wordSplineData).length + ')'
+            modeSplineData = response.data; // Store the data in the global variable
+            modesList.innerHTML = '';
+            modesTitle.textContent = 'Modes (' + Object.keys(modeSplineData).length + ')'
 
-            for (const [word, points] of Object.entries(wordSplineData)) {
-                numSplinesPerChar[word] = points.length  // used during de-selection
+            for (const [mode, points] of Object.entries(modeSplineData)) {
+                numSplinesPerChar[mode] = points.length  // used during de-selection
 
                 const listItem = document.createElement('div');
                 listItem.className = 'char-list-item';
-                listItem.textContent = word;
+                listItem.textContent = mode;
 
                 listItem.addEventListener('click', (event) => {
                     characterField.focus()
                     characterField.value = ''
-                    handleCharSelect(word, points)
+                    handleCharSelect(mode, points)
                     refreshButtons();
                     updatePointsField();
                 });
-                wordsList.appendChild(listItem);
+                modesList.appendChild(listItem);
             }
         });
 }
@@ -478,7 +478,7 @@ saveButton.addEventListener('click', () => {
             points: selectedPoints.map(spline =>
                 spline.map(([x, y]) => [(x + gridSize / 2) / gridSize, (y + gridSize / 2) / gridSize])
                 ),
-            as_word: false,
+            as_mode: false,
             // dots: dots.map(([x, y]) => [(x + gridSize / 2) / gridSize, (y + gridSize / 2) / gridSize]),
         };
         axios.post('/save', data)
@@ -496,7 +496,7 @@ saveButton.addEventListener('click', () => {
 
 });
 
-saveWord.addEventListener('click', () => {
+saveMode.addEventListener('click', () => {
     if (selectedPoints.length) {
 
         const data = {
@@ -504,12 +504,12 @@ saveWord.addEventListener('click', () => {
             points: selectedPoints.map(spline =>
                 spline.map(([x, y]) => [(x + gridSize / 2) / gridSize, (y + gridSize / 2) / gridSize])
                 ),
-            as_word: true,
+            as_mode: true,
         };
         axios.post('/save', data)
             .then(response => {
                 if (response.data.status === 'success') {
-                    loadWords();
+                    loadModes();
                     handleCharSelect(null);
                     refreshButtons();
                     updatePointsField();
@@ -534,7 +534,7 @@ clearButton.addEventListener('click', () => {
 
 deleteButton.addEventListener('click', () => {
     if (selectedPoints) {
-        axios.post('/delete', { character: characterField.value.trim(), as_word: false})
+        axios.post('/delete', { character: characterField.value.trim(), as_mode: false})
             .then(response => {
                 if (response.data.status === 'success') {
                     loadCharacters();
@@ -548,12 +548,12 @@ deleteButton.addEventListener('click', () => {
     }
 });
 
-deleteWord.addEventListener('click', () => {
+deleteMode.addEventListener('click', () => {
     if (selectedPoints) {
-        axios.post('/delete', { character: characterField.value.trim(), as_word: true})
+        axios.post('/delete', { character: characterField.value.trim(), as_mode: true})
             .then(response => {
                 if (response.data.status === 'success') {
-                    loadWords();
+                    loadModes();
                     handleCharSelect(null);
                     refreshButtons();
                     updatePointsField();
@@ -651,8 +651,8 @@ function sortAndDisplayList() {
     sortOneList(glyphsList);
     glyphsList.scrollTop = glyphsList.scrollHeight
 
-    sortOneList(wordsList);
-    wordsList.scrollTop = wordsList.scrollHeight
+    sortOneList(modesList);
+    modesList.scrollTop = modesList.scrollHeight
 }
 
 function sortOneList(listToSort) {
@@ -689,7 +689,7 @@ function sortOneList(listToSort) {
 refreshButtons();
 drawGrid();
 loadCharacters();
-loadWords();
+loadModes();
 
 document.addEventListener("DOMContentLoaded", function() {
     const gridContainer = document.querySelector('.grid-container');

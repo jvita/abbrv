@@ -24,9 +24,9 @@ app = Flask(__name__)
 
 # File paths for single-character and multi-character splines
 CHAR_FILE = 'static/data/characters.json'
-WORDS_FILE = 'static/data/words.json'
+MODES_FILE = 'static/data/modes.json'
 characters_dict = {}
-words_dict = {}
+modes_dict = {}
 
 def adjust_points(points, adjustment):
     """Adjust points by adding or subtracting a constant."""
@@ -64,11 +64,11 @@ def save():
     data = request.json
     character = data['character']
     points = data['points']
-    as_word = data['as_word']
+    as_mode = data['as_mode']
 
     adjusted_points = [adjust_points(p, np.array([-0.5, -0.5])) for p in points]
 
-    file_name = WORDS_FILE if as_word else CHAR_FILE
+    file_name = MODES_FILE if as_mode else CHAR_FILE
 
     # Load existing data
     try:
@@ -100,28 +100,28 @@ def load_characters():
 
     return jsonify(chars)
 
-@app.route('/load_words')
-def load_words():
-    words = {}
+@app.route('/load_modes')
+def load_modes():
+    modes = {}
 
     # Load single-character splines
     try:
-        with open(WORDS_FILE, 'r') as f:
-            words_data = json.load(f)
-            words.update({k: [adjust_points(p, np.array([0.5, 0.5])) for p in v] for k, v in words_data.items()})
+        with open(MODES_FILE, 'r') as f:
+            modes_data = json.load(f)
+            modes.update({k: [adjust_points(p, np.array([0.5, 0.5])) for p in v] for k, v in modes_data.items()})
     except FileNotFoundError:
         pass
 
-    return jsonify(words)
+    return jsonify(modes)
 
 
 @app.route('/delete', methods=['POST'])
 def delete():
     data = request.json
     character = data['character']
-    as_word = data['as_word']
+    as_mode = data['as_mode']
 
-    file_path = WORDS_FILE if as_word else CHAR_FILE
+    file_path = MODES_FILE if as_mode else CHAR_FILE
 
     # Load existing data
     try:
@@ -176,11 +176,11 @@ def get_data():
     for k in to_del:
         del characters_dict[k]
 
-    global words_dict
-    _words = load_json_file(WORDS_FILE)
-    words_dict = {
-        word: [np.array(p, dtype=np.float32) for p in points]
-        for word, points in _words.items()
+    global modes_dict
+    _modes = load_json_file(MODES_FILE)
+    modes_dict = {
+        mode: [np.array(p, dtype=np.float32) for p in points]
+        for mode, points in _modes.items()
     }
 
 
@@ -229,13 +229,13 @@ def line_to_splines(
             cursor_pos[1] += char_height
             word = 'y' + word[3:]
 
-        if remap_words and (word in words_dict):
+        if remap_words and (word in modes_dict):
             # Entire word exists, so just add it
             leftmost_x = 0
             rightmost_x = 0
 
             # Shift the glyph points to the current cursor position
-            glyph_points = words_dict[word]
+            glyph_points = modes_dict[word]
             minx = glyph_points[0][:, 0].min()
             for arr in glyph_points:
                 arr[:, 0] -= minx
