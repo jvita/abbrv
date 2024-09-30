@@ -1,0 +1,139 @@
+{% extends "index.html" %}
+
+{% block content %}
+<div class="main-content"></div>
+    <!-- Add New Rule -->
+    <form id="addRuleForm" class="d-flex flex-row align-items-end">
+        <div class="flex-grow-1 me-2">
+            <label for="ruleName" class="form-label">Name</label>
+            <input type="text" class="form-control" id="ruleName" placeholder="Enter name of rule" required>
+        </div>
+        <div class="flex-grow-1 me-2">
+            <label for="regexInput" class="form-label">Pattern</label>
+            <input type="text" class="form-control" id="regexInput" placeholder="Enter regex pattern to be matched" required>
+        </div>
+        <div class="flex-grow-1 me-2">
+            <label for="replacementText" class="form-label">Replacement</label>
+            <input type="text" class="form-control" id="replacementText" placeholder="Enter replacement text">
+        </div>
+        <div>
+            <button type="submit" class="btn btn-primary" style="margin-bottom:2px">Add</button>
+        </div>
+    </form>
+
+    <!-- Rule List (placed at the bottom) -->
+    <div class="mt-4">
+        <h3>Rules</h3>
+        <ul id="rulesList" class="list-group">
+            <!-- Rules will be dynamically added here -->
+        </ul>
+    </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<script>
+// Holds all the rules
+let rules = [];
+
+function renderRules() {
+    // Fetch the rules from the server
+    axios.get('/load_rules')
+        .then(response => {
+            const rules = response.data || [];
+
+            const rulesList = document.getElementById('rulesList');
+            rulesList.innerHTML = '';
+
+            rules.forEach((rule, index) => {
+                const ruleItem = document.createElement('li');
+                ruleItem.className = 'list-group-item d-flex justify-content-between align-items-center';
+
+                // Create a div for the rule content (left side)
+                const ruleContent = document.createElement('div');
+                ruleContent.innerHTML = `
+                    <strong>Name:</strong> ${rule.name} <br>
+                `;
+
+                // Create a span for the regex, setting it as text content for safety
+                const regexSpan = document.createElement('span');
+                regexSpan.innerHTML = `<strong>Regex:</strong> `;
+                const regexContent = document.createElement('span');
+                regexContent.textContent = rule.regex; // Ensure raw text for regex
+
+                // Append the regex content to the regex span
+                regexSpan.appendChild(regexContent);
+
+                // Append the regex span to the ruleContent div
+                ruleContent.appendChild(regexSpan);
+
+                // Add a line break and the Replacement field
+                const replacementSpan = document.createElement('div');
+                replacementSpan.innerHTML = `<strong>Replacement:</strong> ${rule.replacement}`;
+                ruleContent.appendChild(replacementSpan);
+
+                // Create the delete button (right side)
+                const deleteButton = document.createElement('button');
+                deleteButton.className = 'btn btn-danger btn-sm';
+                deleteButton.textContent = 'Delete';
+                deleteButton.onclick = () => deleteRule(index);
+
+                // Append the content and delete button to the rule item
+                ruleItem.appendChild(ruleContent);
+                ruleItem.appendChild(deleteButton);
+
+                // Append the rule item to the list
+                rulesList.appendChild(ruleItem);
+            });
+        })
+        .catch(error => {
+            console.error('Error loading rules:', error);
+        });
+}
+
+
+// Function to add a new rule
+document.getElementById('addRuleForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const regexInput = document.getElementById('regexInput').value;
+    const replacementText = document.getElementById('replacementText').value;
+    const ruleName = document.getElementById('ruleName').value;
+
+    // Create a new rule object and add it to the list
+    const newRule = { regex: regexInput, replacement: replacementText, name: ruleName };
+    rules.push(newRule);
+
+    // Clear the form
+    document.getElementById('addRuleForm').reset();
+
+    // Save the rules to JSON
+    saveRules();
+
+    // Render the updated rules
+    renderRules();
+});
+
+// Function to delete a rule
+function deleteRule(index) {
+    rules.splice(index, 1);
+    renderRules();
+    saveRules();
+}
+
+// Function to save rules to JSON file
+function saveRules() {
+    // Using Axios to send the rules to the server
+    axios.post('/save_rules', rules)
+        .then(response => {
+            console.log('Rules saved successfully.', response.data);
+        })
+        .catch(error => {
+            console.error('Error saving rules:', error);
+        });
+}
+
+// On page load, load existing rules
+window.onload = function() {
+    renderRules();
+};
+
+</script>
+{% endblock %}
