@@ -25,8 +25,10 @@ app = Flask(__name__)
 # File paths for single-character and multi-character splines
 CHAR_FILE = 'static/data/characters.json'
 MODES_FILE = 'static/data/modes.json'
+RULES_FILE = 'static/data/rules.json'
 characters_dict = {}
 modes_dict = {}
+rules_list = []
 
 def adjust_points(points, adjustment):
     """Adjust points by adding or subtracting a constant."""
@@ -78,7 +80,10 @@ def save():
         existing_data = {}
 
     # Update or add new entry
-    existing_data[character] = adjusted_points
+    if as_mode:
+        existing_data[character] = {'points': adjusted_points, 'pattern': data['pattern']}
+    else:
+        existing_data[character] = adjusted_points
 
     # Save updated data
     with open(file_name, 'w') as f:
@@ -108,12 +113,39 @@ def load_modes():
     try:
         with open(MODES_FILE, 'r') as f:
             modes_data = json.load(f)
-            modes.update({k: [adjust_points(p, np.array([0.5, 0.5])) for p in v] for k, v in modes_data.items()})
+            modes.update({
+                k: {
+                    'points': [
+                        adjust_points(p, np.array([0.5, 0.5])) for p in v_dct['points']
+                        ],
+                    'pattern': v_dct['pattern']
+                    }
+                for k, v_dct in modes_data.items()
+                })
     except FileNotFoundError:
         pass
 
     return jsonify(modes)
 
+# Load the rules from the JSON file
+@app.route('/load_rules', methods=['GET'])
+def load_rules():
+    try:
+        with open(RULES_FILE, 'r') as file:
+            rules = json.load(file)
+    except FileNotFoundError:
+        rules = []
+    print(f'{rules=}')
+    return jsonify(rules)
+
+# Save the rules to the JSON file
+@app.route('/save_rules', methods=['POST'])
+def save_rules():
+    global rules_list
+    rules_list = request.json
+    with open(RULES_FILE, 'w') as f:
+        json.dump(rules_list, f)
+    return jsonify({"message": "Rules saved successfully!"}), 200
 
 @app.route('/delete', methods=['POST'])
 def delete():
@@ -179,9 +211,20 @@ def get_data():
     global modes_dict
     _modes = load_json_file(MODES_FILE)
     modes_dict = {
-        mode: [np.array(p, dtype=np.float32) for p in points]
-        for mode, points in _modes.items()
+        mode: {
+            'pattern': v_dct['pattern'],
+            'points': [np.array(p, dtype=np.float32) for p in v_dct['points']]
+            }
+        for mode, v_dct in _modes.items()
     }
+
+    global rules_list
+    rules_list = load_json_file(RULES_FILE)
+    # rules_list = {
+    #     rule: [np.array(p, dtype=np.float32) for p in points]
+    #     for rule, points in _rules.items()
+    # }
+
 
 
 def interpolate_points(points, num_points=100):
@@ -243,7 +286,8 @@ def split_text_with_linebreaks(text, max_width):
     result = []
 
     for line in lines:
-        words = line.split()
+        # words = line.split()
+        words = split_into_words(line)
         current_line = []
         current_length = 0
 
@@ -266,37 +310,34 @@ def split_text_with_linebreaks(text, max_width):
 
     return result
 
+def add_spaces_around_punctuation(text):
+    # Define a regex pattern to match punctuation and digits
+    pattern = r'(\d|[!\"#$%&\'()*+,-./:;<=>?@[\\\]^_`{|}~])'
+    
+    # Substitute with spaces before and after the matched characters
+    spaced_text = re.sub(pattern, r' \1 ', text)
+    
+    # Return the modified text, stripping any extra spaces at the ends
+    return spaced_text.strip()
 
-def process_text(
-        text,
-        remove_dups=False,
-        ao_mn_rule=False,
-        acq_rule=False,
-        adj_rule=False,
-        tch_rule=False,
-        ex_rule=False,
-        ):
+def process_text(text, rules):
 
     text = text.lower()
-
-    if remove_dups:
-        text = remove_consecutive_duplicates(text)
-    if ao_mn_rule:
-        text = omit_a_o_before_m_n(text)
-    if acq_rule:
-        text = omit_c_in_acq(text)
-    if adj_rule:
-        text = omit_d_in_adj(text)
-    if tch_rule:
-        text = omit_t_before_ch(text)
-    if ex_rule:
-        text = omit_e_before_x(text)
 
     # remove unsupported punctuation
     for p in ["'"]:
         text = text.replace(p, '')
     for p in ['/', '\\', '-']:
         text = text.replace(p, ' ')
+
+    text = add_spaces_around_punctuation(text)
+
+    # Apply all user-defined rules
+    global rules_list
+    for rule in rules_list:
+        if rule['name'] not in rules: continue
+
+        text = re.sub(rule["regex"], rule["replacement"], text)
 
     return text
 
@@ -317,7 +358,7 @@ def process_text(
 
 #     return svg
 
-def text_to_splines(text):
+def text_to_splines(text, modes):
     global characters_dict, modes_dict
 
     # Initialize an empty list to store the mapped integers
@@ -328,7 +369,11 @@ def text_to_splines(text):
         matched = False
         
         # Step 1: Try matching each regex pattern starting at the current index
-        for regex, value in modes_dict.items():
+        # for regex, value in modes_dict.items():
+        for mode in modes:
+            regex = modes_dict[mode]['pattern']
+            value = modes_dict[mode]['points']
+
             pattern = re.compile(regex)
             match = pattern.match(text, i)  # Check if the regex matches at the current position
             if match:
@@ -410,9 +455,16 @@ def generate_splines():
     - line_spacing: Vertical space between lines.
     """
     text = request.form['text']
+    if not text:
+        return jsonify({'image': None})
+
     space_between_words, line_spacing = 0.2, 0.2
 
     show_dots = 'show_dots' in request.form
+    modes = request.form.getlist('modes')
+    rules = request.form.getlist('rules')
+
+    text = process_text(text, rules)
 
     plt.figure(figsize=(8, 8))  # Initialize figure
 
@@ -422,7 +474,7 @@ def generate_splines():
     
     # Process each line of the text
     for line in text.splitlines():
-        word_splines = merge_word_splines(text_to_splines(line))
+        word_splines = merge_word_splines(text_to_splines(line, modes))
         current_shift = np.array([0, 0])
         line_x_pos, splines_to_plot = 0, []
 
@@ -469,7 +521,7 @@ def plot_spline(points, show_dots=True):
         plt.plot(points[:, 0], points[:, 1], 'ko', markersize=2.1)
     else:
         x, y = interpolate_points(points)
-        plt.plot(x, y, 'k', linewidth=3, solid_capstyle='round')
+        plt.plot(x, y, 'k', linewidth=2, solid_capstyle='round')
 
 def plot_baselines(line_positions, left_most, right_most, space_between_words):
     """Plots light-grey baselines for each line."""
@@ -493,12 +545,30 @@ def save_plot_as_svg():
 @app.route('/writer')
 def writer():
     execute_on_refresh()
-    return render_template('writer.html')
+
+    # Read the modes from the JSON file
+    with open(MODES_FILE, 'r') as f:
+        modes_dict = json.load(f)
+        modes = list(modes_dict.keys())  # Extract keys from the dictionary as options
+
+    # Read the modes from the JSON file
+    with open(RULES_FILE, 'r') as f:
+        rules = json.load(f)
+        # rules = list(rules_dict.keys())  # Extract keys from the dictionary as options
+
+    print(f'{modes=}')
+
+    return render_template('writer.html', modes=modes, rules=rules)
 
 @app.route('/drafter')
 def drafter():
     # execute_on_refresh()
     return render_template('drafter.html')
+
+@app.route('/rules')
+def rules():
+    # execute_on_refresh()
+    return render_template('rules.html')
 
 if __name__ == '__main__':
     app.run(debug=True)

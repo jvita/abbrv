@@ -2,59 +2,73 @@
 
 {% block content %}
 <form id="text-form" class="d-flex flex-column justify-content-start">
-    <textarea id="text" name="text" placeholder="Enter text here..."></textarea>
-
-    <div id="output"></div>
+    <textarea id="text" name="text" class="form-control mb-3" placeholder="Enter text here..."></textarea>
 
     <!-- Dropdown Menu -->
-    <div class="dropdown mt-3">
-        <button class="btn btn-primary dropdown-toggle" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
-            Options
-        </button>
-        <!-- <ul class="dropdown-menu multi-column" aria-labelledby="dropdownMenuButton"></ul> -->
-        <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-            <li class="dropdown-item button-container align-items-center">
-                <input type="checkbox" id="remove_duplicates" name="remove_duplicates" style="max-height: 20px; max-width: 20px; min-width: 20px" checked>
-                <label for="remove_duplicates" style="flex: 6;">Remove consecutive duplicates (except "ee")</label>
+    <div class="d-flex mt-3">
+        <!-- Options Dropdown -->
+        <div class="dropdown me-3">
+            <!-- <button class="btn btn-primary dropdown-toggle" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
+                Options
+            </button> -->
+            <button class="btn btn-primary dropdown-toggle" type="button" id="multiSelectDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                Options
+            </button>
+            <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                <li class="dropdown-item button-container align-items-center">
+                    <input type="checkbox" id="show_dots" name="show_dots" style="max-height: 20px; max-width: 20px; min-width: 20px">
+                    <label for="show_dots" style="flex: 6;">Show dots</label>
+                </li>
+                <li class="dropdown-item button-container align-items-center">
+                    <input type="checkbox" id="show_knot_points" name="show_knot_points" style="max-height: 20px; max-width: 20px; min-width: 20px">
+                    <label for="show_knot_points" style="flex: 6;">Display knot points</label>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Multi-Select Dropdown -->
+        <div class="dropdown me-3">
+            <button class="btn btn-primary dropdown-toggle" type="button" id="multiSelectDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                Modes
+            </button>
+            <ul class="dropdown-menu" aria-labelledby="multiSelectDropdown">
+                {% if modes|length == 0 %}
+                    <li class="dropdown-item">No additional modes available</li>
+                {% else %}
+                    {% for mode in modes %}
+                    <li class="dropdown-item">
+                        <!-- <input type="checkbox" id="mode_{{ mode }}" name="modes" value="{{ mode }}" style="max-height: 20px; max-width: 20px;">
+                        <label for="mode_{{ mode }}" style="flex: 6;">{{ mode }}</label> -->
+                        <input class="form-check-input me-2" type="checkbox" id="mode_{{ mode }}" name="modes" value="{{ mode }}" style="width: 5px; height: 5px;">
+                        <label class="form-check-label mb-1" for="mode_{{ mode }}">{{ mode }}</label>
+                    </li>
+                    {% endfor %}
+                {% endif %}
+            </ul>
+        </div>
+
+        <!-- Multi-Select Dropdown -->
+<div class="dropdown me-3">
+    <button class="btn btn-primary dropdown-toggle" type="button" id="multiSelectDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+        Rules
+    </button>
+    <ul class="dropdown-menu" aria-labelledby="multiSelectDropdown">
+        {% if rules|length == 0 %}
+            <li class="dropdown-item">No additional rules available</li>
+        {% else %}
+            {% for rule in rules %}
+            <li class="dropdown-item d-flex align-items-center text-nowrap">
+                <input class="form-check-input me-2" type="checkbox" id="rule_{{ rule['name'] }}" name="rules" value="{{ rule['name'] }}" style="width: 5px; height: 5px;">
+                <label class="form-check-label mb-1" for="rule_{{ rule['name'] }}">{{ rule['name'] }}</label>
             </li>
-            <li class="dropdown-item button-container align-items-center">
-                <input type="checkbox" id="remap_words" name="remap_words" style="max-height: 20px; max-width: 20px; min-width: 20px" checked>
-                <label for="remap_words" style="flex: 6;">Abbreviate common words</label>
-            </li>
-            <li class="dropdown-item button-container align-items-center">
-                <input type="checkbox" id="abbreviate_suffixes" name="abbreviate_suffixes" style="max-height: 20px; max-width: 20px; min-width: 20px" checked>
-                <label for="abbreviate_suffixes" style="flex: 6;">Abbreviate common suffixes</label>
-            </li>
-            <li class="dropdown-item button-container align-items-center">
-                <input type="checkbox" id="show_dots" name="show_dots" style="max-height: 20px; max-width: 20px; min-width: 20px">
-                <label for="show_dots" style="flex: 6;">Show dots</label>
-            </li>
-            <li class="dropdown-item button-container align-items-center">
-                <input type="checkbox" id="show_knot_points" name="show_knot_points" style="max-height: 20px; max-width: 20px; min-width: 20px">
-                <label for="show_knot_points" style="flex: 6;">Display knot points</label>
-            </li>
-            <li class="dropdown-item button-container align-items-center">
-                <input type="checkbox" id="ao_mn_rule" name="ao_mn_rule" style="max-height: 20px; max-width: 20px; min-width: 20px">
-                <label for="ao_mn_rule" style="flex: 6;">Omit "a" and "o" before "m" and "n"</label>
-            </li>
-            <li class="dropdown-item button-container align-items-center">
-                <input type="checkbox" id="acq_rule" name="acq_rule" style="max-height: 20px; max-width: 20px; min-width: 20px">
-                <label for="acq_rule" style="flex: 6;">Omit "c" in "acq"</label>
-            </li>
-            <li class="dropdown-item button-container align-items-center">
-                <input type="checkbox" id="adj_rule" name="adj_rule" style="max-height: 20px; max-width: 20px; min-width: 20px">
-                <label for="adj_rule" style="flex: 6;">Omit "d" in "adj"</label>
-            </li>
-            <li class="dropdown-item button-container align-items-center">
-                <input type="checkbox" id="tch_rule" name="tch_rule" style="max-height: 20px; max-width: 20px; min-width: 20px">
-                <label for="tch_rule" style="flex: 6;">Omit "t" before "ch"</label>
-            </li>
-            <li class="dropdown-item button-container align-items-center">
-                <input type="checkbox" id="ex_rule" name="ex_rule" style="max-height: 20px; max-width: 20px; min-width: 20px">
-                <label for="ex_rule" style="flex: 6;">Omit "e" before "x"</label>
-            </li>
-        </ul>
+            {% endfor %}
+        {% endif %}
+    </ul>
+</div>
+
     </div>
+
+    <div id="output"></div>
 
 </form>
 {% endblock %}
@@ -63,6 +77,26 @@
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
     $(document).ready(function() {
+        // Select the multi-select dropdown or checkboxes
+        const modeCheckboxes = document.querySelectorAll('input[name="modes"]');
+
+        // Add change event listener to each checkbox
+        modeCheckboxes.forEach(function (checkbox) {
+            checkbox.addEventListener('change', function () {
+                updatePlot();
+            });
+        });
+
+        // Select the multi-select dropdown or checkboxes
+        const rulesCheckboxes = document.querySelectorAll('input[name="rules"]');
+
+        // Add change event listener to each checkbox
+        rulesCheckboxes.forEach(function (checkbox) {
+            checkbox.addEventListener('change', function () {
+                updatePlot();
+            });
+        });
+
         let debounceTimeout;
 
         function updatePlot() {
@@ -95,7 +129,7 @@
             debouncedUpdatePlot();
         });
 
-        $('#show_knot_points, #remap_words, #abbreviate_suffixes, #show_dots, #remove_duplicates, #ao_mn_rule, #acq_rule, #adj_rule, #tch_rule, #ex_rule').on('change', function() {
+        $('#show_knot_points, #show_dots').on('change', function() {
             updatePlot();  // Call updatePlot immediately when checkboxes are modified
         });
 

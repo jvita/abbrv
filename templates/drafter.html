@@ -52,6 +52,31 @@
         <canvas id="gridCanvas" width="1520" height="1520"></canvas>
     </div>
 </div>
+<!-- Pop-up menu for saving as a mode -->
+<div class="modal fade" id="saveModeModal" tabindex="-1" aria-labelledby="saveModeModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="saveModeModalLabel">Save as mode</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <label for="modeName" class="form-label">Name</label>
+          <input type="text" class="form-control" id="modeName" placeholder="Enter mode name">
+        </div>
+        <div class="mb-3">
+          <label for="modePattern" class="form-label">Pattern</label>
+          <input type="text" class="form-control" id="modePattern" placeholder="Enter mode pattern">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" id="confirmSaveMode" class="btn btn-primary">Save</button>
+      </div>
+    </div>
+  </div>
+</div>
 <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 <script>
 let charSplineData = {}; // Global variable to store spline data
@@ -64,6 +89,9 @@ const characterField = document.getElementById('character');
 const saveButton = document.getElementById('saveButton');
 const saveDropdown = document.getElementById('saveDropdown');
 const saveMode = document.getElementById('saveMode');
+const confirmSaveMode = document.getElementById('confirmSaveMode');
+const modeName = document.getElementById('modeName');
+const modePattern = document.getElementById('modePattern');
 const clearButton = document.getElementById('clearButton');
 const clearAllButton = document.getElementById('clearAllButton');
 const clearAllDropdown = document.getElementById('clearAllDropdown');
@@ -450,7 +478,9 @@ function loadModes() {
             modesList.innerHTML = '';
             modesTitle.textContent = 'Modes (' + Object.keys(modeSplineData).length + ')'
 
-            for (const [mode, points] of Object.entries(modeSplineData)) {
+            for (const [mode, valuesDict] of Object.entries(modeSplineData)) {
+                points = valuesDict['points']
+
                 numSplinesPerChar[mode] = points.length  // used during de-selection
 
                 const listItem = document.createElement('div');
@@ -496,28 +526,102 @@ saveButton.addEventListener('click', () => {
 
 });
 
-saveMode.addEventListener('click', () => {
+confirmSaveMode.addEventListener('click', () => {
     if (selectedPoints.length) {
 
         const data = {
-            character: characterField.value.trim(),
+            character: modeName.value.trim(),
+            pattern: modePattern.value.trim(),
             points: selectedPoints.map(spline =>
                 spline.map(([x, y]) => [(x + gridSize / 2) / gridSize, (y + gridSize / 2) / gridSize])
                 ),
             as_mode: true,
         };
-        axios.post('/save', data)
-            .then(response => {
-                if (response.data.status === 'success') {
-                    loadModes();
-                    handleCharSelect(null);
-                    refreshButtons();
-                    updatePointsField();
-                    characterField.value = '';
-                    characterField.focus();
-                }
-            });
+
+        // axios.post('/save', data)
+        //     .then(response => {
+        //         if (response.data.status === 'success') {
+        //             loadModes();
+        //             handleCharSelect(null);
+        //             refreshButtons();
+        //             updatePointsField();
+        //             characterField.value = '';
+        //             characterField.focus();
+        //         }
+        //     });
     }
+});
+
+// Function to reset mode name and pattern fields
+function resetModeFields() {
+    modeName.value = '';
+    modePattern.value = '';
+    confirmSaveModeButton.disabled = true; // Optionally disable the button again
+}
+
+// Enable/Disable the save button based on the input fields
+function validateFields() {
+    if (modeName.value.trim() && modePattern.value.trim()) {
+        confirmSaveModeButton.disabled = false;
+    } else {
+        confirmSaveModeButton.disabled = true;
+    }
+}
+
+// Add input event listeners to both fields
+modeName.addEventListener('input', validateFields);
+modePattern.addEventListener('input', validateFields);
+
+// Add event listener to the "Cancel" button
+document.querySelector('.modal-footer .btn-secondary').addEventListener('click', resetModeFields);
+
+confirmSaveMode.addEventListener('click', () => {
+    // const modeName = document.getElementById('modeName').value.trim();
+    // const modePattern = document.getElementById('modePattern').value.trim();
+
+    console.log(modeName.value.trim(), modePattern.value.trim())
+
+    if (!modeName.value.trim() || !modePattern.value.trim()) {
+        alert("Both 'Name' and 'Pattern' fields are required.");
+    } else {
+        if (selectedPoints.length) {
+            const data = {
+                character: modeName.value.trim(),
+                pattern: modePattern.value.trim(),
+                points: selectedPoints.map(spline =>
+                    spline.map(([x, y]) => [(x + gridSize / 2) / gridSize, (y + gridSize / 2) / gridSize])
+                ),
+                as_mode: true,
+            };
+
+            // modeName.value = ''
+            // modePattern.value =''
+
+            axios.post('/save', data)
+                .then(response => {
+                    if (response.data.status === 'success') {
+                        loadModes();
+                        handleCharSelect(null);
+                        refreshButtons();
+                        updatePointsField();
+                        characterField.value = '';
+                        characterField.focus();
+
+                        // Hide the modal after saving
+                        const saveModeModal = bootstrap.Modal.getInstance(document.getElementById('saveModeModal'));
+                        saveModeModal.hide();
+                    }
+                });
+        }
+    }
+});
+
+saveMode.addEventListener('click', () => {
+    // Open the modal when saveMode is clicked
+    const saveModeModal = new bootstrap.Modal(document.getElementById('saveModeModal'));
+
+    modeName.value = characterField.value.trim(),
+    saveModeModal.show();
 });
 
 clearButton.addEventListener('click', () => {
