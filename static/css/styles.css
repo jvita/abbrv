@@ -75,8 +75,9 @@ html, body {
     flex-direction: column;
 }
 
-.controls h2 {
-    margin-bottom: 10px;
+.controls h3 {
+    margin: 5px;
+    /* margin-left: 10px; */
 }
 
 #character {
@@ -96,7 +97,7 @@ html, body {
     /* background-color: var(--selected-color); */
     border: none;
     color: white;
-    padding: 5px 10px;
+    /* padding: 5px 10px; */
     text-align: center;
     text-decoration: none;
     display: inline-block;
@@ -207,13 +208,16 @@ html, body {
     display: flex;
     flex-direction: column;
     gap: 5px;
-    max-height: 555px;
+    /* max-height: 555px; */
+    max-height: 150px;
+    min-height: 150px;
     overflow-y: auto;
     border: 1px solid #ddd;
     border-radius: 4px;
     /* background-color: var(--background-color); */
     background-color: #ffffff;
     padding: 10px;
+    margin: 5px;
     list-style-type: none;
     flex-grow: 1;
 }

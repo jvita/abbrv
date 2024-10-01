@@ -1,16 +1,19 @@
 {% extends "index.html" %}
 
+{% block title %}
+<title>Orthic Editor: Write</title>
+{% endblock %}
+
 {% block content %}
 <form id="text-form" class="d-flex flex-column justify-content-start">
     <textarea id="text" name="text" class="form-control mb-3" placeholder="Enter text here..."></textarea>
+
+    <div id="output"></div>
 
     <!-- Dropdown Menu -->
     <div class="d-flex mt-3">
         <!-- Options Dropdown -->
         <div class="dropdown me-3">
-            <!-- <button class="btn btn-primary dropdown-toggle" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
-                Options
-            </button> -->
             <button class="btn btn-primary dropdown-toggle" type="button" id="multiSelectDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                 Options
             </button>
@@ -37,9 +40,7 @@
                 {% else %}
                     {% for mode in modes %}
                     <li class="dropdown-item">
-                        <!-- <input type="checkbox" id="mode_{{ mode }}" name="modes" value="{{ mode }}" style="max-height: 20px; max-width: 20px;">
-                        <label for="mode_{{ mode }}" style="flex: 6;">{{ mode }}</label> -->
-                        <input class="form-check-input me-2" type="checkbox" id="mode_{{ mode }}" name="modes" value="{{ mode }}" style="width: 5px; height: 5px;">
+                        <input class="form-check-input me-2" type="checkbox" id="mode_{{ mode }}" name="modes" value="{{ mode }}" style="width: 5px; height: 5px;" checked>
                         <label class="form-check-label mb-1" for="mode_{{ mode }}">{{ mode }}</label>
                     </li>
                     {% endfor %}
@@ -48,27 +49,24 @@
         </div>
 
         <!-- Multi-Select Dropdown -->
-<div class="dropdown me-3">
-    <button class="btn btn-primary dropdown-toggle" type="button" id="multiSelectDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-        Rules
-    </button>
-    <ul class="dropdown-menu" aria-labelledby="multiSelectDropdown">
-        {% if rules|length == 0 %}
-            <li class="dropdown-item">No additional rules available</li>
-        {% else %}
-            {% for rule in rules %}
-            <li class="dropdown-item d-flex align-items-center text-nowrap">
-                <input class="form-check-input me-2" type="checkbox" id="rule_{{ rule['name'] }}" name="rules" value="{{ rule['name'] }}" style="width: 5px; height: 5px;">
-                <label class="form-check-label mb-1" for="rule_{{ rule['name'] }}">{{ rule['name'] }}</label>
-            </li>
-            {% endfor %}
-        {% endif %}
-    </ul>
-</div>
-
+        <div class="dropdown me-3">
+            <button class="btn btn-primary dropdown-toggle" type="button" id="multiSelectDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                Rules
+            </button>
+            <ul class="dropdown-menu" aria-labelledby="multiSelectDropdown">
+                {% if rules|length == 0 %}
+                    <li class="dropdown-item">No additional rules available</li>
+                {% else %}
+                    {% for rule in rules %}
+                    <li class="dropdown-item d-flex align-items-center text-nowrap">
+                        <input class="form-check-input me-2" type="checkbox" id="rule_{{ rule['name'] }}" name="rules" value="{{ rule['name'] }}" style="width: 5px; height: 5px;" checked>
+                        <label class="form-check-label mb-1" for="rule_{{ rule['name'] }}">{{ rule['name'] }}</label>
+                    </li>
+                    {% endfor %}
+                {% endif %}
+            </ul>
+        </div>
     </div>
-
-    <div id="output"></div>
 
 </form>
 {% endblock %}

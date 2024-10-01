@@ -1,21 +1,24 @@
 {% extends "index.html" %}
 
+{% block title %}
+<title>Orthic Editor: Draft</title>
+{% endblock %}
+
 {% block content %}
 <div class="main-content">
-    <div class="controls">
-        <div class="d-flex flex-row" style="margin:5px;">
-            <div class="d-flex flex-column flex-grow-1">
-                <h2 id="glyphsTitle">Glyphs</h2>
-                <div id="glyphsList" class="spline-list" style="margin-right: 5px;"></div>
-            </div>
-            <div class="d-flex flex-column flex-grow-1">
-                <h2 id="modesTitle">Modes</h2>
-                <div id="modesList" class="spline-list"></div>
-            </div>
-        </div>
+    <div class="controls d-flex flex-column justify-content-between">
+        <h3 class="mt-2" id="modesTitle">Modes</h3>
+        <div id="modesList" class="spline-list"></div>
+        <h3 class="mt-2" id="wordsTitle">Words</h3>
+        <div id="wordsList" class="spline-list"></div>
+        <h3 class="mt-2" id="glyphsTitle">Glyphs</h3>
+        <div id="glyphsList" class="spline-list" style="margin-right: 5px;"></div>
         <input type="text" id="character" placeholder="Enter character(s)" autocomplete="off">
-        <div class="d-flex flex-column">
+        <!-- <div class="d-flex flex-column"> -->
             <div class="d-flex justify-content-between">
+                <button id="freezeButton" type="button" class="btn btn-primary" disabled>Freeze</button>
+                <div>
+
                 <div class="btn-group">
                     <button id="clearButton" type="button" class="btn btn-primary">Clear</button>
                     <button id="clearAllDropdown" type="button" class="btn btn-primary dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
@@ -25,7 +28,6 @@
                         <li><a id="clearAllButton" class="dropdown-item" href="#" id="clearAllOption">all</a></li>
                     </ul>
                 </div>
-                <button id="freezeButton" type="button" class="btn btn-primary" disabled>Freeze</button>
                 <div class="btn-group">
                     <button id="saveButton" type="button" class="btn btn-primary">Save</button>
                     <button id="saveDropdown" type="button" class="btn btn-primary dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
@@ -35,8 +37,9 @@
                         <li><a id="saveMode" class="dropdown-item" href="#" id="saveAsOption">as mode</a></li>
                     </ul>
                 </div>
+                </div>
             </div>
-            <div class="btn-group d-flex">
+            <div class="btn-group d-flex" style="margin: 0px;">
                 <button id="deleteButton" type="button" class="btn btn-danger flex-grow-1">Delete</button>
                 <button id="deleteDropdown" type="button" class="btn btn-danger dropdown-toggle dropdown-toggle-split flex-grow-0" data-bs-toggle="dropdown" aria-expanded="false">
                     <span class="visually-hidden">Toggle Dropdown</span>
@@ -45,7 +48,8 @@
                     <li><a id="deleteMode" class="dropdown-item" href="#" id="deleteAsOption">as mode</a></li>
                 </ul>
             </div>
-        </div>
+        <!-- </div> -->
+        <!-- </div> -->
     </div>
     <div class="grid-container">
         <canvas id="splineCanvas" width="1520" height="1520"></canvas>
@@ -449,7 +453,7 @@ function loadCharacters() {
 
             charSplineData = response.data; // Store the data in the global variable
             glyphsList.innerHTML = '';
-            glyphsTitle.textContent = 'Glyphs (' + Object.keys(charSplineData).length + ')'
+            // glyphsTitle.textContent = 'Glyphs (' + Object.keys(charSplineData).length + ')'
 
             for (const [character, points] of Object.entries(charSplineData)) {
                 numSplinesPerChar[character] = points.length  // used during de-selection
@@ -476,7 +480,7 @@ function loadModes() {
 
             modeSplineData = response.data; // Store the data in the global variable
             modesList.innerHTML = '';
-            modesTitle.textContent = 'Modes (' + Object.keys(modeSplineData).length + ')'
+            // modesTitle.textContent = 'Modes (' + Object.keys(modeSplineData).length + ')'
 
             for (const [mode, valuesDict] of Object.entries(modeSplineData)) {
                 points = valuesDict['points']

@@ -1,1 +1,1 @@
-[{"name": "Remove consecutive duplicates", "regex": "(.)\\1+", "replacement": "\\1"}, {"regex": "(?<!\\b)([ao])(?=[mn])", "replacement": "", "name": "Omit \"a\" and \"o\" before \"m\" and \"n\""}]
+[{"name": "Remove consecutive duplicates", "regex": "(.)\\1+", "replacement": "\\1"}, {"name": "Omit \"a\" and \"o\" before \"m\" and \"n\"", "regex": "(?<!\\b)([ao])(?=[mn])", "replacement": ""}, {"name": "Omit \"e\" in \"-ed\"", "regex": "\\b(\\w*?)ed\\b", "replacement": "\\1d"}]

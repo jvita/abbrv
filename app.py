@@ -130,13 +130,14 @@ def load_modes():
 # Load the rules from the JSON file
 @app.route('/load_rules', methods=['GET'])
 def load_rules():
+    global rules_list
     try:
         with open(RULES_FILE, 'r') as file:
             rules = json.load(file)
     except FileNotFoundError:
         rules = []
-    print(f'{rules=}')
-    return jsonify(rules)
+    rules_list = rules
+    return jsonify(rules_list)
 
 # Save the rules to the JSON file
 @app.route('/save_rules', methods=['POST'])
@@ -546,19 +547,19 @@ def save_plot_as_svg():
 def writer():
     execute_on_refresh()
 
-    # Read the modes from the JSON file
-    with open(MODES_FILE, 'r') as f:
-        modes_dict = json.load(f)
-        modes = list(modes_dict.keys())  # Extract keys from the dictionary as options
+    # # Read the modes from the JSON file
+    # with open(MODES_FILE, 'r') as f:
+    #     modes_dict = json.load(f)
+    #     modes = list(modes_dict.keys())  # Extract keys from the dictionary as options
 
-    # Read the modes from the JSON file
-    with open(RULES_FILE, 'r') as f:
-        rules = json.load(f)
-        # rules = list(rules_dict.keys())  # Extract keys from the dictionary as options
+    # # Read the modes from the JSON file
+    # with open(RULES_FILE, 'r') as f:
+    #     rules = json.load(f)
+    #     # rules = list(rules_dict.keys())  # Extract keys from the dictionary as options
 
-    print(f'{modes=}')
+    global modes_dict, rules_list
 
-    return render_template('writer.html', modes=modes, rules=rules)
+    return render_template('writer.html', modes=modes_dict, rules=rules_list)
 
 @app.route('/drafter')
 def drafter():
