@@ -364,11 +364,11 @@ def text_to_splines(text, modes):
 
     # Initialize an empty list to store the mapped integers
     glyphs = []
-    
+
     i = 0
     while i < len(text):
         matched = False
-        
+
         # Step 1: Try matching each regex pattern starting at the current index
         # for regex, value in modes_dict.items():
         for mode in modes:
@@ -414,7 +414,7 @@ def merge_word_splines(char_splines):
     # Initialize a list to store the concatenated points for each word
     words = []
     current_word = []
-    
+
     # Initialize the shift to [0, 0] for the first character
     current_shift = np.array([0, 0])
     first_char_in_word = True
@@ -435,15 +435,15 @@ def merge_word_splines(char_splines):
                     shifted_points -= points_array[0]
 
                 current_word.append(shifted_points)
-            
+
             # Update the shift to the last point of the last array in the current character
             current_shift = current_word[-1][-1]  # Last point of the last array
             first_char_in_word = False
-    
+
     # After the loop, add the last word if it's not empty
     if current_word:
         words.append(current_word)
-    
+
     return words
 
 @app.route('/generate_splines', methods=['POST'])
