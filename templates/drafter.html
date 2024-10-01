@@ -38,15 +38,15 @@
                 </div>
             </div>
             <div class="flex-grow-1 d-flex flex-column">
-                <div class="btn-group flex-grow-1">
+                <!-- <div class="btn-group flex-grow-1"> -->
                     <button id="clearButton" type="button" class="btn btn-primary flex-grow-1">Clear</button>
-                    <button id="clearAllDropdown" type="button" class="btn btn-primary dropdown-toggle dropdown-toggle-split flex-grow-0" data-bs-toggle="dropdown" aria-expanded="false">
+                    <!-- <button id="clearAllDropdown" type="button" class="btn btn-primary dropdown-toggle dropdown-toggle-split flex-grow-0" data-bs-toggle="dropdown" aria-expanded="false">
                         <span class="visually-hidden">Toggle Dropdown</span>
                     </button>
                     <ul class="dropdown-menu">
                         <li><a id="clearAllButton" class="dropdown-item" href="#" id="clearAllOption">all</a></li>
-                    </ul>
-                </div>
+                    </ul> -->
+                <!-- </div> -->
                 <div class="btn-group flex-grow-1">
                     <button id="saveButton" type="button" class="btn btn-primary flex-grow-1">Save</button>
                     <button id="saveDropdown" type="button" class="btn btn-primary dropdown-toggle dropdown-toggle-split flex-grow-0" data-bs-toggle="dropdown" aria-expanded="false">
@@ -108,8 +108,8 @@ const confirmSaveMode = document.getElementById('confirmSaveMode');
 const modeName = document.getElementById('modeName');
 const modePattern = document.getElementById('modePattern');
 const clearButton = document.getElementById('clearButton');
-const clearAllButton = document.getElementById('clearAllButton');
-const clearAllDropdown = document.getElementById('clearAllDropdown');
+// const clearAllButton = document.getElementById('clearAllButton');
+// const clearAllDropdown = document.getElementById('clearAllDropdown');
 const deleteButton = document.getElementById('deleteButton');
 const deleteDropdown = document.getElementById('deleteDropdown');
 const deleteMode = document.getElementById('deleteMode');
@@ -375,7 +375,7 @@ function refreshButtons() {
     refreshDeleteButton();
     refreshFreezeButton();
     refreshSaveButton();
-    refreshClearAllButton();
+    // refreshClearAllButton();
 
     // update coloring of spline list
     document.querySelectorAll('.char-list-item').forEach(item => {
@@ -419,14 +419,15 @@ function refreshSaveButton() {
     clearButton.disabled = noneSelected
 }
 
-function refreshClearAllButton() {
-    clearAllButton.disabled = (selectedPoints.length === 0) || (selectedPoints[selectedPoints.length - 1].length === 0)
-    clearAllDropdown.disabled = clearAllButton.disabled
-    // clearAllDropdown.display = clearAllDropdown.disabled ? 'none' : 'block'
-    // clearAllButton.display = clearAllButton.disabled ? 'none' : 'block'
-}
+// function refreshClearAllButton() {
+//     clearAllButton.disabled = (selectedPoints.length === 0) || (selectedPoints[selectedPoints.length - 1].length === 0)
+//     clearAllDropdown.disabled = clearAllButton.disabled
+//     // clearAllDropdown.display = clearAllDropdown.disabled ? 'none' : 'block'
+//     // clearAllButton.display = clearAllButton.disabled ? 'none' : 'block'
+// }
 
 function refreshFreezeButton() {
+    freezeButton.textContent = frozenPoints.length ? 'Unfreeze' : 'Freeze';
     freezeButton.disabled = (frozenPoints.length === 0) && ((selectedPoints.length === 0) || (selectedPoints[selectedPoints.length - 1].length === 0))
 }
 
@@ -715,9 +716,10 @@ freezeButton.addEventListener('click', () => {
     splineCtx.clearRect(0, 0, splineCanvas.width, splineCanvas.height);
 
     if (freezeButton.textContent === 'Freeze') { // freeze
-        frozenPoints = selectedPoints
+        console.log(selectedPoints)
+        frozenPoints = selectedPoints.map(point => point.slice())
 
-        clearAllButton.click()
+        // clearAllButton.click()
         refreshButtons();
 
     } else {  // unfreeze
@@ -725,40 +727,40 @@ freezeButton.addEventListener('click', () => {
         refreshFreezeButton();
     }
 
-    freezeButton.textContent = (freezeButton.textContent === 'Freeze') ? 'Unfreeze' : 'Freeze';
+    // freezeButton.textContent = (freezeButton.textContent === 'Freeze') ? 'Unfreeze' : 'Freeze';
     updatePointsField();
     characterField.focus();
 });
 
-// Click event listener
-clearAllButton.addEventListener('click', (e) => {
-    // Clear the points, characters, and other data
-    selectedPoints = [];
-    numPerSelected = [];
-    selectedCharacters = [];
+// // Click event listener
+// clearAllButton.addEventListener('click', (e) => {
+//     // Clear the points, characters, and other data
+//     selectedPoints = [];
+//     numPerSelected = [];
+//     selectedCharacters = [];
 
-    // Refresh coloring of spline list
-    document.querySelectorAll('.char-list-item').forEach(item => {
-        item.classList.remove('selected');
-        item.classList.remove('joining');
-    });
+//     // Refresh coloring of spline list
+//     document.querySelectorAll('.char-list-item').forEach(item => {
+//         item.classList.remove('selected');
+//         item.classList.remove('joining');
+//     });
 
-    // Update the input field and focus
-    characterField.value = '';
-    characterField.focus();
+//     // Update the input field and focus
+//     characterField.value = '';
+//     characterField.focus();
 
-    // Update fields and buttons
-    updatePointsField();
-    refreshButtons();
+//     // Update fields and buttons
+//     updatePointsField();
+//     refreshButtons();
 
-    // Forcefully close the dropdown by removing the 'show' class
-    const dropdown = document.querySelector('.dropdown-menu');
-    dropdown.classList.remove('show');
-    document.getElementById('clearAllDropdown').setAttribute('aria-expanded', 'false');
+//     // Forcefully close the dropdown by removing the 'show' class
+//     const dropdown = document.querySelector('.dropdown-menu');
+//     dropdown.classList.remove('show');
+//     document.getElementById('clearAllDropdown').setAttribute('aria-expanded', 'false');
 
-    // Prevent the default anchor behavior
-    e.preventDefault();
-});
+//     // Prevent the default anchor behavior
+//     e.preventDefault();
+// });
 
 
 // to avoid too-fast updates when typing into char field
