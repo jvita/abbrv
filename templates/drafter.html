@@ -23,29 +23,10 @@
         </h3>
         <div id="modesList" class="spline-list"></div>
         <input type="text" id="character" placeholder="Enter character(s)" autocomplete="off">
-        <div class="d-flex justify-content-between">
-            <button id="freezeButton" type="button" class="btn btn-primary" disabled>Freeze</button>
-            <div>
-                <div class="btn-group">
-                    <button id="clearButton" type="button" class="btn btn-primary">Clear</button>
-                    <button id="clearAllDropdown" type="button" class="btn btn-primary dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
-                        <span class="visually-hidden">Toggle Dropdown</span>
-                    </button>
-                    <ul class="dropdown-menu">
-                        <li><a id="clearAllButton" class="dropdown-item" href="#" id="clearAllOption">all</a></li>
-                    </ul>
-                </div>
-                <div class="btn-group">
-                    <button id="saveButton" type="button" class="btn btn-primary">Save</button>
-                    <button id="saveDropdown" type="button" class="btn btn-primary dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
-                        <span class="visually-hidden">Toggle Dropdown</span>
-                    </button>
-                    <ul class="dropdown-menu">
-                        <li><a id="saveMode" class="dropdown-item" href="#" id="saveAsOption">as mode</a></li>
-                        <li><a id="saveWord" class="dropdown-item" href="#" id="saveAsOption">as word</a></li>
-                    </ul>
-                </div>
-                <div class="btn-group" style="margin: 0px;">
+        <div class="d-flex flex-row" style="margin-top: 5px">
+            <div class="d-flex flex-column flex-grow-1">
+                <button id="freezeButton" type="button" class="btn btn-primary flex-grow-1" disabled>Freeze</button>
+                <div class="btn-group flex-grow-1">
                     <button id="deleteButton" type="button" class="btn btn-danger flex-grow-1">Delete</button>
                     <button id="deleteDropdown" type="button" class="btn btn-danger dropdown-toggle dropdown-toggle-split flex-grow-0" data-bs-toggle="dropdown" aria-expanded="false">
                         <span class="visually-hidden">Toggle Dropdown</span>
@@ -53,6 +34,27 @@
                     <ul class="dropdown-menu">
                         <li><a id="deleteMode" class="dropdown-item" href="#" id="deleteAsOption">mode</a></li>
                         <li><a id="deleteWord" class="dropdown-item" href="#" id="deleteAsOption">word</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="flex-grow-1 d-flex flex-column">
+                <div class="btn-group flex-grow-1">
+                    <button id="clearButton" type="button" class="btn btn-primary flex-grow-1">Clear</button>
+                    <button id="clearAllDropdown" type="button" class="btn btn-primary dropdown-toggle dropdown-toggle-split flex-grow-0" data-bs-toggle="dropdown" aria-expanded="false">
+                        <span class="visually-hidden">Toggle Dropdown</span>
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a id="clearAllButton" class="dropdown-item" href="#" id="clearAllOption">all</a></li>
+                    </ul>
+                </div>
+                <div class="btn-group flex-grow-1">
+                    <button id="saveButton" type="button" class="btn btn-primary flex-grow-1">Save</button>
+                    <button id="saveDropdown" type="button" class="btn btn-primary dropdown-toggle dropdown-toggle-split flex-grow-0" data-bs-toggle="dropdown" aria-expanded="false">
+                        <span class="visually-hidden">Toggle Dropdown</span>
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a id="saveMode" class="dropdown-item" href="#" id="saveAsOption">as mode</a></li>
+                        <li><a id="saveWord" class="dropdown-item" href="#" id="saveAsOption">as word</a></li>
                     </ul>
                 </div>
             </div>
