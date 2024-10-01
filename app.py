@@ -543,8 +543,8 @@ def save_plot_as_svg():
     return svg_content
 
 @app.route('/')
-@app.route('/writer')
-def writer():
+@app.route('/write')
+def write():
     execute_on_refresh()
 
     # # Read the modes from the JSON file
@@ -561,8 +561,8 @@ def writer():
 
     return render_template('writer.html', modes=modes_dict, rules=rules_list)
 
-@app.route('/drafter')
-def drafter():
+@app.route('/draft')
+def draft():
     # execute_on_refresh()
     return render_template('drafter.html')
 
