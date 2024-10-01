@@ -1,27 +1,27 @@
 {% extends "index.html" %}
 
 {% block title %}
-<title>Orthic Editor: Draft</title>
+<title>abbrv: draft</title>
 {% endblock %}
 
 {% block content %}
 <div class="main-content">
     <div class="controls d-flex flex-column justify-content-between">
         <h3 class="mt-2 d-flex align-items-center" id="modesTitle">
-            Modes 
-            <i class="bi bi-question-circle ms-2" style="font-size: 0.8rem;" data-bs-toggle="tooltip" title="Modes use regular expressions to match any generic pattern to a spline representation. Mode pattern matching will be applied first when mapping text to splines."></i>
+            Glyphs
+            <i class="bi bi-question-circle ms-2" style="font-size: 0.8rem;" data-bs-toggle="tooltip" title="A glyph is a representation of one or more characters."></i>
         </h3>
-        <div id="modesList" class="spline-list"></div>
+        <div id="glyphsList" class="spline-list" style="margin-right: 5px;"></div>
         <h3 class="mt-2 d-flex align-items-center" id="modesTitle">
-            Words
-            <i class="bi bi-question-circle ms-2" style="font-size: 0.8rem;" data-bs-toggle="tooltip" title="Words are like modes, but can only be used to match patterns of one or more complete words. Word pattern matching will be applied second."></i>
+            Phrases
+            <i class="bi bi-question-circle ms-2" style="font-size: 0.8rem;" data-bs-toggle="tooltip" title="A phrase is a representation of one or more words."></i>
         </h3>
         <div id="wordsList" class="spline-list"></div>
         <h3 class="mt-2 d-flex align-items-center" id="modesTitle">
-            Glyphs
-            <i class="bi bi-question-circle ms-2" style="font-size: 0.8rem;" data-bs-toggle="tooltip" title="A glyph is a spline representation of one or more characters. Glyph matching is applied last, after modes and words."></i>
+            Modes 
+            <i class="bi bi-question-circle ms-2" style="font-size: 0.8rem;" data-bs-toggle="tooltip" title="A mode is similar to a glyph, but can be used to represent more complex patterns using regular expressions."></i>
         </h3>
-        <div id="glyphsList" class="spline-list" style="margin-right: 5px;"></div>
+        <div id="modesList" class="spline-list"></div>
         <input type="text" id="character" placeholder="Enter character(s)" autocomplete="off">
         <div class="d-flex justify-content-between">
             <button id="freezeButton" type="button" class="btn btn-primary" disabled>Freeze</button>
@@ -43,6 +43,7 @@
                 </button>
                 <ul class="dropdown-menu">
                     <li><a id="saveMode" class="dropdown-item" href="#" id="saveAsOption">as mode</a></li>
+                    <li><a id="saveWord" class="dropdown-item" href="#" id="saveAsOption">as word</a></li>
                 </ul>
             </div>
             </div>
@@ -53,7 +54,8 @@
                 <span class="visually-hidden">Toggle Dropdown</span>
             </button>
             <ul class="dropdown-menu">
-                <li><a id="deleteMode" class="dropdown-item" href="#" id="deleteAsOption">as mode</a></li>
+                <li><a id="deleteMode" class="dropdown-item" href="#" id="deleteAsOption">mode</a></li>
+                <li><a id="deleteWord" class="dropdown-item" href="#" id="deleteAsOption">word</a></li>
             </ul>
         </div>
     </div>

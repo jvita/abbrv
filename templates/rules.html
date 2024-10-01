@@ -1,23 +1,34 @@
 {% extends "index.html" %}
 
 {% block title %}
-<title>Orthic Editor: Rules</title>
+<title>abbrv: rules</title>
 {% endblock %}
 
 {% block content %}
 <div class="main-content"></div>
     <!-- Add New Rule -->
+    <h3>Rules</h3>
+    <div>Rules can be used to modify text prior to translation into shorthand glyphs. They are applied using find-and-replace operations with <a href="https://regexone.com/" target="_blank">regular expressions</a>.</div>
     <form id="addRuleForm" class="d-flex flex-row align-items-end">
         <div class="flex-grow-1 me-2">
-            <label for="ruleName" class="form-label">Name</label>
+            <label for="ruleName" class="form-label">
+                Name
+                <i class="bi bi-question-circle ms-2" style="font-size: 0.8rem;" data-bs-toggle="tooltip" title="A brief, easily understood description of the rule."></i>
+            </label>
             <input type="text" class="form-control" id="ruleName" placeholder="Enter name of rule" required>
         </div>
         <div class="flex-grow-1 me-2">
-            <label for="regexInput" class="form-label">Pattern</label>
+            <label for="regexInput" class="form-label">
+                Pattern
+                <i class="bi bi-question-circle ms-2" style="font-size: 0.8rem;" data-bs-toggle="tooltip" title="The regular expression used for pattern matching."></i>
+            </label>
             <input type="text" class="form-control" id="regexInput" placeholder="Enter regex pattern to be matched" required>
         </div>
         <div class="flex-grow-1 me-2">
-            <label for="replacementText" class="form-label">Replacement</label>
+            <label for="replacementText" class="form-label">
+                Replacement
+                <i class="bi bi-question-circle ms-2" style="font-size: 0.8rem;" data-bs-toggle="tooltip" title="The regular expression for replacing any matched patterns."></i>
+            </label>
             <input type="text" class="form-control" id="replacementText" placeholder="Enter replacement text">
         </div>
         <div>
@@ -27,7 +38,6 @@
 
     <!-- Rule List (placed at the bottom) -->
     <div class="mt-4">
-        <h3>Rules</h3>
         <ul id="rulesList" class="list-group">
             <!-- Rules will be dynamically added here -->
         </ul>
