@@ -471,10 +471,10 @@ def generate_splines():
 
         # Process each word in the line
         for word in word_splines:
-            for pi, points in enumerate(word):
+            xmin = word[0][:, 0].min()
+            for points in word:
                 shifted_points = points
-                if pi == 0:
-                    shifted_points[:, 0] -= points[:, 0].min()
+                shifted_points[:, 0] -= xmin  # handle negative shift in first char
                 shifted_points += current_shift
                 splines_to_plot.append(shifted_points)
 
