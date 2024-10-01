@@ -554,7 +554,7 @@ saveButton.addEventListener('click', () => {
                 spline.map(([x, y]) => [(x + gridSize / 2) / gridSize, (y + gridSize / 2) / gridSize])
                 ),
             as_mode: false,
-            as_phrase: true,
+            as_phrase: false,
             // dots: dots.map(([x, y]) => [(x + gridSize / 2) / gridSize, (y + gridSize / 2) / gridSize]),
         };
         axios.post('/save', data)
@@ -582,7 +582,7 @@ confirmSaveMode.addEventListener('click', () => {
                 spline.map(([x, y]) => [(x + gridSize / 2) / gridSize, (y + gridSize / 2) / gridSize])
                 ),
             as_mode: true,
-            as_phrase: true,
+            as_phrase: false,
         };
 
         axios.post('/save', data)

@@ -451,6 +451,7 @@ def generate_splines():
 
     space_between_words, line_spacing = 0.2, 0.2
 
+    abbrv_words = 'abbrv_words' in request.form
     show_dots = 'show_dots' in request.form
     modes = request.form.getlist('modes')
     rules = request.form.getlist('rules')
@@ -482,8 +483,6 @@ def generate_splines():
                 line_x_pos = max(shifted_points[:, 0].max(), line_x_pos)
                 right_most_point = max(shifted_points[:, 0].max(), right_most_point)
                 left_most_point = min(shifted_points[:, 0].min(), left_most_point)
-
-                print(f'{line_x_pos=}')
 
             # Shift for the next word
             current_shift = np.array([line_x_pos + space_between_words, 0])

@@ -11,61 +11,70 @@
     <div id="output"></div>
 
     <!-- Dropdown Menu -->
-    <div class="d-flex mt-3">
-        <!-- Options Dropdown -->
-        <div class="dropdown me-3">
-            <button class="btn btn-primary dropdown-toggle" type="button" id="multiSelectDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                Options
-            </button>
-            <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                <li class="dropdown-item button-container align-items-center">
-                    <input type="checkbox" id="show_dots" name="show_dots" style="max-height: 20px; max-width: 20px; min-width: 20px">
-                    <label for="show_dots" style="flex: 6;">Show dots</label>
-                </li>
-                <li class="dropdown-item button-container align-items-center">
-                    <input type="checkbox" id="show_knot_points" name="show_knot_points" style="max-height: 20px; max-width: 20px; min-width: 20px">
-                    <label for="show_knot_points" style="flex: 6;">Display knot points</label>
-                </li>
-            </ul>
-        </div>
-
-        <!-- Multi-Select Dropdown -->
-        <div class="dropdown me-3">
-            <button class="btn btn-primary dropdown-toggle" type="button" id="multiSelectDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                Modes
-            </button>
-            <ul class="dropdown-menu" aria-labelledby="multiSelectDropdown">
-                {% if modes|length == 0 %}
-                    <li class="dropdown-item">No additional modes available</li>
-                {% else %}
-                    {% for mode in modes %}
-                    <li class="dropdown-item">
-                        <input class="form-check-input me-2" type="checkbox" id="mode_{{ mode }}" name="modes" value="{{ mode }}" style="width: 5px; height: 5px;" checked>
-                        <label class="form-check-label mb-1" for="mode_{{ mode }}">{{ mode }}</label>
+    <div class="d-flex mt-3 flex-row justify-content-between">
+        <div class="d-flex flex-row">
+            <!-- Options Dropdown -->
+            <div class="dropdown me-3">
+                <button class="btn btn-primary dropdown-toggle" type="button" id="multiSelectDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                    Options
+                </button>
+                <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                    <li class="dropdown-item button-container align-items-center">
+                        <input type="checkbox" id="abbrv_words" name="abbrv_words" style="max-height: 20px; max-width: 20px; min-width: 20px">
+                        <label for="abbrv_words" style="flex: 6;">Use word abbreviations</label>
                     </li>
-                    {% endfor %}
-                {% endif %}
-            </ul>
-        </div>
-
-        <!-- Multi-Select Dropdown -->
-        <div class="dropdown me-3">
-            <button class="btn btn-primary dropdown-toggle" type="button" id="multiSelectDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                Rules
-            </button>
-            <ul class="dropdown-menu" aria-labelledby="multiSelectDropdown">
-                {% if rules|length == 0 %}
-                    <li class="dropdown-item">No additional rules available</li>
-                {% else %}
-                    {% for rule in rules %}
-                    <li class="dropdown-item d-flex align-items-center text-nowrap">
-                        <input class="form-check-input me-2" type="checkbox" id="rule_{{ rule['name'] }}" name="rules" value="{{ rule['name'] }}" style="width: 5px; height: 5px;" checked>
-                        <label class="form-check-label mb-1" for="rule_{{ rule['name'] }}">{{ rule['name'] }}</label>
+                    <li class="dropdown-item button-container align-items-center">
+                        <input type="checkbox" id="show_dots" name="show_dots" style="max-height: 20px; max-width: 20px; min-width: 20px">
+                        <label for="show_dots" style="flex: 6;">Show dots</label>
                     </li>
-                    {% endfor %}
-                {% endif %}
-            </ul>
+                    <li class="dropdown-item button-container align-items-center">
+                        <input type="checkbox" id="show_knot_points" name="show_knot_points" style="max-height: 20px; max-width: 20px; min-width: 20px">
+                        <label for="show_knot_points" style="flex: 6;">Display knot points</label>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Multi-Select Dropdown -->
+            <div class="dropdown me-3">
+                <button class="btn btn-primary dropdown-toggle" type="button" id="multiSelectDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                    Modes
+                </button>
+                <ul class="dropdown-menu" aria-labelledby="multiSelectDropdown">
+                    {% if modes|length == 0 %}
+                        <li class="dropdown-item">No additional modes available</li>
+                    {% else %}
+                        {% for mode in modes %}
+                        <li class="dropdown-item">
+                            <input class="form-check-input me-2" type="checkbox" id="mode_{{ mode }}" name="modes" value="{{ mode }}" style="width: 5px; height: 5px;" checked>
+                            <label class="form-check-label mb-1" for="mode_{{ mode }}">{{ mode }}</label>
+                        </li>
+                        {% endfor %}
+                    {% endif %}
+                </ul>
+            </div>
+
+            <!-- Multi-Select Dropdown -->
+            <div class="dropdown me-3">
+                <button class="btn btn-primary dropdown-toggle" type="button" id="multiSelectDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                    Rules
+                </button>
+                <ul class="dropdown-menu" aria-labelledby="multiSelectDropdown">
+                    {% if rules|length == 0 %}
+                        <li class="dropdown-item">No additional rules available</li>
+                    {% else %}
+                        {% for rule in rules %}
+                        <li class="dropdown-item d-flex align-items-center text-nowrap">
+                            <input class="form-check-input me-2" type="checkbox" id="rule_{{ rule['name'] }}" name="rules" value="{{ rule['name'] }}" style="width: 5px; height: 5px;" checked>
+                            <label class="form-check-label mb-1" for="rule_{{ rule['name'] }}">{{ rule['name'] }}</label>
+                        </li>
+                        {% endfor %}
+                    {% endif %}
+                </ul>
+            </div>
         </div>
+        <button id="downloadButton" class="btn btn-primary">
+            <i class="bi bi-download"></i>
+        </button>
     </div>
 
 </form>
@@ -75,6 +84,22 @@
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
     $(document).ready(function() {
+        // Function to download the SVG (same as before)
+        function downloadSVG() {
+            const svgElement = document.getElementById('output').innerHTML;
+            const blob = new Blob([svgElement], { type: 'image/svg+xml' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'image.svg';
+            document.body.appendChild(a);
+            a.click();
+            URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+        }
+
+        document.getElementById('downloadButton').addEventListener('click', downloadSVG);
+
         // Select the multi-select dropdown or checkboxes
         const modeCheckboxes = document.querySelectorAll('input[name="modes"]');
 
@@ -127,7 +152,7 @@
             debouncedUpdatePlot();
         });
 
-        $('#show_knot_points, #show_dots').on('change', function() {
+        $('#show_knot_points, #show_dots, #abbreviate_words').on('change', function() {
             updatePlot();  // Call updatePlot immediately when checkboxes are modified
         });
 
