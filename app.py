@@ -571,5 +571,11 @@ def rules():
     # execute_on_refresh()
     return render_template('rules.html')
 
+@app.route('/help')
+def help():
+    # execute_on_refresh()
+    return render_template('help.html')
+
+
 if __name__ == '__main__':
     app.run(debug=True)
