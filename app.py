@@ -23,11 +23,11 @@ app = Flask(__name__)
 # toolbar = DebugToolbarExtension(app)
 
 # File paths for single-character and multi-character splines
-CHAR_FILE = 'static/data/characters.json'
+GLYPHS_FILE = 'static/data/glyphs.json'
 PHRASES_FILE = 'static/data/phrases.json'
 MODES_FILE = 'static/data/modes.json'
 RULES_FILE = 'static/data/rules.json'
-characters_dict = {}
+glyphs_dict = {}
 phrases_dict = {}
 modes_dict = {}
 rules_list = []
@@ -66,13 +66,19 @@ def spline():
 @app.route('/save', methods=['POST'])
 def save():
     data = request.json
-    character = data['character']
+    name = data['name']
     points = data['points']
     as_mode = data['as_mode']
+    as_phrase = data['as_phrase']
 
     adjusted_points = [adjust_points(p, np.array([-0.5, -0.5])) for p in points]
 
-    file_name = MODES_FILE if as_mode else CHAR_FILE
+    if as_phrase:
+        file_name = PHRASES_FILE
+    elif as_mode:
+        file_name = MODES_FILE
+    else:  # as glyph
+        file_name = GLYPHS_FILE
 
     # Load existing data
     try:
@@ -83,9 +89,9 @@ def save():
 
     # Update or add new entry
     if as_mode:
-        existing_data[character] = {'points': adjusted_points, 'pattern': data['pattern']}
+        existing_data[name] = {'points': adjusted_points, 'pattern': data['pattern']}
     else:
-        existing_data[character] = adjusted_points
+        existing_data[name] = adjusted_points
 
     # Save updated data
     with open(file_name, 'w') as f:
@@ -93,13 +99,13 @@ def save():
 
     return jsonify({'status': 'success'})
 
-@app.route('/load_characters')
-def load_characters():
+@app.route('/load_glyphs')
+def load_glyphs():
     chars = {}
 
-    # Load single-character splines
+    # Load single-glyph splines
     try:
-        with open(CHAR_FILE, 'r') as f:
+        with open(GLYPHS_FILE, 'r') as f:
             chars_data = json.load(f)
             chars.update({k: [adjust_points(p, np.array([0.5, 0.5])) for p in v] for k, v in chars_data.items()})
     except FileNotFoundError:
@@ -111,7 +117,7 @@ def load_characters():
 def load_phrases():
     phrases = {}
 
-    # Load single-character splines
+    # Load single-glyph splines
     try:
         with open(PHRASES_FILE, 'r') as f:
             phrases_dict = json.load(f)
@@ -126,7 +132,7 @@ def load_phrases():
 def load_modes():
     modes = {}
 
-    # Load single-character splines
+    # Load single-glyph splines
     try:
         with open(MODES_FILE, 'r') as f:
             modes_data = json.load(f)
@@ -168,29 +174,35 @@ def save_rules():
 @app.route('/delete', methods=['POST'])
 def delete():
     data = request.json
-    character = data['character']
+    name = data['name']
     as_mode = data['as_mode']
+    as_phrase = data['as_phrase']
 
-    file_path = MODES_FILE if as_mode else CHAR_FILE
+    if as_phrase:
+        file_name = PHRASES_FILE
+    elif as_mode:
+        file_name = MODES_FILE
+    else:  # as glyph
+        file_name = GLYPHS_FILE
 
     # Load existing data
     try:
-        with open(file_path, 'r') as f:
+        with open(file_name, 'r') as f:
             existing_data = json.load(f)
     except FileNotFoundError:
         existing_data = {}
 
-    # Remove the specified character
-    if character in existing_data:
-        del existing_data[character]
+    # Remove the specified element
+    if name in existing_data:
+        del existing_data[name]
 
         # Save updated data
-        with open(file_path, 'w') as f:
+        with open(file_name, 'w') as f:
             json.dump(existing_data, f, indent=4)
 
         return jsonify({'status': 'success'})
     else:
-        return jsonify({'status': 'error', 'message': 'Character not found'})
+        return jsonify({'status': 'error', 'message': 'Name not found'})
 
 def execute_on_refresh():
     get_data()
@@ -205,26 +217,12 @@ def load_json_file(filename):
         return json.load(f)
 
 def get_data():
-    global characters_dict
-    _chars = load_json_file(CHAR_FILE)
-    characters_dict = {
+    global glyphs_dict
+    _chars = load_json_file(GLYPHS_FILE)
+    glyphs_dict = {
         char: [np.array(p, dtype=np.float32) for p in points]
         for char, points in _chars.items()
     }
-
-    global suffixes_dict
-    suffixes_dict = {}
-    to_del = []
-    for k,v in characters_dict.items():
-        if k[0] == '-' and len(k) > 1:
-            # for things like -hood and -less
-            _k = remove_consecutive_duplicates(k)
-            suffixes_dict[_k] = v
-            to_del.append(k)
-
-
-    for k in to_del:
-        del characters_dict[k]
 
     global modes_dict
     _modes = load_json_file(MODES_FILE)
@@ -238,12 +236,6 @@ def get_data():
 
     global rules_list
     rules_list = load_json_file(RULES_FILE)
-    # rules_list = {
-    #     rule: [np.array(p, dtype=np.float32) for p in points]
-    #     for rule, points in _rules.items()
-    # }
-
-
 
 def interpolate_points(points, num_points=100):
     if len(points) < 2:
@@ -262,41 +254,6 @@ def interpolate_points(points, num_points=100):
 def split_into_words(text):
     # Regular expression to split text by words, digits, and punctuation
     return re.findall(r'[A-Za-z]+|\d|[^\w\s]', text)
-
-def remove_consecutive_duplicates(s):
-    if not s:
-        return ""
-
-    result = [s[0]]  # Start with the first character
-    e_count = 1 if s[0] == 'e' else 0  # Track consecutive 'e' characters
-
-    for char in s[1:]:
-        if char == 'e':
-            e_count += 1
-        else:
-            e_count = 0  # Reset the count if the character is not 'e'
-
-        # Skip if char is the same as the last one (except for digits)
-        if char != result[-1] or char.isdigit() or (char == 'e' and e_count <= 2):
-            result.append(char)
-
-    return ''.join(result)
-
-def omit_a_o_before_m_n(input_string):
-    # does not apply at the beginning of a word
-    return re.sub(r'(?<!\b)([ao])(?=[mn])', '', input_string)
-
-def omit_c_in_acq(input_string):
-    return input_string.replace('acq', 'aq')
-
-def omit_d_in_adj(input_string):
-    return input_string.replace('adj', 'aj')
-
-def omit_t_before_ch(input_string):
-    return input_string.replace('tch', 'ch')
-
-def omit_e_before_x(input_string):
-    return input_string.replace('ex', 'x')
 
 def split_text_with_linebreaks(text, max_width):
     # Split by lines first to preserve existing line breaks
@@ -359,25 +316,8 @@ def process_text(text, rules):
 
     return text
 
-# def points_to_svg(points, stroke_color='black', stroke_width=2, width=100, height=100):
-#     # Start the SVG string
-#     svg = f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}">\n'
-
-#     # Generate the path data
-#     if points:
-#         d = f'M {points[0][0]},{points[0][1]} '
-#         d += ' '.join(f'L {x},{y}' for x, y in points[1:])
-
-#         # Create the path element
-#         svg += f'    <path d="{d}" stroke="{stroke_color}" stroke-width="{stroke_width}" fill="none" />\n'
-
-#     # Close the SVG string
-#     svg += '</svg>'
-
-#     return svg
-
 def text_to_splines(text, modes):
-    global characters_dict, modes_dict
+    global glyphs_dict, modes_dict
 
     # Initialize an empty list to store the mapped integers
     glyphs = []
@@ -409,7 +349,7 @@ def text_to_splines(text, modes):
             best_value = None
 
             # Iterate over each key in char_dict to find the longest match at the current position
-            for key, value in characters_dict.items():
+            for key, value in glyphs_dict.items():
                 if text[i:i + len(key)] == key and len(key) > max_key_len:
                     max_key_len = len(key)
                     best_match = key
@@ -563,16 +503,6 @@ def save_plot_as_svg():
 @app.route('/write')
 def write():
     execute_on_refresh()
-
-    # # Read the modes from the JSON file
-    # with open(MODES_FILE, 'r') as f:
-    #     modes_dict = json.load(f)
-    #     modes = list(modes_dict.keys())  # Extract keys from the dictionary as options
-
-    # # Read the modes from the JSON file
-    # with open(RULES_FILE, 'r') as f:
-    #     rules = json.load(f)
-    #     # rules = list(rules_dict.keys())  # Extract keys from the dictionary as options
 
     global modes_dict, rules_list
 
