@@ -224,6 +224,13 @@ def get_data():
         for char, points in _chars.items()
     }
 
+    global phrases_dict
+    _chars = load_json_file(PHRASES_FILE)
+    phrases_dict = {
+        char: [np.array(p, dtype=np.float32) for p in points]
+        for char, points in _chars.items()
+    }
+
     global modes_dict
     _modes = load_json_file(MODES_FILE)
     modes_dict = {
@@ -316,8 +323,10 @@ def process_text(text, rules):
 
     return text
 
+import re
+
 def text_to_splines(text, modes):
-    global glyphs_dict, modes_dict
+    global glyphs_dict, modes_dict, phrases_dict
 
     # Initialize an empty list to store the mapped integers
     glyphs = []
@@ -327,7 +336,6 @@ def text_to_splines(text, modes):
         matched = False
 
         # Step 1: Try matching each regex pattern starting at the current index
-        # for regex, value in modes_dict.items():
         for mode in modes:
             regex = modes_dict[mode]['pattern']
             value = modes_dict[mode]['points']
@@ -335,14 +343,38 @@ def text_to_splines(text, modes):
             pattern = re.compile(regex)
             match = pattern.match(text, i)  # Check if the regex matches at the current position
             if match:
-                # Add the corresponding integer value to the list
+                # Add the corresponding points value to the list
                 glyphs.append(value)
                 # Move the index forward by the length of the matched substring
                 i += len(match.group(0))
                 matched = True
                 break
 
-        # Step 2: If no regex pattern matched, check the longest match in char_dict
+        # Step 2: If no regex pattern matched, check for phrases in phrases_dict
+        if not matched:
+            best_phrase = None
+            best_value = None
+            max_phrase_len = 0
+
+            # Iterate over phrases to find the longest match that starts and ends at word boundaries
+            for phrase, value in phrases_dict.items():
+                if text[i:i + len(phrase)] == phrase:
+                    # Check if the phrase is surrounded by word boundaries
+                    start_ok = i == 0 or text[i - 1].isspace()
+                    end_ok = i + len(phrase) == len(text) or text[i + len(phrase)].isspace()
+                    if start_ok and end_ok and len(phrase) > max_phrase_len:
+                        max_phrase_len = len(phrase)
+                        best_phrase = phrase
+                        best_value = value
+
+            if best_phrase:
+                # Add the corresponding points value to the list
+                glyphs.append(best_value)
+                # Move the index forward by the length of the matched phrase
+                i += max_phrase_len
+                matched = True
+
+        # Step 3: If no phrase or regex matched, check the longest match in char_dict
         if not matched:
             max_key_len = 0
             best_match = None
@@ -356,7 +388,7 @@ def text_to_splines(text, modes):
                     best_value = value
 
             if best_match:
-                # Add the corresponding integer value to the list
+                # Add the corresponding points value to the list
                 glyphs.append(best_value)
                 # Move the index forward by the length of the matched key
                 i += max_key_len
@@ -366,6 +398,7 @@ def text_to_splines(text, modes):
                 i += 1
 
     return glyphs
+
 
 def merge_word_splines(char_splines):
     # Initialize a list to store the concatenated points for each word
@@ -438,14 +471,19 @@ def generate_splines():
 
         # Process each word in the line
         for word in word_splines:
-            for points in word:
-                shifted_points = points + current_shift
+            for pi, points in enumerate(word):
+                shifted_points = points
+                if pi == 0:
+                    shifted_points[:, 0] -= points[:, 0].min()
+                shifted_points += current_shift
                 splines_to_plot.append(shifted_points)
 
                 # Update line and overall horizontal boundaries
                 line_x_pos = max(shifted_points[:, 0].max(), line_x_pos)
                 right_most_point = max(shifted_points[:, 0].max(), right_most_point)
                 left_most_point = min(shifted_points[:, 0].min(), left_most_point)
+
+                print(f'{line_x_pos=}')
 
             # Shift for the next word
             current_shift = np.array([line_x_pos + space_between_words, 0])
