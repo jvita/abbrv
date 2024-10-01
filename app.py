@@ -24,9 +24,11 @@ app = Flask(__name__)
 
 # File paths for single-character and multi-character splines
 CHAR_FILE = 'static/data/characters.json'
+PHRASES_FILE = 'static/data/phrases.json'
 MODES_FILE = 'static/data/modes.json'
 RULES_FILE = 'static/data/rules.json'
 characters_dict = {}
+phrases_dict = {}
 modes_dict = {}
 rules_list = []
 
@@ -104,6 +106,21 @@ def load_characters():
         pass
 
     return jsonify(chars)
+
+@app.route('/load_phrases')
+def load_phrases():
+    phrases = {}
+
+    # Load single-character splines
+    try:
+        with open(PHRASES_FILE, 'r') as f:
+            phrases_dict = json.load(f)
+            phrases.update({k: [adjust_points(p, np.array([0.5, 0.5])) for p in v] for k, v in phrases_dict.items()})
+    except FileNotFoundError:
+        pass
+
+    return jsonify(phrases)
+
 
 @app.route('/load_modes')
 def load_modes():
@@ -314,10 +331,10 @@ def split_text_with_linebreaks(text, max_width):
 def add_spaces_around_punctuation(text):
     # Define a regex pattern to match punctuation and digits
     pattern = r'(\d|[!\"#$%&\'()*+,-./:;<=>?@[\\\]^_`{|}~])'
-    
+
     # Substitute with spaces before and after the matched characters
     spaced_text = re.sub(pattern, r' \1 ', text)
-    
+
     # Return the modified text, stripping any extra spaces at the ends
     return spaced_text.strip()
 
@@ -450,7 +467,7 @@ def merge_word_splines(char_splines):
 def generate_splines():
     """
     Plots words as splines, handles line breaks by shifting each line downward.
-    
+
     - text: Input text from user.
     - space_between_words: Horizontal space between words.
     - line_spacing: Vertical space between lines.
@@ -472,7 +489,7 @@ def generate_splines():
     # Variables to track positions for each line
     current_vertical_offset, right_most_point, left_most_point = 0, 0, 0
     line_positions = []  # Store y-positions of each line
-    
+
     # Process each line of the text
     for line in text.splitlines():
         word_splines = merge_word_splines(text_to_splines(line, modes))

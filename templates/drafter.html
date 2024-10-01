@@ -18,7 +18,7 @@
         </h3>
         <div id="phrasesList" class="spline-list"></div>
         <h3 class="mt-2 d-flex align-items-center" id="modesTitle">
-            Modes 
+            Modes
             <i class="bi bi-question-circle ms-2" style="font-size: 0.8rem;" data-bs-toggle="tooltip" title="A mode is similar to a glyph, but can be used to represent more complex patterns using regular expressions."></i>
         </h3>
         <div id="modesList" class="spline-list"></div>
@@ -91,6 +91,7 @@
 <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 <script>
 let charSplineData = {}; // Global variable to store spline data
+let phraseSplineData = {}; // Global variable to store spline data
 let modeSplineData = {}; // Global variable to store spline data
 const gridCanvas = document.getElementById('gridCanvas');
 const gridCtx = gridCanvas.getContext('2d');
@@ -100,6 +101,7 @@ const characterField = document.getElementById('character');
 const saveButton = document.getElementById('saveButton');
 const saveDropdown = document.getElementById('saveDropdown');
 const saveMode = document.getElementById('saveMode');
+const saveWord = document.getElementById('saveWord');
 const confirmSaveMode = document.getElementById('confirmSaveMode');
 const modeName = document.getElementById('modeName');
 const modePattern = document.getElementById('modePattern');
@@ -112,6 +114,8 @@ const deleteMode = document.getElementById('deleteMode');
 const freezeButton = document.getElementById('freezeButton');
 const glyphsTitle = document.getElementById('glyphsTitle');
 const glyphsList = document.getElementById('glyphsList');
+const phrasesTitle = document.getElementById('phrasesTitle');
+const phrasesList = document.getElementById('phrasesList');
 const modesTitle = document.getElementById('modesTitle');
 const modesList = document.getElementById('modesList');
 
@@ -481,6 +485,33 @@ function loadCharacters() {
         });
 }
 
+function loadPhrases() {
+    axios.get('/load_phrases')
+        .then(response => {
+
+            phraseSplineData = response.data; // Store the data in the global variable
+            phrasesList.innerHTML = '';
+            // glyphsTitle.textContent = 'Glyphs (' + Object.keys(charSplineData).length + ')'
+
+            for (const [character, points] of Object.entries(phraseSplineData)) {
+                numSplinesPerChar[character] = points.length  // used during de-selection
+
+                const listItem = document.createElement('div');
+                listItem.className = 'char-list-item';
+                listItem.textContent = character;
+
+                listItem.addEventListener('click', (event) => {
+                    characterField.focus()
+                    characterField.value = ''
+                    handleCharSelect(character, null, event.ctrlKey)
+                    refreshButtons();
+                    updatePointsField();
+                });
+                phrasesList.appendChild(listItem);
+            }
+        });
+}
+
 function loadModes() {
     axios.get('/load_modes')
         .then(response => {
@@ -509,7 +540,6 @@ function loadModes() {
             }
         });
 }
-
 
 saveButton.addEventListener('click', () => {
     if (selectedPoints.length) {
