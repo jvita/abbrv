@@ -453,6 +453,7 @@ def generate_splines():
 
     abbrv_words = 'abbrv_words' in request.form
     show_dots = 'show_dots' in request.form
+    show_knots = 'show_knot_points' in request.form
     modes = request.form.getlist('modes')
     rules = request.form.getlist('rules')
 
@@ -497,7 +498,7 @@ def generate_splines():
         # Plot the splines for this line
         for points in splines_to_plot:
             shifted_points = points + np.array([0, current_vertical_offset])
-            plot_spline(shifted_points, show_dots)  # Reusable plot helper function
+            plot_spline(shifted_points, show_dots, show_knots)  # Reusable plot helper function
 
         # Adjust vertical offset for the next line
         line_positions.append(current_vertical_offset)
@@ -510,13 +511,17 @@ def generate_splines():
     return jsonify({'image': save_plot_as_svg()})
 
 # Helper functions
-def plot_spline(points, show_dots=True):
+def plot_spline(points, show_dots=True, show_knots=False):
     """Plots individual splines."""
     if points.shape[0] == 1 and show_dots:
         plt.plot(points[:, 0], points[:, 1], 'ko', markersize=2.1)
     else:
         x, y = interpolate_points(points)
         plt.plot(x, y, 'k', linewidth=2, solid_capstyle='round')
+
+    if show_knots:
+        plt.plot(points[:, 0], points[:, 1], 'ro', markersize=3.0)
+
 
 def plot_baselines(line_positions, left_most, right_most, space_between_words):
     """Plots light-grey baselines for each line."""

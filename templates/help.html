@@ -6,6 +6,22 @@
 
 {% block content %}
 <div class="main-content"></div>
-This page is still a work-in-progress. It will be used to provide additional details regarding how <b>abbrv</b> uses glyphs, phrases, modes, and rules for mapping text into a shorthand font.
+This page outlines the key functionalities of <b>abbrv</b> and how they can be used to design a shorthand system.
+Note that this program was built with orthographic systems in mind (Orthic, in particular), and that as a result some of the functions and design choices may be better suited for working with these systems.
+While it should still be possible to use <b>abbrv</b> to design a phonetic system (e.g., by building glyphs for each phenome), this has yet to be done and may require some additional development to better address the needs specific to phonetic systems.
+
+<br>
+<br>
+In <b>abbrv</b>, the following terminology is used:
+<ol>
+    <br>
+    <li><b>Character</b>: individual characters in an alphabet. Examples in English would be "a", "b", "c" ...</li>
+    <br>
+    <li><b>Glyph</b>: a representation of one or more characters. For example, "a", "b", and "c" may all have their own glyphs, as might "th", "with", or "-ing".</li>
+    <br>
+    <li><b>Phrase</b>: one or more longform words which may be represented using a single glyph. For example, "the", "of the", or "able to do".</li>
+    <br>
+    <li><b>Mode</b>: a modified form of a glyph which is used in specific cases depending upon the surrounding text. For example, in Orthic, the practice of omitting "th-" at the beginning of a word and elevating the subsequent glyphs above the line.</li>
+</ol>
 </div>
 {% endblock %}
