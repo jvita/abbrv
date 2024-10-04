@@ -143,7 +143,7 @@ The buttons panel can be used for saving, deleting and "freezing" glyphs, and fo
         <br>
         <b>Freeze</b>: paint all the current splines onto the background
         <br>
-        <b>Clear</b>: clear the currently selected splines
+        <b>Clear</b>: clear the currently selected knot points
         <br>
     </figcaption>
 </div>
@@ -184,8 +184,8 @@ A "mode" is similar to a phrase and a regular glyph, with the additional flexibi
 I recommend asking an LLM to write a regex for you (e.g. "please write a regex that matches 'a' and 'o' before 'm' or 'n'"), then using the site <a href="https://regex101.com/">regex101</a> to make sure that the matching is working properly.
 
 <div style="text-align: center; padding: 20px;">
-    <img src="/static/data/images/mode_popup.png" alt="When saving a glyph as a new mode, a popup window will appear to additionally specify the name of the mode, and the regular expression pattern used for matching the mode." style="width: 30%; height: auto"/>
-    <figcaption style="margin-top: 10px;">When saving a glyph as a new mode, a popup window will appear to additionally specify the name of the mode, and the regular expression pattern used for matching the mode.</figcaption>
+    <img src="/static/data/images/mode_popup.png" alt="When saving a glyph as a mode, a popup window will appear to additionally specify the name of the mode and the regular expression pattern used for matching the mode." style="width: 30%; height: auto"/>
+    <figcaption style="margin-top: 10px;">When saving a glyph as a mode, a popup window will appear to additionally specify the name of the mode and the regular expression pattern used for matching the mode.</figcaption>
 </div>
 
 <br>
@@ -198,6 +198,16 @@ The <a href="{{ url_for('rules') }}">rules page</a> can be used for defining new
     <img src="/static/data/images/rules.png" alt="A rule is created by specifying a name, one regular expression for matching patterns, and a second regular expression for replacing any matched patterns. If the second regex is left blank, any matches will be replaced with empty text (i.e., deleted)." style="width: 100%; height: auto"/>
     <figcaption style="margin-top: 10px;">A rule is created by specifying a name, one regular expression for matching patterns, and a second regular expression for replacing any matched patterns. If the second regex is left blank, any matches will be replaced with empty text (i.e., deleted).</figcaption>
 </div>
+
+Some examples of rules:
+
+<ul>
+    <li><b>Name</b>: "remove consecutive duplicates"; <b>regex</b>: <code>(.)\1+</code>; <b>replacement</b>: <code>\1</code>.</li>
+    <ul>
+        <li>Note the use of <code>\1</code> for the replacement text, which replaces the matched pattern with the text prior to the match.</li>
+    </ul>
+    <li><b>Name</b>: "omit 'e' in '-ed'"; <b>regex</b>: <code>\b(\w*?ed\b</code>; <b>replacement</b>: <code>\1d</code>.</li>
+</ul>
 
 <hr>
 <h2>Writing</h2>
