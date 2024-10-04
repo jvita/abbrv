@@ -59,7 +59,7 @@ The following steps are applied in order:
 <hr>
 <h2 id="designing_a_system">Designing a system</h2>
 
-Using <b>abbrv</b> to design a new shorthand system will typically involves four main steps: 1) drafting your glyphs, 2) abbreviating common words, 3) defining pre-processing rules, and 4) introducing "modes".
+Using <b>abbrv</b> to design a new shorthand system will typically involves four main steps: 1) drafting your glyphs, 2) abbreviating common phrases, 3) introducing "modes", and 4) defining pre-processing rules.
 
 <br>
 <br>
@@ -120,59 +120,76 @@ When working with multi-spline glyphs, using <b>ctrl + left-click</b> to start a
 Note that only the knot points for the spline which is currently being edited are shown.
 
 <div style="text-align: center; padding: 20px;">
-    <img src="/static/data/images/grid_oa_o.png" alt="A second spline is used for the 'a' in the glyph 'oa'." style="width: 253px; height: auto"/>
+    <img src="/static/data/images/grid_oa_o.png" alt="One spline is used for the 'o' in the glyph 'oa'. The beginning of the first spline defines the start of the glyph." style="width: 253px; height: auto"/>
     <figcaption style="margin-top: 10px;">One spline is used for the 'o' in the glyph 'oa'. The beginning of the first spline defines the start of the glyph.</figcaption>
     <br>
-    <img src="/static/data/images/grid_oa_a.png" alt="A second spline is used for the 'a' in the glyph 'oa'." style="width: 253px; height: auto"/>
+    <img src="/static/data/images/grid_oa_a.png" alt="A second spline is used for the 'a'." style="width: 253px; height: auto"/>
     <figcaption style="margin-top: 10px;">A second spline is used for the 'a'.</figcaption>
     <br>
-    <img src="/static/data/images/grid_oa_end.png" alt="A third spline is used to ensure that 'oa' joins to the next glyph at the end of the long 'o' line." style="width: 253px; height: auto"/>
+    <img src="/static/data/images/grid_oa_end.png" alt="And a third spline is used to specify the end of the glyph when joining to the next glyph in a word." style="width: 253px; height: auto"/>
     <figcaption style="margin-top: 10px;">And a third spline is used to specify the end of the glyph when joining to the next glyph in a word.</figcaption>
 </div>
 
+The buttons panel can be used for saving, deleting and "freezing" glyphs, and for clearing the currently selected spline.
+
 <div style="text-align: center; padding: 20px;">
-    <img src="/static/data/images/buttons.png" alt="A second spline is used for the 'a' in the glyph 'oa'." style="width: 40%; height: auto"/>
-    <figcaption style="margin-top: 10px;">The Orthic glyphs for the words 'it' and 'oat'. Note that the 't' spline connects to the top of the 'i' and the end of the longer line in 'oa', since this is where the glyphs were designed to end.</figcaption>
+    <img src="/static/data/images/buttons.png" alt="A second spline is used for the 'a' in the glyph 'oa'." style="width: 30%; height: auto"/>
+    <figcaption style="margin-top: 10px;">
+        The buttons panel and text fieldl of the draft page.
+        <br>
+        <b>Save</b>: save the current splines as a glyph corresponding to the text in the text field
+        <br>
+        <b>Delete</b>: delete the glyph a glyph corresponding to the text in the text field
+        <br>
+        <b>Freeze</b>: paint all the current splines onto the background
+        <br>
+        <b>Clear</b>: clear the currently selected splines
+        <br>
+    </figcaption>
+</div>
+
+<div style="text-align: center; padding: 20px;">
+    <img src="/static/data/images/frozen.png" alt="Frozen splines are painted onto the background, which can be useful when making adjustments to a glyph. If a spline is frozen, the 'Freeze' button will change to 'Unfreeze', which will remove the painted splines." style="width: 10%; height: auto"/>
+    <figcaption style="margin-top: 10px;">Frozen splines are painted onto the background, which can be useful when making adjustments to a glyph. If a spline is frozen, the 'Freeze' button will change to 'Unfreeze', which will remove the painted splines.</figcaption>
+</div>
+
+<div style="text-align: center; padding: 20px;">
+    <img src="/static/data/images/lists.png" alt="The list panels will show the currently saved glyphs, phrases, and modes." style="width: 30%; height: auto"/>
+    <figcaption style="margin-top: 10px;">The list panels will show the currently saved glyphs, phrases, and modes. You can click on the elements of the list to select them and display their splines.</figcaption>
 </div>
 
 <br>
-<h3 id="phrases">Phrases</h3>
-
 <br>
-<h3 id="modes">Modes</h3>
+<h3>Abbreviating common phrases</h3>
+When saving a glyph, you can choose the 'as phrase' option to specify that the glyph corresponds to an entire word or phrase.
+This is similar to a regular glyph, with the difference that it can only be used to represent an entire word rather than a subset of a word.
+For example, if you define a glyph for the word 'man', it will not also be used in the word 'woman'.
 
-<hr>
-<h2 id="rules">Functionality</h2>
-<br>
-
-There are three main components of <b>abbrv</b>, which users may interact with on their corresponding pages:
-
-<ul>
-    <li><b>write</b>: translating longhand into shorthand.</li>
-    <li><b>draft</b>: defining <a href="#glyphs">glyphs</a>, <a href="#phrases">phrases</a>, and <a href="#modes">modes</a>.</li>
-    <li><b>rules</b>: defining additional <a href="#rules">rules</a>.</li>
-</ul>
-
-Each of these components will be described further in this section.
+<div style="text-align: center; padding: 20px;">
+    <img src="/static/data/images/buttons_save.png" alt="The save and delete buttons both have 'mode' and 'phrase' options for saving/deleting the glyph of the word or phrase specified in the text field." style="width: 30%; height: auto"/>
+    <figcaption style="margin-top: 10px;">The save and delete buttons both have 'mode' and 'phrase' options for saving/deleting the glyph of the word or phrase specified in the text field.</figcaption>
+</div>
 
 <br>
 <br>
-<h3 id="rules">Rules</h3>
+<h3>Introducing modes</h3>
+A 'mode' is similar to a phrase and a regular glyph, with the additional flexibility of being able to be used to replace any pattern using a <a href="https://regexone.com/">regular expression</a>.
 
-When converting a line of text to the corresponding glyphs, there are only a few immutable rules to be aware of:
-<ul>
-    <br>
-    <li>The first glyph in a word is drawn as-is, using the baseline as the origin. So if the first knot of a glyph is not at the point (0, 0), the glyph may start above or below the line.</li>
-    <li>subsequent glyphs in the same word are shifted so that the first knot of the current glyph aligns with the last knot of the previous glyph.</li>
-    <li>All splines are drawn separately, allowing for sharp breaks between splines.</li>
-</ul>
-
-Although you will be able to <i>add</i> to the above list, u, <b>abbrv</b> does not currently support the ability to <i>remove</i> any of the above rules.
-If this is a problem for your shorthand system (e.g., if the positions of words should be drawn relative to the previous word's endpoint, rather than relative to the baseline), then you may need to patch <b>abbrv</b> to support your use-case.
+<div style="text-align: center; padding: 20px;">
+    <img src="/static/data/images/mode_popup.png" alt="When saving a glyph as a new mode, a popup window will appear to additionally specify the 'name' of the mode, and the regular expression pattern used for matching the mode." style="width: 30%; height: auto"/>
+    <figcaption style="margin-top: 10px;">When saving a glyph as a new mode, a popup window will appear to additionally specify the 'name' of the mode, and the regular expression pattern used for matching the mode.</figcaption>
+</div>
 
 <br>
 <br>
-<h3 id="draft">Page: draft</h3>
+<h3>Defining pre-processing rules</h3>
+A rule is a way of specifying find-and-replace operations that can be used to modify the text before mapping to glyphs.
+The <a href="{{ url_for('rules') }}">rules page</a> can be used for defining new rules.
+
+<div style="text-align: center; padding: 20px;">
+    <img src="/static/data/images/rules.png" alt="A rule is created by specifying a name, a regular expression for matching patterns, and a regular expression for replacing any matched patterns." style="width: 100%; height: auto"/>
+    <figcaption style="margin-top: 10px;">A rule is created by specifying a name, a regular expression for matching patterns, and a regular expression for replacing any matched patterns.</figcaption>
+</div>
 
 </div>
 {% endblock %}
