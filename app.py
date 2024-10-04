@@ -82,11 +82,7 @@ def save():
         file_name = GLYPHS_FILE
 
     # Load existing data
-    try:
-        with open(file_name, 'r') as f:
-            existing_data = json.load(f)
-    except FileNotFoundError:
-        existing_data = {}
+    existing_data = load_json_file(file_name)
 
     # Update or add new entry
     if as_mode:
@@ -333,8 +329,6 @@ def process_text(text, rules):
 
         modified_phrases_dict[k] = v
 
-    print(f'{modified_phrases_dict.keys()=}')
-
     return text
 
 def text_to_splines(text, modes):
@@ -465,6 +459,7 @@ def generate_splines():
     abbrv_words = 'abbrv_words' in request.form
     show_dots = 'show_dots' in request.form
     show_knots = 'show_knot_points' in request.form
+    show_baselines = 'show_baselines' in request.form
     modes = request.form.getlist('modes')
     rules = request.form.getlist('rules')
 
@@ -515,9 +510,15 @@ def generate_splines():
         line_positions.append(current_vertical_offset)
         current_vertical_offset += lowest_point_current_line - line_spacing
 
-    # Plot baseline for each line
-    plot_baselines(line_positions, left_most_point, right_most_point, space_between_words)
+    xlims = [left_most_point - space_between_words, right_most_point + space_between_words]
 
+    if show_baselines:
+        # Plot baseline for each line
+        plot_baselines(line_positions, xlims)
+
+    plt.xlim(xlims)
+    plt.gca().set_aspect('equal', adjustable='box')
+    plt.axis('off')
     # Save and return the SVG plot
     return jsonify({'image': save_plot_as_svg()})
 
@@ -534,14 +535,11 @@ def plot_spline(points, show_dots=True, show_knots=False):
         plt.plot(points[:, 0], points[:, 1], 'ro', markersize=3.0)
 
 
-def plot_baselines(line_positions, left_most, right_most, space_between_words):
+def plot_baselines(line_positions, xlims):
     """Plots light-grey baselines for each line."""
-    xlims = [left_most - space_between_words, right_most + space_between_words]
     for v in line_positions:
         plt.plot(xlims, [v, v], '--', color='lightgrey', zorder=0)
-    plt.xlim(xlims)
-    plt.gca().set_aspect('equal', adjustable='box')
-    plt.axis('off')
+
 
 def save_plot_as_svg():
     """Saves the current plot as an SVG and returns its content."""

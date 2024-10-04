@@ -432,7 +432,6 @@ function refreshFreezeButton() {
 }
 
 function refreshDeleteButton() {
-    console.log(characterField.value)
     deleteButton.disabled = (characterField.value.length === 0)
 
     if (deleteButton.disabled) {
@@ -535,8 +534,8 @@ function loadModes() {
 
                 listItem.addEventListener('click', (event) => {
                     characterField.focus()
-                    characterField.value = ''
-                    handleGlyphSelect(mode, points)
+                    characterField.value = mode
+                    handleGlyphSelect(mode, modeSplineData[mode]['points'])
                     refreshButtons();
                     updatePointsField();
                 });
@@ -603,15 +602,15 @@ confirmSaveMode.addEventListener('click', () => {
 function resetModeFields() {
     modeName.value = '';
     modePattern.value = '';
-    confirmSaveModeButton.disabled = true; // Optionally disable the button again
+    confirmSaveMode.disabled = true; // Optionally disable the button again
 }
 
 // Enable/Disable the save button based on the input fields
 function validateFields() {
     if (modeName.value.trim() && modePattern.value.trim()) {
-        confirmSaveModeButton.disabled = false;
+        confirmSaveMode.disabled = false;
     } else {
-        confirmSaveModeButton.disabled = true;
+        confirmSaveMode.disabled = true;
     }
 }
 
@@ -634,7 +633,7 @@ confirmSaveMode.addEventListener('click', () => {
                     spline.map(([x, y]) => [(x + gridSize / 2) / gridSize, (y + gridSize / 2) / gridSize])
                 ),
                 as_mode: true,
-                as_phrase: true,
+                as_phrase: false,
             };
 
             axios.post('/save', data)
@@ -750,8 +749,8 @@ freezeButton.addEventListener('click', () => {
     splineCtx.clearRect(0, 0, splineCanvas.width, splineCanvas.height);
 
     if (freezeButton.textContent === 'Freeze') { // freeze
-        console.log(selectedPoints)
         frozenPoints = selectedPoints.map(point => point.slice())
+        selectedPoints = []
 
         // clearAllButton.click()
         refreshButtons();

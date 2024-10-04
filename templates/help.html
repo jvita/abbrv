@@ -19,9 +19,9 @@ While it should still be possible to use <b>abbrv</b> to design a phonetic syste
 In <b>abbrv</b>, the following terminology is used:
 <ol>
     <br>
-    <li><b>Character</b>: individual characters in an alphabet. Examples in English would be "a", "b", "c" ...</li>
+    <li><b>Character</b>: individual characters in an alphabet, punctuation, or digits. Examples would be "a", "b", "c", as well as '.', '!', and '3'.</li>
     <br>
-    <li><b>Glyph</b>: a representation of one or more characters. For example, "a", "b", and "c" may all have their own glyphs, as might "th", "with", or "-ing".</li>
+    <li><b>Glyph</b>: a representation of one or more characters. For example, "a", "b", and "c" may all have their own glyphs, as might "th", "sh", or "oa".</li>
     <br>
     <li><b>Phrase</b>: one or more longhand words which may be represented using a single glyph. For example, "the", "of the", or "able to do".</li>
     <br>
@@ -155,7 +155,13 @@ The buttons panel can be used for saving, deleting and "freezing" glyphs, and fo
 
 <div style="text-align: center; padding: 20px;">
     <img src="/static/data/images/lists.png" alt="The list panels will show the currently saved glyphs, phrases, and modes." style="width: 30%; height: auto"/>
-    <figcaption style="margin-top: 10px;">The list panels will show the currently saved glyphs, phrases, and modes. You can click on the elements of the list to select them and display their splines.</figcaption>
+    <figcaption style="margin-top: 10px;">
+        The list panels will show the currently saved glyphs, phrases, and modes.
+        <br>
+        <b>Left-click</b>: select a glyph and display its splines.
+        <br>
+        <b>Ctrl + left-click</b>: select a new glyph and append its splines to the current glyph.
+    </figcaption>
 </div>
 
 <br>
@@ -190,6 +196,56 @@ The <a href="{{ url_for('rules') }}">rules page</a> can be used for defining new
     <img src="/static/data/images/rules.png" alt="A rule is created by specifying a name, a regular expression for matching patterns, and a regular expression for replacing any matched patterns." style="width: 100%; height: auto"/>
     <figcaption style="margin-top: 10px;">A rule is created by specifying a name, a regular expression for matching patterns, and a regular expression for replacing any matched patterns.</figcaption>
 </div>
+
+<hr>
+<h2>Writing</h2>
+The <a href="{{ url_for('write') }}">write page</a> can be used for testing out your newly-created shorthand system.
+It can be useful to use this page frequently while drafting your glyphs to confirm that they are being drawn and joined as you expect them to be.
+The buttons can be used to choose which modifications you would like applied to your text:
+<div style="text-align: center; padding: 20px;">
+    <img src="/static/data/images/write_buttons.png" alt="The options, modes, and rules buttons." style="width: 30%; height: auto"/>
+    <img src="/static/data/images/write_download.png" alt="The download button." style="width: 4.9%; height: auto"/>
+    <figcaption style="margin-top: 10px;">
+        The buttons on the write page.
+        <br>
+        <b>Options</b>: toggle universal options (show knot points, show baselines, etc.)
+        <br>
+        <b>Modes</b>: toggle user-defined modes
+        <br>
+        <b>Rules</b>: toggle user-defined rules
+        <br>
+        <b>Download</b>: save the current image as an SVG
+    </figcaption>
+</div>
+
+<br>
+Using <b>abbrv</b>, you can go from a bare-bones alphabet that only has single-character (or single-phenome) glyphs, to a fully-fledged system with complex abbreviations, modes, and rules.
+Consider, for example, this quote in 'fully-written' Orthic (no abbreviations, modes, etc.):
+
+<div style="text-align: center; padding: 20px;">
+    <img src="/static/data/images/quote_raw.svg" alt="The quote 'If you cannot do great things, do small things in a great way' (Napoleon Hill, or M.L.K. Jr.?) in Orthic, using only the simplest single-character glyphs and no additional rules or modes." style="width: 100%; height: auto"/>
+    <figcaption style="margin-top: 10px;">The quote 'If you cannot do great things, do small things in a great way' (Napoleon Hill, or M.L.K. Jr.?) in Orthic, using only the simplest single-character glyphs and no additional rules or modes.</figcaption>
+</div>
+
+Compared to the same quote written in the 'ordinary' style with the following modifications applied:
+
+<ul>
+    <br>
+    <li>(mode) write 'you-' as an elevated 'y'.</li>
+    <li>(phrase) abbreviate 'cannot' as 'cnt'.</li>
+    <li>(glyph) define the glyph 'gr' to make it slightly smoother than 'g' joined directly to 'r'.</li>
+    <li>(mode) smooth the dipthong 'ea'.</li>
+    <li>(mode) omit the prefix 'th-', and elevate the rest of the word.</li>
+    <li>(mode) write the suffix '-ings' as a long downard curve with a sharp tail.</li>
+    <li>(rule) omit consecutive duplicate letters (the 'll' in 'small', thought it's unnoticeable in the original version).</li>
+    <li>(mode) smooth the dipthong 'ay'.</li>
+</ul>
+
+<div style="text-align: center; padding: 20px;">
+    <img src="/static/data/images/quote_modified.svg" alt="The same quote as above, but with multiple abbreviations, modes, and rules applied." style="width: 100%; height: auto"/>
+    <figcaption style="margin-top: 10px;">The same quote as above, but with multiple abbreviations, modes, and rules applied.</figcaption>
+</div>
+
 
 </div>
 {% endblock %}

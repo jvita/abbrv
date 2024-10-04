@@ -28,6 +28,10 @@
                         <label for="show_dots" style="flex: 6;">Show dots</label>
                     </li>
                     <li class="dropdown-item button-container align-items-center">
+                        <input type="checkbox" id="show_baselines" name="show_baselines" style="max-height: 20px; max-width: 20px; min-width: 20px">
+                        <label for="show_baselines" style="flex: 6;">Show baselines</label>
+                    </li>
+                    <li class="dropdown-item button-container align-items-center">
                         <input type="checkbox" id="show_knot_points" name="show_knot_points" style="max-height: 20px; max-width: 20px; min-width: 20px">
                         <label for="show_knot_points" style="flex: 6;">Display knot points</label>
                     </li>
@@ -152,7 +156,7 @@
             debouncedUpdatePlot();
         });
 
-        $('#show_knot_points, #show_dots, #abbreviate_words').on('change', function() {
+        $('#show_knot_points, #show_dots, #show_baselines, #abbreviate_words').on('change', function() {
             updatePlot();  // Call updatePlot immediately when checkboxes are modified
         });
 
