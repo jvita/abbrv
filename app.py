@@ -331,7 +331,7 @@ def process_text(text, rules):
 
     return text
 
-def text_to_splines(text, modes):
+def text_to_splines(text, modes, abbrv_words=False):
     global glyphs_dict, modes_dict, modified_phrases_dict
 
     # Initialize an empty list to store the mapped integers
@@ -357,7 +357,7 @@ def text_to_splines(text, modes):
                 break
 
         # Step 2: If no regex pattern matched, check for phrases in phrases_dict
-        if not matched:
+        if not matched and abbrv_words:
             best_phrase = None
             best_value = None
             max_phrase_len = 0
@@ -473,7 +473,7 @@ def generate_splines():
 
     # Process each line of the text
     for line in text.splitlines():
-        word_splines = merge_word_splines(text_to_splines(line, modes))
+        word_splines = merge_word_splines(text_to_splines(line, modes, abbrv_words))
         current_shift = np.array([0, 0])
         line_x_pos, splines_to_plot = 0, []
 
