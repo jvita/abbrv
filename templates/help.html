@@ -6,12 +6,16 @@
 
 {% block content %}
 <div class="main-content"></div>
+<h2>Overview</h2>
+<br>
 This page outlines the key functionalities of <b>abbrv</b> and how they can be used to design a shorthand system.
 Note that this program was built with orthographic systems in mind (Orthic, in particular), and that as a result some of the functions and design choices may be better suited for working with these systems.
 While it should still be possible to use <b>abbrv</b> to design a phonetic system (e.g., by building glyphs for each phenome), this has yet to be done and may require some additional development to better address the needs specific to phonetic systems.
 
 <br>
 <br>
+<h3>Terminology</h3>
+
 In <b>abbrv</b>, the following terminology is used:
 <ol>
     <br>
@@ -19,9 +23,156 @@ In <b>abbrv</b>, the following terminology is used:
     <br>
     <li><b>Glyph</b>: a representation of one or more characters. For example, "a", "b", and "c" may all have their own glyphs, as might "th", "with", or "-ing".</li>
     <br>
-    <li><b>Phrase</b>: one or more longform words which may be represented using a single glyph. For example, "the", "of the", or "able to do".</li>
+    <li><b>Phrase</b>: one or more longhand words which may be represented using a single glyph. For example, "the", "of the", or "able to do".</li>
     <br>
-    <li><b>Mode</b>: a modified form of a glyph which is used in specific cases depending upon the surrounding text. For example, in Orthic, the practice of omitting "th-" at the beginning of a word and elevating the subsequent glyphs above the line.</li>
+    <li><b>Mode</b>: a new glyph, or a modified form of an existing glyph, which is used in specific cases depending upon the surrounding text. For example, in Orthic, the practice of omitting "th-" at the beginning of a word and elevating the subsequent glyphs above the baseline.</li>
 </ol>
+
+<hr>
+<h2 id="text_to_glyphs">Converting text to glyphs</h2>
+<br>
+
+Before beginning to design a new shorthand system, it will be useful to review the basics of how <b>abbrv</b> processes text, converts words to glyphs, and draws the glyphs.
+Understanding these rules will be particularly useful when drafting your own glyphs and debugging any issues.
+<br>
+<br>
+The following steps are applied in order:
+<ol>
+    <br>
+    <li>Any user-defined <a href="#rules">rules</a> are executed to modify the text.</li>
+    <br>
+    <li>Any user-defined <a href="#phrases">phrases</a> are mapped to their corresponding glyphs (accounting for the modifications due to the previous step).</li>
+    <br>
+    <li>Any user-defined <a href="#modes">modes</a> are applied by searching for patterns matching their regular expressions, then mapping them to the corresponding glyphs</li>
+    <br>
+    <li>All remaining un-mapped words are parsed from left to right, breaking them up into their longest possible glyphs. For example, the word 'match' could be decomposed into the glyphs ['m', 'a', 'tch'] (in Orthic).</li>
+    <br>
+    <li>All words are drawn in the following manner:</li>
+    <ol type="a">
+        <li>The first glyph in a word is drawn as-is, using the baseline as the origin.</li>
+        <li>Subsequent glyphs in the same word are shifted so that the first knot of the current glyph aligns with the last knot of the previous glyph.</li>
+        <li>Words are shifted horizontally to ensure a fixed width between the left-most point of the current word and the right-most point of the previous word.</li>
+        <li>Lines are shifted vertically to ensure a fixed width between the highest point of the current line and the lowest point of the previous line.</li>
+    </ol>
+</ol>
+
+<hr>
+<h2 id="designing_a_system">Designing a system</h2>
+
+Using <b>abbrv</b> to design a new shorthand system will typically involves four main steps: 1) drafting your glyphs, 2) abbreviating common words, 3) defining pre-processing rules, and 4) introducing "modes".
+
+<br>
+<br>
+<h3>Drafting your glyphs</h3>
+
+A glyph is defined using one or more <a href="https://mathworld.wolfram.com/CubicSpline.html" target="_blank">cubic splines</a>.
+Individual splines are created by specifying the positions of the spline knot points, which are then smoothly interpolated between to construct the spline.
+<div style="text-align: center; padding: 20px;">
+    <img src="/static/data/images/abc.svg" alt="Splines for the glyphs of the characters 'a', 'b', and 'c' in Orthic. Knot points for each spline are shown in red." />
+    <figcaption style="margin-top: 10px;">Splines for the glyphs of the characters 'a', 'b', and 'c' in Orthic. Knot points for each spline are shown in red.</figcaption>
+</div>
+
+Glyphs are allowed to start and end above or below the baseline. If such glyphs occur at the beginning of a word, this could mean that the word will not start at the baseline either.
+<div style="text-align: center; padding: 20px;">
+    <img src="/static/data/images/gwv.svg" alt="Splines for the glyphs of the characters 'g', 'w', and 'v' in Orthic. Since their first knot points are not at (0, 0), these glyphs do not start at the baseline. Note: I am aware the 'w' is not usually drawn below the baseline; this is just my personal style." />
+    <figcaption style="margin-top: 10px;">Splines for the glyphs of the characters 'g', 'w', and 'v' in Orthic. Since their first knot points are not at (0, 0), these glyphs do not start at the baseline. Note: I am aware the 'w' is not usually drawn below the baseline; this is just my personal style.</figcaption>
+</div>
+
+If a glyph uses multiple splines (e.g. for words and phrases), each spline is drawn separately, which may be useful when defining a glyph with sharp breaks in it.
+<div style="text-align: center; padding: 20px;">
+    <img src="/static/data/images/does.svg" alt="The Orthic glyph for the word 'does', which uses two splines ('d' and 's') that are joined with a sharp break between them." />
+    <figcaption style="margin-top: 10px;">The Orthic glyph for the word 'does', which uses two splines ('d' and 's') that are joined with a sharp break between them.</figcaption>
+</div>
+
+A glyph may also use multiple splines if it needs to have separated segments.
+<div style="text-align: center; padding: 20px;">
+    <img src="/static/data/images/i_oa.svg" alt="The Orthic glyphs 'i' and 'oa'. Separate splines are used to draw the dot in 'i', and to draw the 'a' above the 'o' in 'oa'." />
+    <figcaption style="margin-top: 10px;">The Orthic glyphs 'i' and 'oa'. Separate splines are used to draw the dot in 'i', and to draw the 'a' above the 'o' in 'oa'.</figcaption>
+</div>
+
+As described above, subsequent glyphs in the same word are shifted so that the first knot of the current glyph aligns with the last knot of the previous glyph.
+This means that when defining a multi-spline glyph, you must always <i>start</i> the first spline at the point where it should join to the previous glyph, and <i>end</i> the last spline at the point from which the next glyph should continue.
+This can lead to some confusing behavior when designing a glyph. For example, the 'i' drawn in the figure above is actually composed of three splines: the slanted line, the dot above the slanted line, and a second dot which overlaps with the end of the slanted line to ensure that it joins properly to the next glyph.
+The 'oa' glyph also has a third spline at the end of the longer line for the same reason.
+<div style="text-align: center; padding: 20px;">
+    <img src="/static/data/images/it_oat.svg" alt="The Orthic glyphs for the words 'it' and 'oat'. Note that the 't' spline connects to the top of the 'i' and the end of the longer line in 'oa', since this is where the glyphs were designed to end." />
+    <figcaption style="margin-top: 10px;">The Orthic glyphs for the words 'it' and 'oat'. Note that the 't' spline connects to the top of the 'i' and the end of the longer line in 'oa', since this is where the glyphs were designed to end.</figcaption>
+</div>
+
+The <a href="{{ url_for('draft') }}">draft page</a> provides you with all of the functionality necessary to design the glyphs for the individual characters (or phonemes) in your system.
+
+<br>
+<br>
+The grid editor is used to visualize and edit your glyphs:
+<div style="text-align: center; padding: 20px;">
+    <img src="/static/data/images/grid.png" alt="The grid editor panel of the draft page." style="width: 40%; height: auto"/>
+    <figcaption style="margin-top: 10px;">The grid editor panel of the draft page.
+        <br>
+        <b>Left-click</b>: add a knot point
+        <br>
+        <b>Right-click</b>: remove a knot point
+        <br>
+        <b>Ctrl + left-click</b>: start a new spline
+    </figcaption>
+</div>
+
+When working with multi-spline glyphs, using <b>ctrl + left-click</b> to start a new spline allows you to create separated segments and specify the start/end points of the glyph.
+Note that only the knot points for the spline which is currently being edited are shown.
+
+<div style="text-align: center; padding: 20px;">
+    <img src="/static/data/images/grid_oa_o.png" alt="A second spline is used for the 'a' in the glyph 'oa'." style="width: 253px; height: auto"/>
+    <figcaption style="margin-top: 10px;">One spline is used for the 'o' in the glyph 'oa'. The beginning of the first spline defines the start of the glyph.</figcaption>
+    <br>
+    <img src="/static/data/images/grid_oa_a.png" alt="A second spline is used for the 'a' in the glyph 'oa'." style="width: 253px; height: auto"/>
+    <figcaption style="margin-top: 10px;">A second spline is used for the 'a'.</figcaption>
+    <br>
+    <img src="/static/data/images/grid_oa_end.png" alt="A third spline is used to ensure that 'oa' joins to the next glyph at the end of the long 'o' line." style="width: 253px; height: auto"/>
+    <figcaption style="margin-top: 10px;">And a third spline is used to specify the end of the glyph when joining to the next glyph in a word.</figcaption>
+</div>
+
+<div style="text-align: center; padding: 20px;">
+    <img src="/static/data/images/buttons.png" alt="A second spline is used for the 'a' in the glyph 'oa'." style="width: 40%; height: auto"/>
+    <figcaption style="margin-top: 10px;">The Orthic glyphs for the words 'it' and 'oat'. Note that the 't' spline connects to the top of the 'i' and the end of the longer line in 'oa', since this is where the glyphs were designed to end.</figcaption>
+</div>
+
+<br>
+<h3 id="phrases">Phrases</h3>
+
+<br>
+<h3 id="modes">Modes</h3>
+
+<hr>
+<h2 id="rules">Functionality</h2>
+<br>
+
+There are three main components of <b>abbrv</b>, which users may interact with on their corresponding pages:
+
+<ul>
+    <li><b>write</b>: translating longhand into shorthand.</li>
+    <li><b>draft</b>: defining <a href="#glyphs">glyphs</a>, <a href="#phrases">phrases</a>, and <a href="#modes">modes</a>.</li>
+    <li><b>rules</b>: defining additional <a href="#rules">rules</a>.</li>
+</ul>
+
+Each of these components will be described further in this section.
+
+<br>
+<br>
+<h3 id="rules">Rules</h3>
+
+When converting a line of text to the corresponding glyphs, there are only a few immutable rules to be aware of:
+<ul>
+    <br>
+    <li>The first glyph in a word is drawn as-is, using the baseline as the origin. So if the first knot of a glyph is not at the point (0, 0), the glyph may start above or below the line.</li>
+    <li>subsequent glyphs in the same word are shifted so that the first knot of the current glyph aligns with the last knot of the previous glyph.</li>
+    <li>All splines are drawn separately, allowing for sharp breaks between splines.</li>
+</ul>
+
+Although you will be able to <i>add</i> to the above list, u, <b>abbrv</b> does not currently support the ability to <i>remove</i> any of the above rules.
+If this is a problem for your shorthand system (e.g., if the positions of words should be drawn relative to the previous word's endpoint, rather than relative to the baseline), then you may need to patch <b>abbrv</b> to support your use-case.
+
+<br>
+<br>
+<h3 id="draft">Page: draft</h3>
+
 </div>
 {% endblock %}

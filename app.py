@@ -29,6 +29,7 @@ MODES_FILE = 'static/data/modes.json'
 RULES_FILE = 'static/data/rules.json'
 glyphs_dict = {}
 phrases_dict = {}
+modified_phrases_dict = {}
 modes_dict = {}
 rules_list = []
 
@@ -320,13 +321,24 @@ def process_text(text, rules):
         if rule['name'] not in rules: continue
 
         text = re.sub(rule["regex"], rule["replacement"], text)
+    
+    # Also apply the rules to phrases_dict so that it detects the modified phrases
+    global modified_phrases_dict
+
+    for k, v in phrases_dict.items():
+        for rule in rules_list:
+            if rule['name'] not in rules: continue
+
+            k = re.sub(rule["regex"], rule["replacement"], k)
+
+        modified_phrases_dict[k] = v
+
+    print(f'{modified_phrases_dict.keys()=}')
 
     return text
 
-import re
-
 def text_to_splines(text, modes):
-    global glyphs_dict, modes_dict, phrases_dict
+    global glyphs_dict, modes_dict, modified_phrases_dict
 
     # Initialize an empty list to store the mapped integers
     glyphs = []
@@ -357,7 +369,7 @@ def text_to_splines(text, modes):
             max_phrase_len = 0
 
             # Iterate over phrases to find the longest match that starts and ends at word boundaries
-            for phrase, value in phrases_dict.items():
+            for phrase, value in modified_phrases_dict.items():
                 if text[i:i + len(phrase)] == phrase:
                     # Check if the phrase is surrounded by word boundaries
                     start_ok = i == 0 or text[i - 1].isspace()
@@ -398,7 +410,6 @@ def text_to_splines(text, modes):
                 i += 1
 
     return glyphs
-
 
 def merge_word_splines(char_splines):
     # Initialize a list to store the concatenated points for each word
