@@ -44,16 +44,17 @@
         </ul>
     </div>
 </div>
-<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+{% endblock %}
+{% block scripts %}
 <script>
-let rules = [];
+let rules = selectedSystem ? systems[selectedSystem]['rules'] : {}
 
 // Function to fetch and render rules
 function renderRules() {
     // Fetch the rules from the server
-    axios.get('/load_rules')
-        .then(response => {
-            rules = response.data || []; // Update the rules array
+    // axios.get('/load_rules')
+    //     .then(response => {
+    //         rules = response.data || []; // Update the rules array
 
             const rulesList = document.getElementById('rulesList');
             rulesList.innerHTML = ''; // Clear the existing list
@@ -99,10 +100,10 @@ function renderRules() {
                 // Append the rule item to the list
                 rulesList.appendChild(ruleItem);
             });
-        })
-        .catch(error => {
-            console.error('Error loading rules:', error);
-        });
+        // })
+        // .catch(error => {
+        //     console.error('Error loading rules:', error);
+        // });
 }
 
 // Function to add a new rule
@@ -122,30 +123,31 @@ document.getElementById('addRuleForm').addEventListener('submit', function(e) {
     document.getElementById('addRuleForm').reset();
 
     // Save the rules to JSON and render the updated list
-    saveRules().then(() => {
+    // saveRules().then(() => {
         renderRules(); // Ensure the updated list is displayed
-    });
+    // });
 });
 
 // Function to delete a rule
 function deleteRule(index) {
     rules.splice(index, 1); // Remove the rule from the array
-    saveRules().then(() => {
+    saveSystems();
+    // saveRules().then(() => {
         renderRules(); // Ensure the updated list is displayed after deletion
-    });
+    // });
 }
 
-// Function to save rules to JSON file
-function saveRules() {
-    // Using Axios to send the rules to the server
-    return axios.post('/save_rules', rules) // Return the promise for chaining
-        .then(response => {
-            console.log('Rules saved successfully.', response.data);
-        })
-        .catch(error => {
-            console.error('Error saving rules:', error);
-        });
-}
+// // Function to save rules to JSON file
+// function saveRules() {
+//     // Using Axios to send the rules to the server
+//     return axios.post('/save_rules', rules) // Return the promise for chaining
+//         .then(response => {
+//             console.log('Rules saved successfully.', response.data);
+//         })
+//         .catch(error => {
+//             console.error('Error saving rules:', error);
+//         });
+// }
 
 // On page load, load existing rules
 window.onload = function() {

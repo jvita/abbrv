@@ -102,6 +102,11 @@
 
         document.getElementById('downloadSystem').addEventListener('click', handleDownloadSystems);
 
+        function saveSystems() {
+            const systemsJson = JSON.stringify(systems);
+            localStorage.setItem('systems', systemsJson);
+        }
+
         // Function to handle downloading systems
         function handleDownloadSystems() {
             event.preventDefault(); // Prevent default anchor behavior
@@ -151,9 +156,6 @@
             axios.get(`/load_system_data/${systemName}`)
                 .then(response => {
                     systems[systemName] = response.data; // Assuming the response contains system data
-                    // Process the system data as needed
-                    console.log(`Loaded data for system: ${systemName}`, response.data);
-                    console.log('systems', systems)
 
                     selectedSystem = systemName
 
@@ -199,28 +201,36 @@
 
             // Check if showSaveFilePicker is supported
             if ('showSaveFilePicker' in window) {
-                // Use the File System Access API
-                const options = {
-                    suggestedName: 'system.zip', // Default name for the file
-                    types: [{
-                        description: 'ZIP files',
-                        accept: {
-                            'application/zip': ['.zip'],
-                        },
-                    }],
-                };
+                try {
+                    // Use the File System Access API
+                    const options = {
+                        suggestedName: (selectedSystem ? selectedSystem : 'system') + '.zip', // Default name for the file
+                        types: [{
+                            description: 'ZIP files',
+                            accept: {
+                                'application/zip': ['.zip'],
+                            },
+                        }],
+                    };
 
-                // Show the save file dialog
-                const fileHandle = await window.showSaveFilePicker(options);
-                
-                // Create a writable stream
-                const writableStream = await fileHandle.createWritable();
-                
-                // Write the blob data to the file
-                await writableStream.write(content);
-                
-                // Close the writable stream
-                await writableStream.close();
+                    // Show the save file dialog
+                    const fileHandle = await window.showSaveFilePicker(options);
+                    
+                    // Create a writable stream
+                    const writableStream = await fileHandle.createWritable();
+                    
+                    // Write the blob data to the file
+                    await writableStream.write(content);
+                    
+                    // Close the writable stream
+                    await writableStream.close();
+                } catch (err) {
+                    if (err.name === 'AbortError') {
+                        console.log('User canceled the save operation')
+                    } else {
+                        console.error('Error during save:', err)
+                    }
+                }
             } else {
 
                 let filename = prompt("Enter the name of the new system:", "new_system_name");
@@ -289,9 +299,6 @@
 
                         // Refresh the page
                         location.reload(); // This will reload the current page
-
-                        // Optionally, you can refresh the UI or perform additional actions here
-                        console.log(`Selected system set to: ${selectedSystem}`);
                     });
 
                     systemsListContainer.appendChild(listItem); // Append the item to the systems list

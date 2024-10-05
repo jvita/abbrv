@@ -102,8 +102,6 @@
 // let phraseSplineData = JSON.parse(localStorage.getItem('phraseSplineData'));
 // let modeSplineData = JSON.parse(localStorage.getItem('modeSplineData'));
 // let selectedSystem = getSelectedSystem()
-console.log('selectedSystem', selectedSystem)
-console.log('systems', systems)
 let glyphSplineData = selectedSystem ? systems[selectedSystem]['glyphs'] : {}
 let phraseSplineData = selectedSystem ? systems[selectedSystem]['phrases'] : {}
 let modeSplineData = selectedSystem ? systems[selectedSystem]['modes']: {}
@@ -564,7 +562,8 @@ saveButton.addEventListener('click', () => {
                 )
 
         glyphSplineData[newName] = newPoints
-        localStorage.setItem('glyphSplineData', JSON.stringify(glyphSplineData));
+        // localStorage.setItem('glyphSplineData', JSON.stringify(glyphSplineData));
+        saveSystems();  // from index.html
 
         // axios.post('/save', data)
         //     .then(response => {
@@ -581,32 +580,38 @@ saveButton.addEventListener('click', () => {
 
 });
 
-confirmSaveMode.addEventListener('click', () => {
-    if (selectedPoints.length) {
+// confirmSaveMode.addEventListener('click', () => {
+//     if (selectedPoints.length) {
 
-        const data = {
-            name: modeName.value.trim(),
-            pattern: modePattern.value.trim(),
-            points: selectedPoints.map(spline =>
-                spline.map(([x, y]) => [(x + gridSize / 2) / gridSize, (y + gridSize / 2) / gridSize])
-                ),
-            as_mode: true,
-            as_phrase: false,
-        };
+//         const newPoints = selectedPoints.map(spline =>
+//                 spline.map(([x, y]) => [(x + gridSize / 2) / gridSize - 0.5, (y + gridSize / 2) / gridSize - 0.5])
+//                 )
+//         modeSplineData[modeName.value.trim()] = newPoints
+//         saveSystems();
 
-        axios.post('/save', data)
-            .then(response => {
-                if (response.data.status === 'success') {
-                    rebuildModesList();
-                    handleGlyphSelect(null);
-                    refreshButtons();
-                    updatePointsField();
-                    characterField.value = '';
-                    characterField.focus();
-                }
-            });
-    }
-});
+//         // const data = {
+//         //     name: modeName.value.trim(),
+//         //     pattern: modePattern.value.trim(),
+//         //     points: selectedPoints.map(spline =>
+//         //         spline.map(([x, y]) => [(x + gridSize / 2) / gridSize, (y + gridSize / 2) / gridSize])
+//         //         ),
+//         //     as_mode: true,
+//         //     as_phrase: false,
+//         // };
+
+//         // axios.post('/save', data)
+//         //     .then(response => {
+//         //         if (response.data.status === 'success') {
+//                     rebuildModesList();
+//                     handleGlyphSelect(null);
+//                     refreshButtons();
+//                     updatePointsField();
+//                     characterField.value = '';
+//                     characterField.focus();
+//             //     }
+//             // });
+//     }
+// });
 
 // Function to reset mode name and pattern fields
 function resetModeFields() {
@@ -636,19 +641,27 @@ confirmSaveMode.addEventListener('click', () => {
         alert("Both 'Name' and 'Pattern' fields are required.");
     } else {
         if (selectedPoints.length) {
-            const data = {
-                name: modeName.value.trim(),
-                pattern: modePattern.value.trim(),
-                points: selectedPoints.map(spline =>
-                    spline.map(([x, y]) => [(x + gridSize / 2) / gridSize, (y + gridSize / 2) / gridSize])
-                ),
-                as_mode: true,
-                as_phrase: false,
-            };
 
-            axios.post('/save', data)
-                .then(response => {
-                    if (response.data.status === 'success') {
+            const newPoints = selectedPoints.map(spline =>
+                    spline.map(([x, y]) => [(x + gridSize / 2) / gridSize - 0.5, (y + gridSize / 2) / gridSize - 0.5])
+                    )
+            modeSplineData[modeName.value.trim()] = {points: newPoints, pattern: modePattern.value.trim()}
+            saveSystems()
+
+
+            // const data = {
+            //     name: modeName.value.trim(),
+            //     pattern: modePattern.value.trim(),
+            //     points: selectedPoints.map(spline =>
+            //         spline.map(([x, y]) => [(x + gridSize / 2) / gridSize, (y + gridSize / 2) / gridSize])
+            //     ),
+            //     as_mode: true,
+            //     as_phrase: false,
+            // };
+
+            // axios.post('/save', data)
+            //     .then(response => {
+            //         if (response.data.status === 'success') {
                         rebuildModesList();
                         handleGlyphSelect(null);
                         refreshButtons();
@@ -659,8 +672,8 @@ confirmSaveMode.addEventListener('click', () => {
                         // Hide the modal after saving
                         const saveModeModal = bootstrap.Modal.getInstance(document.getElementById('saveModeModal'));
                         saveModeModal.hide();
-                    }
-                });
+                //     }
+                // });
         }
     }
 });
@@ -675,26 +688,33 @@ saveMode.addEventListener('click', () => {
 
 savePhrase.addEventListener('click', () => {
     if (selectedPoints.length) {
-        const data = {
-            name: characterField.value.trim(),
-            points: selectedPoints.map(spline =>
-                spline.map(([x, y]) => [(x + gridSize / 2) / gridSize, (y + gridSize / 2) / gridSize])
-            ),
-            as_phrase: true,
-            as_mode: false,
-        };
 
-        axios.post('/save', data)
-            .then(response => {
-                if (response.data.status === 'success') {
+        const newPoints = selectedPoints.map(spline =>
+                spline.map(([x, y]) => [(x + gridSize / 2) / gridSize - 0.5, (y + gridSize / 2) / gridSize - 0.5])
+                )
+        phraseSplineData[characterField.value.trim()] = newPoints
+        saveSystems()
+
+        // const data = {
+        //     name: characterField.value.trim(),
+        //     points: selectedPoints.map(spline =>
+        //         spline.map(([x, y]) => [(x + gridSize / 2) / gridSize, (y + gridSize / 2) / gridSize])
+        //     ),
+        //     as_phrase: true,
+        //     as_mode: false,
+        // };
+
+        // axios.post('/save', data)
+        //     .then(response => {
+        //         if (response.data.status === 'success') {
                     rebuildPhrasesList();
                     handleGlyphSelect(null);
                     refreshButtons();
                     updatePointsField();
                     characterField.value = '';
                     characterField.focus();
-                }
-            });
+            //     }
+            // });
     }
 });
 
@@ -713,46 +733,52 @@ clearButton.addEventListener('click', () => {
 
 deleteButton.addEventListener('click', () => {
     if (selectedPoints) {
-        axios.post('/delete', { name: characterField.value.trim(), as_mode: false, as_phrase: false})
-            .then(response => {
-                if (response.data.status === 'success') {
+        // axios.post('/delete', { name: characterField.value.trim(), as_mode: false, as_phrase: false})
+        //     .then(response => {
+        //         if (response.data.status === 'success') {
+                    delete glyphSplineData[characterField.value.trim()]
+                    saveSystems();
                     rebuildGlyphList();
                     handleGlyphSelect(null);
                     refreshButtons();
                     updatePointsField();
                     characterField.value = '';
                     characterField.focus();
-                }
-            });
+                // }
+            // });
     }
 });
 
 deleteMode.addEventListener('click', () => {
-    axios.post('/delete', { name: characterField.value.trim(), as_mode: true, as_phrase: false})
-        .then(response => {
-            if (response.data.status === 'success') {
+    // axios.post('/delete', { name: characterField.value.trim(), as_mode: true, as_phrase: false})
+    //     .then(response => {
+    //         if (response.data.status === 'success') {
+                delete modeSplineData[characterField.value.trim()]
+                saveSystems();
                 rebuildModesList();
                 handleGlyphSelect(null);
                 refreshButtons();
                 updatePointsField();
                 characterField.value = '';
                 characterField.focus();
-            }
-        });
+            // }
+        // });
 });
 
 deletePhrase.addEventListener('click', () => {
-    axios.post('/delete', { name: characterField.value.trim(), as_mode: false, as_phrase: true})
-        .then(response => {
-            if (response.data.status === 'success') {
+    // axios.post('/delete', { name: characterField.value.trim(), as_mode: false, as_phrase: true})
+    //     .then(response => {
+    //         if (response.data.status === 'success') {
+                delete phraseSplineData[characterField.value.trim()]
+                saveSystems();
                 rebuildPhrasesList();
                 handleGlyphSelect(null);
                 refreshButtons();
                 updatePointsField();
                 characterField.value = '';
                 characterField.focus();
-            }
-        });
+        //     }
+        // });
 });
 
 freezeButton.addEventListener('click', () => {
