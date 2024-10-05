@@ -329,7 +329,7 @@ def add_spaces_around_punctuation(text):
     # Return the modified text, stripping any extra spaces at the ends
     return spaced_text.strip()
 
-def process_text(text, rules):
+def process_text(text, rules, system):
 
     text = text.lower()
 
@@ -351,7 +351,7 @@ def process_text(text, rules):
     # Also apply the rules to phrases_dict so that it detects the modified phrases
     modified_phrases_dict = {}
 
-    for k, v in phrases_dict.items():
+    for k, v in system['phrases'].items():
         for rule in rules_list:
             if rule['name'] not in rules: continue
 
@@ -361,9 +361,9 @@ def process_text(text, rules):
 
     return text, modified_phrases_dict
 
-def text_to_splines(system_name, modified_phrases_dict, text, modes, abbrv_words=False):
-    glyphs_dict = systems[system_name]['glyphs']
-    modes_dict = systems[system_name]['modes']
+def text_to_splines(system, modified_phrases_dict, text, modes, abbrv_words=False):
+    glyphs_dict = system['glyphs']
+    modes_dict = system['modes']
 
     # Initialize an empty list to store the mapped integers
     glyphs = []
@@ -491,6 +491,8 @@ def generate_splines(system_name):
 
     space_between_words, line_spacing = 0.2, 0.2
 
+    client_system = json.loads(request.form.get('system'))
+
     abbrv_words = 'abbrv_words' in request.form
     show_dots = 'show_dots' in request.form
     show_knots = 'show_knot_points' in request.form
@@ -498,7 +500,7 @@ def generate_splines(system_name):
     modes = request.form.getlist('modes')
     rules = request.form.getlist('rules')
 
-    text, modified_phrases_dict = process_text(text, rules)
+    text, modified_phrases_dict = process_text(text, rules, client_system)
 
     plt.figure(figsize=(8, 8))  # Initialize figure
 
@@ -509,7 +511,7 @@ def generate_splines(system_name):
     # Process each line of the text
     for line in text.splitlines():
         word_splines = merge_word_splines(text_to_splines(
-            system_name,
+            client_system,
             modified_phrases_dict,  # accounting for currently-applied rules
             line,
             modes,

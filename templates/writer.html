@@ -127,10 +127,15 @@
         let debounceTimeout;
 
         function updatePlot() {
+
+            const formData = $('#text-form').serializeArray();
+            formData.push({name: 'system', value: JSON.stringify(systems[selectedSystem])})
+
             $.ajax({
                 type: 'POST',
                 url: `/generate_splines/${selectedSystem}`,
-                data: $('#text-form').serialize(),
+                // data: $('#text-form').serialize(),
+                data: $.param(formData),  // use $.param to serialize the formData array
                 success: function(response) {
                     // Assuming the server returns the raw SVG markup as part of the response
                     $('#output').html(response.image);
