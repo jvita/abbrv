@@ -90,11 +90,24 @@
     </div>
   </div>
 </div>
+
+{% endblock %}
+
+{% block scripts %}
 <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 <script>
-let glyphSplineData = {}; // Global variable to store spline data
-let phraseSplineData = {}; // Global variable to store spline data
-let modeSplineData = {}; // Global variable to store spline data
+
+// All of these will be loaded in index.html, since they may need to be accessible globally
+// let glyphSplineData = JSON.parse(localStorage.getItem('glyphSplineData'));
+// let phraseSplineData = JSON.parse(localStorage.getItem('phraseSplineData'));
+// let modeSplineData = JSON.parse(localStorage.getItem('modeSplineData'));
+// let selectedSystem = getSelectedSystem()
+console.log('selectedSystem', selectedSystem)
+console.log('systems', systems)
+let glyphSplineData = selectedSystem ? systems[selectedSystem]['glyphs'] : {}
+let phraseSplineData = selectedSystem ? systems[selectedSystem]['phrases'] : {}
+let modeSplineData = selectedSystem ? systems[selectedSystem]['modes']: {}
+
 const gridCanvas = document.getElementById('gridCanvas');
 const gridCtx = gridCanvas.getContext('2d');
 const splineCanvas = document.getElementById('splineCanvas');
@@ -340,9 +353,11 @@ function handleGlyphSelect(glyph, glyphPoints = null, append = false) {
     if (glyph !== null) {
         // selecting un-selected character
         const newPoints = glyphPoints ? glyphPoints : (glyph in glyphSplineData ? glyphSplineData[glyph] : [])
-        // const shiftedNewPoints = newPoints.map(([x, y]) => [x * gridSize - gridSize / 2, y * gridSize - gridSize / 2]);
+        
+        // glyphSplineData is assumed to be relative to the origin (0, 0).
+        // since the center of the grid is (0.5, 0.5), glyphSplineData has to be shifted when plotting
         const shiftedNewPoints = newPoints.map(spline =>
-            spline.map(([x, y]) => [(x * gridSize  - gridSize / 2), (y * gridSize - gridSize / 2)])
+            spline.map(([x, y]) => [((x+0.5) * gridSize  - gridSize / 2), ((y+0.5) * gridSize - gridSize / 2)])
             );
 
         if (!append) {
@@ -366,7 +381,7 @@ function handleGlyphSelect(glyph, glyphPoints = null, append = false) {
 
         selectedGlyphs.push(glyph)
         numPerSelected.push(numSplinesPerGlyph[glyph])
-    } else {  // not allowed to multi-select characters
+    } else {  // not allowed to select the same character multiple times
 
     }
 }
@@ -461,87 +476,72 @@ function scrollIfNeeded(item) {
     }
 }
 
-function loadGlyphs() {
-    axios.get('/load_glyphs')
-        .then(response => {
+function rebuildGlyphList() {
+    glyphsList.innerHTML = '';
+    glyphsTitle.childNodes[0].textContent = 'Glyphs (' + Object.keys(glyphSplineData).length + ')'
 
-            glyphSplineData = response.data; // Store the data in the global variable
-            glyphsList.innerHTML = '';
-            glyphsTitle.childNodes[0].textContent = 'Glyphs (' + Object.keys(glyphSplineData).length + ')'
+    for (const [glyph, points] of Object.entries(glyphSplineData)) {
+        numSplinesPerGlyph[glyph] = points.length  // used during de-selection
 
-            for (const [glyph, points] of Object.entries(glyphSplineData)) {
-                numSplinesPerGlyph[glyph] = points.length  // used during de-selection
+        const listItem = document.createElement('div');
+        listItem.className = 'char-list-item';
+        listItem.textContent = glyph;
 
-                const listItem = document.createElement('div');
-                listItem.className = 'char-list-item';
-                listItem.textContent = glyph;
-
-                listItem.addEventListener('click', (event) => {
-                    characterField.focus()
-                    characterField.value = ''
-                    handleGlyphSelect(glyph, null, event.ctrlKey)
-                    refreshButtons();
-                    updatePointsField();
-                });
-                glyphsList.appendChild(listItem);
-            }
+        listItem.addEventListener('click', (event) => {
+            characterField.focus()
+            characterField.value = ''
+            handleGlyphSelect(glyph, null, event.ctrlKey)
+            refreshButtons();
+            updatePointsField();
         });
+        glyphsList.appendChild(listItem);
+    }
 }
 
-function loadPhrases() {
-    axios.get('/load_phrases')
-        .then(response => {
+function rebuildPhrasesList() {
+    phrasesList.innerHTML = '';
+    phrasesTitle.childNodes[0].textContent = 'Phrases (' + Object.keys(phraseSplineData).length + ')'
 
-            phraseSplineData = response.data; // Store the data in the global variable
-            phrasesList.innerHTML = '';
-            phrasesTitle.childNodes[0].textContent = 'Phrases (' + Object.keys(phraseSplineData).length + ')'
+    for (const [phrase, points] of Object.entries(phraseSplineData)) {
+        numSplinesPerGlyph[phrase] = points.length  // used during de-selection
 
-            for (const [phrase, points] of Object.entries(phraseSplineData)) {
-                numSplinesPerGlyph[phrase] = points.length  // used during de-selection
+        const listItem = document.createElement('div');
+        listItem.className = 'char-list-item';
+        listItem.textContent = phrase;
 
-                const listItem = document.createElement('div');
-                listItem.className = 'char-list-item';
-                listItem.textContent = phrase;
-
-                listItem.addEventListener('click', (event) => {
-                    characterField.focus()
-                    characterField.value = phrase
-                    handleGlyphSelect(phrase, points)
-                    refreshButtons();
-                    updatePointsField();
-                });
-                phrasesList.appendChild(listItem);
-            }
+        listItem.addEventListener('click', (event) => {
+            characterField.focus()
+            characterField.value = phrase
+            handleGlyphSelect(phrase, points)
+            refreshButtons();
+            updatePointsField();
         });
+        phrasesList.appendChild(listItem);
+    }
 }
 
-function loadModes() {
-    axios.get('/load_modes')
-        .then(response => {
+function rebuildModesList() {
+    modesList.innerHTML = '';
+    modesTitle.childNodes[0].textContent = 'Modes (' + Object.keys(modeSplineData).length + ')'
 
-            modeSplineData = response.data; // Store the data in the global variable
-            modesList.innerHTML = '';
-            modesTitle.childNodes[0].textContent = 'Modes (' + Object.keys(modeSplineData).length + ')'
+    for (const [mode, valuesDict] of Object.entries(modeSplineData)) {
+        points = valuesDict['points']
 
-            for (const [mode, valuesDict] of Object.entries(modeSplineData)) {
-                points = valuesDict['points']
+        numSplinesPerGlyph[mode] = points.length  // used during de-selection
 
-                numSplinesPerGlyph[mode] = points.length  // used during de-selection
+        const listItem = document.createElement('div');
+        listItem.className = 'char-list-item';
+        listItem.textContent = mode;
 
-                const listItem = document.createElement('div');
-                listItem.className = 'char-list-item';
-                listItem.textContent = mode;
-
-                listItem.addEventListener('click', (event) => {
-                    characterField.focus()
-                    characterField.value = mode
-                    handleGlyphSelect(mode, modeSplineData[mode]['points'])
-                    refreshButtons();
-                    updatePointsField();
-                });
-                modesList.appendChild(listItem);
-            }
+        listItem.addEventListener('click', (event) => {
+            characterField.focus()
+            characterField.value = mode
+            handleGlyphSelect(mode, modeSplineData[mode]['points'])
+            refreshButtons();
+            updatePointsField();
         });
+        modesList.appendChild(listItem);
+    }
 }
 
 saveButton.addEventListener('click', () => {
@@ -554,19 +554,29 @@ saveButton.addEventListener('click', () => {
                 ),
             as_mode: false,
             as_phrase: false,
-            // dots: dots.map(([x, y]) => [(x + gridSize / 2) / gridSize, (y + gridSize / 2) / gridSize]),
         };
-        axios.post('/save', data)
-            .then(response => {
-                if (response.data.status === 'success') {
-                    loadGlyphs();
+
+        const newName = characterField.value.trim()
+
+        // points have to be rescaled to [0, 1], then shifted by [0.5, 0.5]
+        const newPoints = selectedPoints.map(spline =>
+                spline.map(([x, y]) => [(x + gridSize / 2) / gridSize - 0.5, (y + gridSize / 2) / gridSize - 0.5])
+                )
+
+        glyphSplineData[newName] = newPoints
+        localStorage.setItem('glyphSplineData', JSON.stringify(glyphSplineData));
+
+        // axios.post('/save', data)
+        //     .then(response => {
+        //         if (response.data.status === 'success') {
+                    rebuildGlyphList();
                     handleGlyphSelect(null);
                     refreshButtons();
                     updatePointsField();
                     characterField.value = '';
                     characterField.focus();
-                }
-            });
+            //     }
+            // });
     }
 
 });
@@ -587,7 +597,7 @@ confirmSaveMode.addEventListener('click', () => {
         axios.post('/save', data)
             .then(response => {
                 if (response.data.status === 'success') {
-                    loadModes();
+                    rebuildModesList();
                     handleGlyphSelect(null);
                     refreshButtons();
                     updatePointsField();
@@ -639,7 +649,7 @@ confirmSaveMode.addEventListener('click', () => {
             axios.post('/save', data)
                 .then(response => {
                     if (response.data.status === 'success') {
-                        loadModes();
+                        rebuildModesList();
                         handleGlyphSelect(null);
                         refreshButtons();
                         updatePointsField();
@@ -677,7 +687,7 @@ savePhrase.addEventListener('click', () => {
         axios.post('/save', data)
             .then(response => {
                 if (response.data.status === 'success') {
-                    loadPhrases();
+                    rebuildPhrasesList();
                     handleGlyphSelect(null);
                     refreshButtons();
                     updatePointsField();
@@ -706,7 +716,7 @@ deleteButton.addEventListener('click', () => {
         axios.post('/delete', { name: characterField.value.trim(), as_mode: false, as_phrase: false})
             .then(response => {
                 if (response.data.status === 'success') {
-                    loadGlyphs();
+                    rebuildGlyphList();
                     handleGlyphSelect(null);
                     refreshButtons();
                     updatePointsField();
@@ -721,7 +731,7 @@ deleteMode.addEventListener('click', () => {
     axios.post('/delete', { name: characterField.value.trim(), as_mode: true, as_phrase: false})
         .then(response => {
             if (response.data.status === 'success') {
-                loadModes();
+                rebuildModesList();
                 handleGlyphSelect(null);
                 refreshButtons();
                 updatePointsField();
@@ -735,7 +745,7 @@ deletePhrase.addEventListener('click', () => {
     axios.post('/delete', { name: characterField.value.trim(), as_mode: false, as_phrase: true})
         .then(response => {
             if (response.data.status === 'success') {
-                loadPhrases();
+                rebuildPhrasesList();
                 handleGlyphSelect(null);
                 refreshButtons();
                 updatePointsField();
@@ -764,37 +774,6 @@ freezeButton.addEventListener('click', () => {
     updatePointsField();
     characterField.focus();
 });
-
-// // Click event listener
-// clearAllButton.addEventListener('click', (e) => {
-//     // Clear the points, characters, and other data
-//     selectedPoints = [];
-//     numPerSelected = [];
-//     selectedCharacters = [];
-
-//     // Refresh coloring of spline list
-//     document.querySelectorAll('.char-list-item').forEach(item => {
-//         item.classList.remove('selected');
-//         item.classList.remove('joining');
-//     });
-
-//     // Update the input field and focus
-//     characterField.value = '';
-//     characterField.focus();
-
-//     // Update fields and buttons
-//     updatePointsField();
-//     refreshButtons();
-
-//     // Forcefully close the dropdown by removing the 'show' class
-//     const dropdown = document.querySelector('.dropdown-menu');
-//     dropdown.classList.remove('show');
-//     document.getElementById('clearAllDropdown').setAttribute('aria-expanded', 'false');
-
-//     // Prevent the default anchor behavior
-//     e.preventDefault();
-// });
-
 
 // to avoid too-fast updates when typing into char field
 let debounceTimeout;
@@ -873,9 +852,9 @@ function sortOneList(listToSort) {
 
 refreshButtons();
 drawGrid();
-loadGlyphs();
-loadPhrases();
-loadModes();
+rebuildGlyphList();
+rebuildPhrasesList();
+rebuildModesList();
 
 document.addEventListener("DOMContentLoaded", function() {
     const gridContainer = document.querySelector('.grid-container');

@@ -1,16 +1,16 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, session, Response
 import numpy as np
 import json
 from scipy.interpolate import CubicSpline, BSpline
 import os
 import re
+import zipfile
 
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
 import io
-import base64
 
 app = Flask(__name__)
 
@@ -23,20 +23,18 @@ app = Flask(__name__)
 # toolbar = DebugToolbarExtension(app)
 
 # File paths for single-character and multi-character splines
-GLYPHS_FILE = 'static/data/glyphs.json'
-PHRASES_FILE = 'static/data/phrases.json'
-MODES_FILE = 'static/data/modes.json'
-RULES_FILE = 'static/data/rules.json'
+SYSTEMS_FOLDER = 'static/data/systems'
+# GLYPHS_FILE = 'static/data/glyphs.json'
+# PHRASES_FILE = 'static/data/phrases.json'
+# MODES_FILE = 'static/data/modes.json'
+# RULES_FILE = 'static/data/rules.json'
+current_system = None
+systems = {}
 glyphs_dict = {}
 phrases_dict = {}
 modified_phrases_dict = {}
 modes_dict = {}
 rules_list = []
-
-def adjust_points(points, adjustment):
-    """Adjust points by adding or subtracting a constant."""
-    points = np.array(points)
-    return (points + adjustment).tolist()
 
 @app.route('/spline', methods=['POST'])
 def spline():
@@ -64,145 +62,181 @@ def spline():
         print(f"Error in spline calculation: {e}")
         return jsonify({'spline': []})
 
-@app.route('/save', methods=['POST'])
-def save():
-    data = request.json
-    name = data['name']
-    points = data['points']
-    as_mode = data['as_mode']
-    as_phrase = data['as_phrase']
+# @app.route('/save', methods=['POST'])
+# def save():
+#     data = request.json
+#     name = data['name']
+#     points = data['points']
+#     as_mode = data['as_mode']
+#     as_phrase = data['as_phrase']
 
-    adjusted_points = [adjust_points(p, np.array([-0.5, -0.5])) for p in points]
+#     adjusted_points = [adjust_points(p, np.array([-0.5, -0.5])) for p in points]
 
-    if as_phrase:
-        file_name = PHRASES_FILE
-    elif as_mode:
-        file_name = MODES_FILE
-    else:  # as glyph
-        file_name = GLYPHS_FILE
+#     if as_phrase:
+#         file_name = PHRASES_FILE
+#     elif as_mode:
+#         file_name = MODES_FILE
+#     else:  # as glyph
+#         file_name = GLYPHS_FILE
 
-    # Load existing data
-    existing_data = load_json_file(file_name)
+#     # Load existing data
+#     existing_data = load_json_file(file_name)
 
-    # Update or add new entry
-    if as_mode:
-        existing_data[name] = {'points': adjusted_points, 'pattern': data['pattern']}
+#     # Update or add new entry
+#     if as_mode:
+#         existing_data[name] = {'points': adjusted_points, 'pattern': data['pattern']}
+#     else:
+#         existing_data[name] = adjusted_points
+
+#     # Save updated data
+#     with open(file_name, 'w') as f:
+#         json.dump(existing_data, f, indent=4)
+
+#     return jsonify({'status': 'success'})
+
+@app.route('/set_selected_system', methods=['POST'])
+def set_selected_system():
+    system = request.json.get('system')
+    session['selected_system'] = system  # Store the selected system in the session
+    return jsonify(success=True)
+
+@app.route('/available_systems', methods=['GET'])
+def available_systems():
+    system_names = []
+    for filename in os.listdir(SYSTEMS_FOLDER):
+        if filename.endswith('.zip'):
+            name = filename.replace('.zip', '')  # Get the system name (without the .zip extension)
+            system_names.append(name)
+    return jsonify(system_names)
+
+@app.route('/load_system_data/<system_name>', methods=['GET'])
+def load_system_data(system_name):
+    global systems
+    if system_name in systems:
+        global glyphs_dict, phrases_dict, modes_dict, rules_list
+
+        glyphs_dict = systems[system_name]['glyphs']
+        phrases_dict = systems[system_name]['phrases']
+        modes_dict = systems[system_name]['modes']
+        rules_list = systems[system_name]['rules']
+
+        return jsonify(systems[system_name])  # Return the system data as JSON
     else:
-        existing_data[name] = adjusted_points
+        return jsonify({'error': 'System not found'}), 404
 
-    # Save updated data
-    with open(file_name, 'w') as f:
-        json.dump(existing_data, f, indent=4)
+# @app.route('/load_glyphs')
+# def load_glyphs():
+#     # chars = {}
 
-    return jsonify({'status': 'success'})
+#     # Load single-glyph splines
+#     try:
+#         with open(GLYPHS_FILE, 'r') as f:
+#             chars = json.load(f)
+#             # chars_data = json.load(f)
+#             # chars.update({k: [adjust_points(p, np.array([0.5, 0.5])) for p in v] for k, v in chars_data.items()})
+#     except FileNotFoundError:
+#         chars = {}
+#         # pass
 
-@app.route('/load_glyphs')
-def load_glyphs():
-    chars = {}
+#     return jsonify(chars)
 
-    # Load single-glyph splines
-    try:
-        with open(GLYPHS_FILE, 'r') as f:
-            chars_data = json.load(f)
-            chars.update({k: [adjust_points(p, np.array([0.5, 0.5])) for p in v] for k, v in chars_data.items()})
-    except FileNotFoundError:
-        pass
+# @app.route('/load_phrases')
+# def load_phrases():
+#     # phrases = {}
 
-    return jsonify(chars)
+#     # Load single-glyph splines
+#     try:
+#         with open(PHRASES_FILE, 'r') as f:
+#             phrases = json.load(f)
+#             # phrases_dict = json.load(f)
+#             # phrases.update({k: [adjust_points(p, np.array([0.5, 0.5])) for p in v] for k, v in phrases_dict.items()})
+#     except FileNotFoundError:
+#         phrases = {}
+#         # pass
 
-@app.route('/load_phrases')
-def load_phrases():
-    phrases = {}
-
-    # Load single-glyph splines
-    try:
-        with open(PHRASES_FILE, 'r') as f:
-            phrases_dict = json.load(f)
-            phrases.update({k: [adjust_points(p, np.array([0.5, 0.5])) for p in v] for k, v in phrases_dict.items()})
-    except FileNotFoundError:
-        pass
-
-    return jsonify(phrases)
+#     return jsonify(phrases)
 
 
-@app.route('/load_modes')
-def load_modes():
-    modes = {}
+# @app.route('/load_modes')
+# def load_modes():
+#     # modes = {}
 
-    # Load single-glyph splines
-    try:
-        with open(MODES_FILE, 'r') as f:
-            modes_data = json.load(f)
-            modes.update({
-                k: {
-                    'points': [
-                        adjust_points(p, np.array([0.5, 0.5])) for p in v_dct['points']
-                        ],
-                    'pattern': v_dct['pattern']
-                    }
-                for k, v_dct in modes_data.items()
-                })
-    except FileNotFoundError:
-        pass
+#     # Load single-glyph splines
+#     try:
+#         with open(MODES_FILE, 'r') as f:
+#             modes = json.load(f)
+#             # modes_data = json.load(f)
+#             # modes.update({
+#             #     k: {
+#             #         'points': [
+#             #             adjust_points(p, np.array([0.5, 0.5])) for p in v_dct['points']
+#             #             ],
+#             #         'pattern': v_dct['pattern']
+#             #         }
+#             #     for k, v_dct in modes_data.items()
+#             #     })
+#     except FileNotFoundError:
+#         modes = {}
+#         # pass
 
-    return jsonify(modes)
+#     return jsonify(modes)
 
-# Load the rules from the JSON file
-@app.route('/load_rules', methods=['GET'])
-def load_rules():
-    global rules_list
-    try:
-        with open(RULES_FILE, 'r') as file:
-            rules = json.load(file)
-    except FileNotFoundError:
-        rules = []
-    rules_list = rules
-    return jsonify(rules_list)
+# # Load the rules from the JSON file
+# @app.route('/load_rules', methods=['GET'])
+# def load_rules():
+#     global rules_list
+#     try:
+#         with open(RULES_FILE, 'r') as file:
+#             rules = json.load(file)
+#     except FileNotFoundError:
+#         rules = []
+#     rules_list = rules
+#     return jsonify(rules_list)
 
-# Save the rules to the JSON file
-@app.route('/save_rules', methods=['POST'])
-def save_rules():
-    global rules_list
-    rules_list = request.json
-    with open(RULES_FILE, 'w') as f:
-        json.dump(rules_list, f)
-    return jsonify({"message": "Rules saved successfully!"}), 200
+# # Save the rules to the JSON file
+# @app.route('/save_rules', methods=['POST'])
+# def save_rules():
+#     global rules_list
+#     rules_list = request.json
+#     with open(RULES_FILE, 'w') as f:
+#         json.dump(rules_list, f)
+#     return jsonify({"message": "Rules saved successfully!"}), 200
 
-@app.route('/delete', methods=['POST'])
-def delete():
-    data = request.json
-    name = data['name']
-    as_mode = data['as_mode']
-    as_phrase = data['as_phrase']
+# @app.route('/delete', methods=['POST'])
+# def delete():
+#     data = request.json
+#     name = data['name']
+#     as_mode = data['as_mode']
+#     as_phrase = data['as_phrase']
 
-    if as_phrase:
-        file_name = PHRASES_FILE
-    elif as_mode:
-        file_name = MODES_FILE
-    else:  # as glyph
-        file_name = GLYPHS_FILE
+#     if as_phrase:
+#         file_name = PHRASES_FILE
+#     elif as_mode:
+#         file_name = MODES_FILE
+#     else:  # as glyph
+#         file_name = GLYPHS_FILE
 
-    # Load existing data
-    try:
-        with open(file_name, 'r') as f:
-            existing_data = json.load(f)
-    except FileNotFoundError:
-        existing_data = {}
+#     # Load existing data
+#     try:
+#         with open(file_name, 'r') as f:
+#             existing_data = json.load(f)
+#     except FileNotFoundError:
+#         existing_data = {}
 
-    # Remove the specified element
-    if name in existing_data:
-        del existing_data[name]
+#     # Remove the specified element
+#     if name in existing_data:
+#         del existing_data[name]
 
-        # Save updated data
-        with open(file_name, 'w') as f:
-            json.dump(existing_data, f, indent=4)
+#         # Save updated data
+#         with open(file_name, 'w') as f:
+#             json.dump(existing_data, f, indent=4)
 
-        return jsonify({'status': 'success'})
-    else:
-        return jsonify({'status': 'error', 'message': 'Name not found'})
+#         return jsonify({'status': 'success'})
+#     else:
+#         return jsonify({'status': 'error', 'message': 'Name not found'})
 
-def execute_on_refresh():
-    get_data()
+# def execute_on_refresh():
+#     get_data()
 
 # Writer code
 def load_json_file(filename):
@@ -214,32 +248,33 @@ def load_json_file(filename):
         return json.load(f)
 
 def get_data():
-    global glyphs_dict
-    _chars = load_json_file(GLYPHS_FILE)
-    glyphs_dict = {
-        char: [np.array(p, dtype=np.float32) for p in points]
-        for char, points in _chars.items()
-    }
+    global systems
 
-    global phrases_dict
-    _chars = load_json_file(PHRASES_FILE)
-    phrases_dict = {
-        char: [np.array(p, dtype=np.float32) for p in points]
-        for char, points in _chars.items()
-    }
+    # Loop through all files in DATA_FOLDER
+    for filename in os.listdir(SYSTEMS_FOLDER):
+        if filename.endswith('.zip'):
+            system_name = filename.replace('.zip', '')  # Get the system name (without the .zip extension)
+            systems[system_name] = {}
 
-    global modes_dict
-    _modes = load_json_file(MODES_FILE)
-    modes_dict = {
-        mode: {
-            'pattern': v_dct['pattern'],
-            'points': [np.array(p, dtype=np.float32) for p in v_dct['points']]
-            }
-        for mode, v_dct in _modes.items()
-    }
+            # Open the zip file
+            zip_path = os.path.join(SYSTEMS_FOLDER, filename)
+            with zipfile.ZipFile(zip_path, 'r') as zf:
+                # Iterate over each file inside the zip (skip directories)
+                for zip_info in zf.infolist():
+                    if not zip_info.is_dir():  # Only process files, not directories
+                        with zf.open(zip_info) as file:
+                            file_content = file.read().decode('utf-8')  # Assuming the files are in text (JSON)
+                            parsed_data = json.loads(file_content)  # Parse the JSON file
 
-    global rules_list
-    rules_list = load_json_file(RULES_FILE)
+                            # Store data based on the filename
+                            if 'glyphs' in zip_info.filename:
+                                systems[system_name]['glyphs'] = parsed_data
+                            elif 'phrases' in zip_info.filename:
+                                systems[system_name]['phrases'] = parsed_data
+                            elif 'modes' in zip_info.filename:
+                                systems[system_name]['modes'] = parsed_data
+                            elif 'rules' in zip_info.filename:
+                                systems[system_name]['rules'] = parsed_data
 
 def interpolate_points(points, num_points=100):
     if len(points) < 2:
@@ -553,11 +588,12 @@ def save_plot_as_svg():
 @app.route('/')
 @app.route('/write')
 def write():
-    execute_on_refresh()
+    # execute_on_refresh()
 
-    global modes_dict, rules_list
+    # global modes_dict, rules_list
 
-    return render_template('writer.html', modes=modes_dict, rules=rules_list)
+    # return render_template('writer.html', modes=modes_dict, rules=rules_list)
+    return render_template('writer.html', modes={}, rules={})
 
 @app.route('/draft')
 def draft():
@@ -576,4 +612,5 @@ def help():
 
 
 if __name__ == '__main__':
+    get_data()
     app.run(debug=True)

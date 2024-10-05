@@ -10,7 +10,16 @@
 
     <!-- Add Bootstrap for styling the navbar -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.2/font/bootstrap-icons.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
+    <!-- for zipping files -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 </head>
 <body>
     <!-- Navbar -->
@@ -33,9 +42,42 @@
                 <li class="nav-item">
                     <a class="nav-link" href="{{ url_for('help') }}">help</a>
                 </li>
+                <!-- Systems Dropdown -->
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <!-- system: {{ session.get('selected_system', 'select') }} -->
+                        system: select
+                    </a>
+                    <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                        <div id="systemsList"></div>
+                        <li><hr class="dropdown-divider"></li> <!-- Horizontal delimiter -->
+                        <li><a class="dropdown-item" href="#" id="downloadSystem">Download</a></li>
+                        <li><a class="dropdown-item" href="#" id="importSystem">Import</a></li>
+                        <li><a class="dropdown-item" href="#" id="exportSystem">Export</a></li>
+                    </ul>
+                </li>
             </ul>
         </div>
+        <!-- Modal for downloading systems -->
+        <div class="modal fade" id="downloadSystemsModal" tabindex="-1" aria-labelledby="downloadSystemsModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="downloadSystemsModalLabel">Available Systems</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <ul id="downloadableList" class="list-group">
+                        </ul>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
     </nav>
+
 
     <div class="container-fluid mt-4" id="content">
         {% block content %}
@@ -43,23 +85,246 @@
         {% endblock %}
     </div>
 
-    <!-- Add Bootstrap JavaScript and dependencies -->
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    
-    <!-- Bootstrap icons -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.2/font/bootstrap-icons.css">
-
     <script>
+        const systemsJson = localStorage.getItem('systems');
+        let systems = systemsJson ? JSON.parse(systemsJson) : {}
+        const selectedSystemJson = localStorage.getItem('selectedSystem')
+        let selectedSystem = selectedSystemJson ? selectedSystemJson : null
+
+        const navbarElement = document.getElementById('navbarDropdown');
+        navbarElement.textContent = `system: ${selectedSystem ? selectedSystem : 'select'}`;
+
         // Initialize Bootstrap tooltips
         const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
         const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
             return new bootstrap.Tooltip(tooltipTriggerEl);
         });
+
+        document.getElementById('downloadSystem').addEventListener('click', handleDownloadSystems);
+
+        // Function to handle downloading systems
+        function handleDownloadSystems() {
+            event.preventDefault(); // Prevent default anchor behavior
+
+            // Fetch the list of systems from the server
+            axios.get('/available_systems')
+                .then(response => {
+                    displayDownloadableSystems(response.data);
+                })
+                .catch(error => {
+                    console.error('Error fetching systems:', error);
+                });
+        }
+
+        // Function to display the list of downloadable systems in the modal
+        function displayDownloadableSystems(availableSystems) {
+            const downloadableList = document.getElementById('downloadableList');
+            
+            // Clear any existing items
+            downloadableList.innerHTML = '';
+
+            // Loop through the systems and create list items
+            availableSystems.forEach(system => {
+                const listItem = document.createElement('li');
+                listItem.classList.add('list-group-item', 'list-group-item-action');
+                listItem.innerText = system;
+
+                // Add click event listener to each item
+                listItem.addEventListener('click', function () {
+                    // Load the selected system's data
+                    loadSystemData(system);
+                    // Close the modal after selection
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('downloadSystemsModal'));
+                    modal.hide();
+                });
+
+                downloadableList.appendChild(listItem)
+            });
+
+            // Show the modal
+            const modal = new bootstrap.Modal(document.getElementById('downloadSystemsModal'));
+            modal.show();
+        }
+
+        // Function to load the selected system's data
+        function loadSystemData(systemName) {
+            axios.get(`/load_system_data/${systemName}`)
+                .then(response => {
+                    systems[systemName] = response.data; // Assuming the response contains system data
+                    // Process the system data as needed
+                    console.log(`Loaded data for system: ${systemName}`, response.data);
+                    console.log('systems', systems)
+
+                    selectedSystem = systemName
+
+                    const systemsJson = JSON.stringify(systems);
+                    localStorage.setItem('systems', systemsJson);
+
+                    addSystemsToDropdown();     // Then run addSystemsToDropdown after
+                })
+                .catch(error => {
+                    console.error('Error loading system data:', error);
+                });
+        }
+
+        // Import System
+        document.getElementById('importSystem').addEventListener('click', function() {
+            // Logic to handle file upload
+            const fileInput = document.createElement('input');
+            fileInput.type = 'file';
+            fileInput.accept = '.zip';
+            fileInput.onchange = function(event) {
+                const file = event.target.files[0];
+                if (file) {
+                    // Logic to extract and handle the zip file
+                    console.log("Importing file:", file.name);
+                }
+            };
+            fileInput.click();
+        });
+
+        // Save As Function
+        async function saveAs(data) {
+            // Create a new instance of JSZip
+            const zip = new JSZip();
+            
+            // Convert the JavaScript object to a JSON string
+            const jsonString = JSON.stringify(data, null, 2); // Pretty-print JSON
+
+            // Add the JSON string to the zip file
+            zip.file('data.json', jsonString);
+
+            // Generate the zip file asynchronously
+            const content = await zip.generateAsync({ type: "blob" });
+
+            // Check if showSaveFilePicker is supported
+            if ('showSaveFilePicker' in window) {
+                // Use the File System Access API
+                const options = {
+                    suggestedName: 'system.zip', // Default name for the file
+                    types: [{
+                        description: 'ZIP files',
+                        accept: {
+                            'application/zip': ['.zip'],
+                        },
+                    }],
+                };
+
+                // Show the save file dialog
+                const fileHandle = await window.showSaveFilePicker(options);
+                
+                // Create a writable stream
+                const writableStream = await fileHandle.createWritable();
+                
+                // Write the blob data to the file
+                await writableStream.write(content);
+                
+                // Close the writable stream
+                await writableStream.close();
+            } else {
+
+                let filename = prompt("Enter the name of the new system:", "new_system_name");
+
+                // If the user clicks "Cancel" or provides an empty input, exit the function
+                if (!filename) {
+                    return; // Exit without downloading
+                }
+
+                // Fallback method using a temporary anchor element
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(content);
+                link.download = filename + '.zip'; // Specify the file name with .zip extension
+
+                // Append to the body
+                document.body.appendChild(link);
+                link.click(); // Trigger the download
+                document.body.removeChild(link); // Clean up the DOM
+            }
+        }
+
+        // Example usage in the export button event listener
+        document.getElementById('exportSystem').addEventListener('click', async function() {
+            // Example JavaScript object to be exported
+            const myObject = {
+                glyphs: {},
+                phrases: {},
+                modes: {},
+                rules: {},
+            };
+
+            // Call the saveAs function with the object and filename
+            await saveAs(myObject);
+        });
+
+        function addSystemsToDropdown() {
+            // Get the systems list container
+            const systemsListContainer = document.getElementById('systemsList');
+
+            // Clear any existing items
+            systemsListContainer.innerHTML = '';
+
+            const navbarElement = document.getElementById('navbarDropdown');
+
+            // Loop through the dictionary keys
+            for (const systemKey in systems) {
+                if (systems.hasOwnProperty(systemKey)) {
+                    const listItem = document.createElement('li'); // Create a list item
+                    listItem.innerHTML = `<a class="dropdown-item" href="#">${systemKey}</a>`; // Use the key as the link text
+                    
+                    // Add a click event listener to the anchor element
+                    listItem.querySelector('a').addEventListener('click', function (event) {
+                        event.preventDefault(); // Prevent default anchor behavior
+                        
+                        // Set the currently selected system
+                        selectedSystem = systemKey; // Use the key as the selected system
+
+                        // Store the selected system in local storage or a global variable
+                        localStorage.setItem('selectedSystem', selectedSystem);
+                        navbarElement.textContent = `system: ${selectedSystem ? selectedSystem : 'select'}`;
+
+                        // // Update the navbar element (e.g., for display purposes)
+                        // const navbarElement = document.getElementById('navbarDropdown');
+                        // navbarElement.setAttribute('data-selected-system', selectedSystem);
+                        // navbarElement.textContent = `system: ${selectedSystem}`;
+
+                        // Refresh the page
+                        location.reload(); // This will reload the current page
+
+                        // Optionally, you can refresh the UI or perform additional actions here
+                        console.log(`Selected system set to: ${selectedSystem}`);
+                    });
+
+                    systemsListContainer.appendChild(listItem); // Append the item to the systems list
+                }
+            }
+        }
+
+        // For handling system selection
+        document.getElementById('navbarDropdown').addEventListener('change', function() {
+            const selectedSystem = this.value; // Get the selected system value
+
+            // Send an AJAX request to update the session
+            axios.post('/set_selected_system', { system: selectedSystem })
+                .then(response => {
+                    console.log('Selected system updated in session.');
+                })
+                .catch(error => {
+                    console.error('Error updating selected system:', error);
+                });
+        });
+
+        async function loadSystemsAndUpdateDropdown() {
+            addSystemsToDropdown();     // Then run addSystemsToDropdown after
+        }
+
+        // Call the fetch function on page load
+        document.addEventListener('DOMContentLoaded', function () {
+            loadSystemsAndUpdateDropdown();
+        });
+
     </script>
 
-    <!-- Include app1 JavaScript if needed -->
+    <!-- Include child JavaScript if needed -->
     {% block scripts %}
     {% endblock %}
 </body>
