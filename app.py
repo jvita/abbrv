@@ -30,11 +30,11 @@ SYSTEMS_FOLDER = 'static/data/systems'
 # RULES_FILE = 'static/data/rules.json'
 current_system = None
 systems = {}
-glyphs_dict = {}
-phrases_dict = {}
-modified_phrases_dict = {}
-modes_dict = {}
-rules_list = []
+# glyphs_dict = {}
+# phrases_dict = {}
+# modified_phrases_dict = {}
+# modes_dict = {}
+# rules_list = []
 
 @app.route('/spline', methods=['POST'])
 def spline():
@@ -123,6 +123,8 @@ def load_system_data(system_name):
 def save_system(system_name):
     # Parse the incoming JSON data
     system_dict = request.json
+
+    print(system_dict['rules'])
 
     systems[system_name] = system_dict
 
@@ -376,7 +378,7 @@ def add_spaces_around_punctuation(text):
     # Return the modified text, stripping any extra spaces at the ends
     return spaced_text.strip()
 
-def process_text(text, rules, system):
+def process_text(text, applied_rules, system):
 
     text = text.lower()
 
@@ -389,18 +391,17 @@ def process_text(text, rules, system):
     text = add_spaces_around_punctuation(text)
 
     # Apply all user-defined rules
-    global rules_list
-    for rule in rules_list:
-        if rule['name'] not in rules: continue
+    for rule in system['rules']:
+        if rule['name'] not in applied_rules: continue
 
         text = re.sub(rule["regex"], rule["replacement"], text)
-    
+
     # Also apply the rules to phrases_dict so that it detects the modified phrases
     modified_phrases_dict = {}
 
     for k, v in system['phrases'].items():
-        for rule in rules_list:
-            if rule['name'] not in rules: continue
+        for rule in system['rules']:
+            if rule['name'] not in applied_rules: continue
 
             k = re.sub(rule["regex"], rule["replacement"], k)
 
@@ -519,9 +520,6 @@ def merge_word_splines(char_splines):
 
     return words
 
-
-# @app.route('/generate_splines', methods=['POST'])
-# def generate_splines():
 @app.route('/generate_splines/<system_name>', methods=['POST'])
 def generate_splines(system_name):
     """
@@ -547,7 +545,10 @@ def generate_splines(system_name):
     modes = request.form.getlist('modes')
     rules = request.form.getlist('rules')
 
+    print(f'{text=}')
     text, modified_phrases_dict = process_text(text, rules, client_system)
+    print(f'{rules=}')
+    print(f'{text=}')
 
     plt.figure(figsize=(8, 8))  # Initialize figure
 
@@ -643,12 +644,7 @@ def save_plot_as_svg():
 @app.route('/')
 @app.route('/write')
 def write():
-    # execute_on_refresh()
-
-    # global modes_dict, rules_list
-
-    # return render_template('writer.html', modes=modes_dict, rules=rules_list)
-    return render_template('writer.html', modes={}, rules={})
+    return render_template('writer.html')
 
 @app.route('/draft')
 def draft():

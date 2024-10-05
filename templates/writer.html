@@ -40,42 +40,23 @@
 
             <!-- Multi-Select Dropdown -->
             <div class="dropdown me-3">
-                <button class="btn btn-primary dropdown-toggle" type="button" id="multiSelectDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                <button class="btn btn-primary dropdown-toggle" type="button" id="modesDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                     Modes
                 </button>
-                <ul class="dropdown-menu" aria-labelledby="multiSelectDropdown">
-                    {% if modes|length == 0 %}
-                        <li class="dropdown-item">No additional modes available</li>
-                    {% else %}
-                        {% for mode in modes %}
-                        <li class="dropdown-item">
-                            <input class="form-check-input me-2" type="checkbox" id="mode_{{ mode }}" name="modes" value="{{ mode }}" style="width: 5px; height: 5px;" checked>
-                            <label class="form-check-label mb-1" for="mode_{{ mode }}">{{ mode }}</label>
-                        </li>
-                        {% endfor %}
-                    {% endif %}
+                <ul class="dropdown-menu" aria-labelledby="modesDropdown" id="modesDropdownItems">
+                    <!-- Dropdown items will be inserted here by JavaScript -->
                 </ul>
             </div>
 
             <!-- Multi-Select Dropdown -->
-            <div class="dropdown me-3">
-                <button class="btn btn-primary dropdown-toggle" type="button" id="multiSelectDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+            <div class="dropdown me-3" id="rulesDropdown">
+                <button class="btn btn-primary dropdown-toggle" type="button" id="rulesDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                     Rules
                 </button>
-                <ul class="dropdown-menu" aria-labelledby="multiSelectDropdown">
-                    {% if rules|length == 0 %}
-                        <li class="dropdown-item">No additional rules available</li>
-                    {% else %}
-                        {% for rule in rules %}
-                        <li class="dropdown-item d-flex align-items-center text-nowrap">
-                            <input class="form-check-input me-2" type="checkbox" id="rule_{{ rule['name'] }}" name="rules" value="{{ rule['name'] }}" style="width: 5px; height: 5px;" checked>
-                            <label class="form-check-label mb-1" for="rule_{{ rule['name'] }}">{{ rule['name'] }}</label>
-                        </li>
-                        {% endfor %}
-                    {% endif %}
+                <ul class="dropdown-menu" aria-labelledby="rulesDropdown" id="rulesDropdownItems">
+                    <!-- Dropdown items will be inserted here by JavaScript -->
                 </ul>
             </div>
-        </div>
         <button id="downloadButton" class="btn btn-primary">
             <i class="bi bi-download"></i>
         </button>
@@ -114,6 +95,40 @@
             });
         });
 
+        // Function to escape special characters for HTML
+        function escapeHtml(unsafe) {
+            return unsafe
+                .replace(/&/g, "&amp;")   // Escape ampersand
+                .replace(/</g, "&lt;")    // Escape less-than
+                .replace(/>/g, "&gt;")     // Escape greater-than
+                .replace(/"/g, "&quot;")   // Escape double quote
+                .replace(/'/g, "&#039;");   // Escape single quote
+        }
+
+        const rulesDropdownItems = document.getElementById('rulesDropdownItems');
+
+        // Check if there are any rules
+        rules = selectedSystem ? systems[selectedSystem]['rules'] : []
+
+        if (rules.length === 0) {
+            rulesDropdownItems.innerHTML = '<li class="dropdown-item">No additional rules available</li>';
+        } else {
+            // Create dropdown items dynamically
+            rules.forEach(rule => {
+                const listItem = document.createElement('li');
+                listItem.className = 'dropdown-item d-flex align-items-center text-nowrap';
+
+                const escapedName = escapeHtml(rule.name);  // Escape the rule name
+
+                listItem.innerHTML = `
+                    <input class="form-check-input me-2" type="checkbox" id="rule_${escapedName}" name="rules" value="${escapedName}" style="width: 5px; height: 5px;" checked>
+                    <label class="form-check-label mb-1" for="rule_${escapedName}">${escapedName}</label>
+                `;
+
+                rulesDropdownItems.appendChild(listItem);
+            });
+        }
+
         // Select the multi-select dropdown or checkboxes
         const rulesCheckboxes = document.querySelectorAll('input[name="rules"]');
 
@@ -124,10 +139,35 @@
             });
         });
 
+        const modesDropdownItems = document.getElementById('modesDropdownItems');
+
+        // Check if there are any rules
+        modes = selectedSystem ? systems[selectedSystem]['modes'] : []
+
+        if (rules.length === 0) {
+            modesDropdownItems.innerHTML = '<li class="dropdown-item">No additional rules available</li>';
+        } else {
+            // Create dropdown items dynamically
+            for (const [mode, modeDict] of Object.entries(modes)) {
+                const listItem = document.createElement('li');
+                listItem.className = 'dropdown-item d-flex align-items-center text-nowrap';
+
+                const escapedName = escapeHtml(mode);  // Escape the rule name
+
+                listItem.innerHTML = `
+                    <input class="form-check-input me-2" type="checkbox" id="mode_${escapedName}" name="modes" value="${escapedName}" style="width: 5px; height: 5px;" checked>
+                    <label class="form-check-label mb-1" for="mode_${escapedName}">${escapedName}</label>
+                `;
+
+                modesDropdownItems.appendChild(listItem);
+            }
+        }
+
         let debounceTimeout;
 
         function updatePlot() {
 
+            console.log('selectedSystem', selectedSystem)
             if (!selectedSystem) {
                 $('#output').html('<p>Please select a system first.</p>');
             } else {
