@@ -129,7 +129,7 @@
         function updatePlot() {
             $.ajax({
                 type: 'POST',
-                url: '/generate_splines',
+                url: `/generate_splines/${selectedSystem}`,
                 data: $('#text-form').serialize(),
                 success: function(response) {
                     // Assuming the server returns the raw SVG markup as part of the response

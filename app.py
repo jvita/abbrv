@@ -111,15 +111,10 @@ def available_systems():
 
 @app.route('/load_system_data/<system_name>', methods=['GET'])
 def load_system_data(system_name):
+    # This only sends the data for local download
+
     global systems
     if system_name in systems:
-        global glyphs_dict, phrases_dict, modes_dict, rules_list
-
-        glyphs_dict = systems[system_name]['glyphs']
-        phrases_dict = systems[system_name]['phrases']
-        modes_dict = systems[system_name]['modes']
-        rules_list = systems[system_name]['rules']
-
         return jsonify(systems[system_name])  # Return the system data as JSON
     else:
         return jsonify({'error': 'System not found'}), 404
@@ -354,7 +349,7 @@ def process_text(text, rules):
         text = re.sub(rule["regex"], rule["replacement"], text)
     
     # Also apply the rules to phrases_dict so that it detects the modified phrases
-    global modified_phrases_dict
+    modified_phrases_dict = {}
 
     for k, v in phrases_dict.items():
         for rule in rules_list:
@@ -364,10 +359,11 @@ def process_text(text, rules):
 
         modified_phrases_dict[k] = v
 
-    return text
+    return text, modified_phrases_dict
 
-def text_to_splines(text, modes, abbrv_words=False):
-    global glyphs_dict, modes_dict, modified_phrases_dict
+def text_to_splines(system_name, modified_phrases_dict, text, modes, abbrv_words=False):
+    glyphs_dict = systems[system_name]['glyphs']
+    modes_dict = systems[system_name]['modes']
 
     # Initialize an empty list to store the mapped integers
     glyphs = []
@@ -476,8 +472,11 @@ def merge_word_splines(char_splines):
 
     return words
 
-@app.route('/generate_splines', methods=['POST'])
-def generate_splines():
+
+# @app.route('/generate_splines', methods=['POST'])
+# def generate_splines():
+@app.route('/generate_splines/<system_name>', methods=['POST'])
+def generate_splines(system_name):
     """
     Plots words as splines, handles line breaks by shifting each line downward.
 
@@ -485,6 +484,7 @@ def generate_splines():
     - space_between_words: Horizontal space between words.
     - line_spacing: Vertical space between lines.
     """
+
     text = request.form['text']
     if not text:
         return jsonify({'image': None})
@@ -498,7 +498,7 @@ def generate_splines():
     modes = request.form.getlist('modes')
     rules = request.form.getlist('rules')
 
-    text = process_text(text, rules)
+    text, modified_phrases_dict = process_text(text, rules)
 
     plt.figure(figsize=(8, 8))  # Initialize figure
 
@@ -508,7 +508,13 @@ def generate_splines():
 
     # Process each line of the text
     for line in text.splitlines():
-        word_splines = merge_word_splines(text_to_splines(line, modes, abbrv_words))
+        word_splines = merge_word_splines(text_to_splines(
+            system_name,
+            modified_phrases_dict,  # accounting for currently-applied rules
+            line,
+            modes,
+            abbrv_words
+            ))
         current_shift = np.array([0, 0])
         line_x_pos, splines_to_plot = 0, []
 
