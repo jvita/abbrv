@@ -103,8 +103,36 @@
         document.getElementById('downloadSystem').addEventListener('click', handleDownloadSystems);
 
         function saveSystems() {
+            // TODO: this is inefficient; should only update current system
             const systemsJson = JSON.stringify(systems);
             localStorage.setItem('systems', systemsJson);
+            saveSystemToServer(selectedSystem, systems[selectedSystem])
+        }
+
+        function saveSystemToServer(systemName, systemData) {
+            fetch(`/save_system/${systemName}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(systemData)
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(errorData => {
+                        throw new Error(errorData.error);
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Success:', data.message);
+                // Handle success, e.g., show a message to the user
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                // Handle error, e.g., show an error message to the user
+            });
         }
 
         // Function to handle downloading systems
@@ -158,11 +186,13 @@
                     systems[systemName] = response.data; // Assuming the response contains system data
 
                     selectedSystem = systemName
+                    localStorage.setItem('selectedSystem', selectedSystem);
 
                     const systemsJson = JSON.stringify(systems);
                     localStorage.setItem('systems', systemsJson);
 
-                    addSystemsToDropdown();     // Then run addSystemsToDropdown after
+                    location.reload(); // This will reload the current page
+                    // addSystemsToDropdown();     // Then run addSystemsToDropdown after
                 })
                 .catch(error => {
                     console.error('Error loading system data:', error);

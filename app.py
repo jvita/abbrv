@@ -119,6 +119,51 @@ def load_system_data(system_name):
     else:
         return jsonify({'error': 'System not found'}), 404
 
+@app.route('/save_system/<system_name>', methods=['POST'])
+def save_system(system_name):
+    # Parse the incoming JSON data
+    data_dict = request.json
+
+    # Ensure the dictionary has the required keys
+    required_keys = ['glyphs', 'modes', 'rules', 'phrases']
+    for key in required_keys:
+        if key not in data_dict:
+            return jsonify({"error": f"Missing key: {key}"}), 400
+
+    # Create the static/data/systems directory if it doesn't exist
+    output_dir = os.path.join('static', 'data', 'systems')
+    os.makedirs(output_dir, exist_ok=True)
+
+    # Path for the ZIP file
+    zip_filename = os.path.join(output_dir, f'{system_name}.zip')
+
+    # Create a temporary directory to store the JSON files
+    temp_dir = 'temp_json_files'
+    os.makedirs(temp_dir, exist_ok=True)
+
+    try:
+        # Save each entry as a JSON file
+        for key in required_keys:
+            file_path = os.path.join(temp_dir, f'{key}.json')
+            with open(file_path, 'w') as f:
+                json.dump(data_dict[key], f, indent=4)
+
+        # Create a ZIP file and add the JSON files to it
+        with zipfile.ZipFile(zip_filename, 'w') as zipf:
+            for key in required_keys:
+                file_path = os.path.join(temp_dir, f'{key}.json')
+                zipf.write(file_path, arcname=f'{key}.json')
+
+        return jsonify({"message": f"System saved as {system_name}.zip"}), 200
+
+    finally:
+        # Clean up the temporary directory and files
+        for key in required_keys:
+            file_path = os.path.join(temp_dir, f'{key}.json')
+            if os.path.exists(file_path):
+                os.remove(file_path)
+        os.rmdir(temp_dir)
+
 # @app.route('/load_glyphs')
 # def load_glyphs():
 #     # chars = {}
