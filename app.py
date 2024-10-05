@@ -124,8 +124,6 @@ def save_system(system_name):
     # Parse the incoming JSON data
     system_dict = request.json
 
-    print(system_dict['rules'])
-
     systems[system_name] = system_dict
 
     # Ensure the dictionary has the required keys
@@ -504,15 +502,15 @@ def merge_word_splines(char_splines):
             # Process each array in the list of arrays for the current character
             for pi, points_array in enumerate(char_arrays):
                 shifted_points = points_array + current_shift
-                if pi == 0 and not first_char_in_word:
+                if not first_char_in_word:
                     # If not the first character in the word, shift the first array so that its first point is at [0, 0]
                     shifted_points -= points_array[0]
 
                 current_word.append(shifted_points)
+                first_char_in_word = False
 
-            # Update the shift to the last point of the last array in the current character
-            current_shift = current_word[-1][-1]  # Last point of the last array
-            first_char_in_word = False
+                # Update the shift to the last point of the last array in the current character
+                current_shift = current_word[-1][-1]  # Last point of the last array
 
     # After the loop, add the last word if it's not empty
     if current_word:
@@ -545,10 +543,7 @@ def generate_splines(system_name):
     modes = request.form.getlist('modes')
     rules = request.form.getlist('rules')
 
-    print(f'{text=}')
     text, modified_phrases_dict = process_text(text, rules, client_system)
-    print(f'{rules=}')
-    print(f'{text=}')
 
     plt.figure(figsize=(8, 8))  # Initialize figure
 
