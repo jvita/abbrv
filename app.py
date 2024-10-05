@@ -122,12 +122,14 @@ def load_system_data(system_name):
 @app.route('/save_system/<system_name>', methods=['POST'])
 def save_system(system_name):
     # Parse the incoming JSON data
-    data_dict = request.json
+    system_dict = request.json
+
+    systems[system_name] = system_dict
 
     # Ensure the dictionary has the required keys
     required_keys = ['glyphs', 'modes', 'rules', 'phrases']
     for key in required_keys:
-        if key not in data_dict:
+        if key not in system_dict:
             return jsonify({"error": f"Missing key: {key}"}), 400
 
     # Create the static/data/systems directory if it doesn't exist
@@ -146,7 +148,7 @@ def save_system(system_name):
         for key in required_keys:
             file_path = os.path.join(temp_dir, f'{key}.json')
             with open(file_path, 'w') as f:
-                json.dump(data_dict[key], f, indent=4)
+                json.dump(system_dict[key], f, indent=4)
 
         # Create a ZIP file and add the JSON files to it
         with zipfile.ZipFile(zip_filename, 'w') as zipf:
