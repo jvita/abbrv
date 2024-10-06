@@ -105,6 +105,9 @@
 
         function saveSystems() {
             // TODO: this is inefficient; should only update current system
+            // TODO: there can be an issue when you make an edit in one page,
+            // then make another edit in a second page without refreshing first.
+            // this will overwrite the first set of changes
             const systemsJson = JSON.stringify(systems);
             localStorage.setItem('systems', systemsJson);
 
