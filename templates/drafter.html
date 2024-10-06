@@ -98,10 +98,6 @@
 <script>
 
 // All of these will be loaded in index.html, since they may need to be accessible globally
-// let glyphSplineData = JSON.parse(localStorage.getItem('glyphSplineData'));
-// let phraseSplineData = JSON.parse(localStorage.getItem('phraseSplineData'));
-// let modeSplineData = JSON.parse(localStorage.getItem('modeSplineData'));
-// let selectedSystem = getSelectedSystem()
 let glyphSplineData = selectedSystem ? systems[selectedSystem]['glyphs'] : {}
 let phraseSplineData = selectedSystem ? systems[selectedSystem]['phrases'] : {}
 let modeSplineData = selectedSystem ? systems[selectedSystem]['modes']: {}
@@ -119,8 +115,6 @@ const confirmSaveMode = document.getElementById('confirmSaveMode');
 const modeName = document.getElementById('modeName');
 const modePattern = document.getElementById('modePattern');
 const clearButton = document.getElementById('clearButton');
-// const clearAllButton = document.getElementById('clearAllButton');
-// const clearAllDropdown = document.getElementById('clearAllDropdown');
 const deleteButton = document.getElementById('deleteButton');
 const deleteDropdown = document.getElementById('deleteDropdown');
 const deleteMode = document.getElementById('deleteMode');
@@ -432,13 +426,6 @@ function refreshSaveButton() {
     clearButton.disabled = noneSelected
 }
 
-// function refreshClearAllButton() {
-//     clearAllButton.disabled = (selectedPoints.length === 0) || (selectedPoints[selectedPoints.length - 1].length === 0)
-//     clearAllDropdown.disabled = clearAllButton.disabled
-//     // clearAllDropdown.display = clearAllDropdown.disabled ? 'none' : 'block'
-//     // clearAllButton.display = clearAllButton.disabled ? 'none' : 'block'
-// }
-
 function refreshFreezeButton() {
     freezeButton.textContent = frozenPoints.length ? 'Unfreeze' : 'Freeze';
     freezeButton.disabled = (frozenPoints.length === 0) && ((selectedPoints.length === 0) || (selectedPoints[selectedPoints.length - 1].length === 0))
@@ -537,6 +524,9 @@ function rebuildModesList() {
             handleGlyphSelect(mode, modeSplineData[mode]['points'])
             refreshButtons();
             updatePointsField();
+
+            modeName.value = mode
+            modePattern.value = valuesDict['pattern']
         });
         modesList.appendChild(listItem);
     }
@@ -562,56 +552,17 @@ saveButton.addEventListener('click', () => {
                 )
 
         glyphSplineData[newName] = newPoints
-        // localStorage.setItem('glyphSplineData', JSON.stringify(glyphSplineData));
         saveSystems();  // from index.html
 
-        // axios.post('/save', data)
-        //     .then(response => {
-        //         if (response.data.status === 'success') {
-                    rebuildGlyphList();
-                    handleGlyphSelect(null);
-                    refreshButtons();
-                    updatePointsField();
-                    characterField.value = '';
-                    characterField.focus();
-            //     }
-            // });
+        rebuildGlyphList();
+        handleGlyphSelect(null);
+        refreshButtons();
+        updatePointsField();
+        characterField.value = '';
+        characterField.focus();
     }
 
 });
-
-// confirmSaveMode.addEventListener('click', () => {
-//     if (selectedPoints.length) {
-
-//         const newPoints = selectedPoints.map(spline =>
-//                 spline.map(([x, y]) => [(x + gridSize / 2) / gridSize - 0.5, (y + gridSize / 2) / gridSize - 0.5])
-//                 )
-//         modeSplineData[modeName.value.trim()] = newPoints
-//         saveSystems();
-
-//         // const data = {
-//         //     name: modeName.value.trim(),
-//         //     pattern: modePattern.value.trim(),
-//         //     points: selectedPoints.map(spline =>
-//         //         spline.map(([x, y]) => [(x + gridSize / 2) / gridSize, (y + gridSize / 2) / gridSize])
-//         //         ),
-//         //     as_mode: true,
-//         //     as_phrase: false,
-//         // };
-
-//         // axios.post('/save', data)
-//         //     .then(response => {
-//         //         if (response.data.status === 'success') {
-//                     rebuildModesList();
-//                     handleGlyphSelect(null);
-//                     refreshButtons();
-//                     updatePointsField();
-//                     characterField.value = '';
-//                     characterField.focus();
-//             //     }
-//             // });
-//     }
-// });
 
 // Function to reset mode name and pattern fields
 function resetModeFields() {
@@ -648,32 +599,16 @@ confirmSaveMode.addEventListener('click', () => {
             modeSplineData[modeName.value.trim()] = {points: newPoints, pattern: modePattern.value.trim()}
             saveSystems()
 
+            rebuildModesList();
+            handleGlyphSelect(null);
+            refreshButtons();
+            updatePointsField();
+            characterField.value = '';
+            characterField.focus();
 
-            // const data = {
-            //     name: modeName.value.trim(),
-            //     pattern: modePattern.value.trim(),
-            //     points: selectedPoints.map(spline =>
-            //         spline.map(([x, y]) => [(x + gridSize / 2) / gridSize, (y + gridSize / 2) / gridSize])
-            //     ),
-            //     as_mode: true,
-            //     as_phrase: false,
-            // };
-
-            // axios.post('/save', data)
-            //     .then(response => {
-            //         if (response.data.status === 'success') {
-                        rebuildModesList();
-                        handleGlyphSelect(null);
-                        refreshButtons();
-                        updatePointsField();
-                        characterField.value = '';
-                        characterField.focus();
-
-                        // Hide the modal after saving
-                        const saveModeModal = bootstrap.Modal.getInstance(document.getElementById('saveModeModal'));
-                        saveModeModal.hide();
-                //     }
-                // });
+            // Hide the modal after saving
+            const saveModeModal = bootstrap.Modal.getInstance(document.getElementById('saveModeModal'));
+            saveModeModal.hide();
         }
     }
 });
@@ -695,26 +630,12 @@ savePhrase.addEventListener('click', () => {
         phraseSplineData[characterField.value.trim()] = newPoints
         saveSystems()
 
-        // const data = {
-        //     name: characterField.value.trim(),
-        //     points: selectedPoints.map(spline =>
-        //         spline.map(([x, y]) => [(x + gridSize / 2) / gridSize, (y + gridSize / 2) / gridSize])
-        //     ),
-        //     as_phrase: true,
-        //     as_mode: false,
-        // };
-
-        // axios.post('/save', data)
-        //     .then(response => {
-        //         if (response.data.status === 'success') {
-                    rebuildPhrasesList();
-                    handleGlyphSelect(null);
-                    refreshButtons();
-                    updatePointsField();
-                    characterField.value = '';
-                    characterField.focus();
-            //     }
-            // });
+        rebuildPhrasesList();
+        handleGlyphSelect(null);
+        refreshButtons();
+        updatePointsField();
+        characterField.value = '';
+        characterField.focus();
     }
 });
 
@@ -733,52 +654,37 @@ clearButton.addEventListener('click', () => {
 
 deleteButton.addEventListener('click', () => {
     if (selectedPoints) {
-        // axios.post('/delete', { name: characterField.value.trim(), as_mode: false, as_phrase: false})
-        //     .then(response => {
-        //         if (response.data.status === 'success') {
-                    delete glyphSplineData[characterField.value.trim()]
-                    saveSystems();
-                    rebuildGlyphList();
-                    handleGlyphSelect(null);
-                    refreshButtons();
-                    updatePointsField();
-                    characterField.value = '';
-                    characterField.focus();
-                // }
-            // });
+        delete glyphSplineData[characterField.value.trim()]
+        saveSystems();
+        rebuildGlyphList();
+        handleGlyphSelect(null);
+        refreshButtons();
+        updatePointsField();
+        characterField.value = '';
+        characterField.focus();
     }
 });
 
 deleteMode.addEventListener('click', () => {
-    // axios.post('/delete', { name: characterField.value.trim(), as_mode: true, as_phrase: false})
-    //     .then(response => {
-    //         if (response.data.status === 'success') {
-                delete modeSplineData[characterField.value.trim()]
-                saveSystems();
-                rebuildModesList();
-                handleGlyphSelect(null);
-                refreshButtons();
-                updatePointsField();
-                characterField.value = '';
-                characterField.focus();
-            // }
-        // });
+    delete modeSplineData[characterField.value.trim()]
+    saveSystems();
+    rebuildModesList();
+    handleGlyphSelect(null);
+    refreshButtons();
+    updatePointsField();
+    characterField.value = '';
+    characterField.focus();
 });
 
 deletePhrase.addEventListener('click', () => {
-    // axios.post('/delete', { name: characterField.value.trim(), as_mode: false, as_phrase: true})
-    //     .then(response => {
-    //         if (response.data.status === 'success') {
-                delete phraseSplineData[characterField.value.trim()]
-                saveSystems();
-                rebuildPhrasesList();
-                handleGlyphSelect(null);
-                refreshButtons();
-                updatePointsField();
-                characterField.value = '';
-                characterField.focus();
-        //     }
-        // });
+    delete phraseSplineData[characterField.value.trim()]
+    saveSystems();
+    rebuildPhrasesList();
+    handleGlyphSelect(null);
+    refreshButtons();
+    updatePointsField();
+    characterField.value = '';
+    characterField.focus();
 });
 
 freezeButton.addEventListener('click', () => {
@@ -788,7 +694,6 @@ freezeButton.addEventListener('click', () => {
         frozenPoints = selectedPoints.map(point => point.slice())
         selectedPoints = []
 
-        // clearAllButton.click()
         refreshButtons();
 
     } else {  // unfreeze
@@ -796,7 +701,6 @@ freezeButton.addEventListener('click', () => {
         refreshFreezeButton();
     }
 
-    // freezeButton.textContent = (freezeButton.textContent === 'Freeze') ? 'Unfreeze' : 'Freeze';
     updatePointsField();
     characterField.focus();
 });
@@ -814,18 +718,7 @@ function debounce(func, delay) {
 const debouncedKeyCheck = debounce(keyCheck, 100);  // ms?
 
 function keyCheck(event) {
-    // handling typing in the character field,
-    // and listening for Ctrl, Shift or Esc clicks
-    // if (event.key === 'Control') {
-    //     freezeButton.click()
-    // } else if (event.key === 'Shift') {
-    //     // joinButton.click();
-    // } else if (event.key == 'Escape') {
-    //     clearButton.click()
-    // }
-    // else {
-        sortAndDisplayList();
-    // }
+    sortAndDisplayList();
 }
 
 // Bind the input event on textarea and change event on checkboxes
