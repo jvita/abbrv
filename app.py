@@ -502,7 +502,7 @@ def merge_word_splines(char_splines):
             # Process each array in the list of arrays for the current character
             for pi, points_array in enumerate(char_arrays):
                 shifted_points = points_array + current_shift
-                if not first_char_in_word:
+                if (pi == 0) and (not first_char_in_word):
                     # If not the first character in the word, shift the first array so that its first point is at [0, 0]
                     shifted_points -= points_array[0]
 
@@ -510,7 +510,7 @@ def merge_word_splines(char_splines):
                 first_char_in_word = False
 
                 # Update the shift to the last point of the last array in the current character
-                current_shift = current_word[-1][-1]  # Last point of the last array
+            current_shift = current_word[-1][-1]  # Last point of the last array
 
     # After the loop, add the last word if it's not empty
     if current_word:
