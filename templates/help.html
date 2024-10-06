@@ -188,7 +188,13 @@ I recommend asking an LLM to write a regex for you (e.g. "please write a regex t
     <figcaption style="margin-top: 10px;">When saving a glyph as a mode, a popup window will appear to additionally specify the name of the mode and the regular expression pattern used for matching the mode.</figcaption>
 </div>
 
-<br>
+Some examples of rules:
+
+<ul>
+    <li><b>Name</b>: "elevate 'th-'"; <b>regex</b>: <code>\bth</code>.</li>
+    <li><b>Name</b>: "'ay' diphthong"; <b>regex</b>: <code>(?$lt;![dtjqmnv])(ay|ya)</code>.</li>
+</ul>
+
 <br>
 <h3>Defining pre-processing rules</h3>
 A rule is a way of specifying find-and-replace operations that can be used to modify the text before mapping to glyphs.
