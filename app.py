@@ -553,6 +553,10 @@ def generate_splines(system_name):
 
     # Process each line of the text
     for line in text.splitlines():
+        if not len(line):  # empty line
+            current_vertical_offset -= line_spacing
+            continue
+
         word_splines = merge_word_splines(text_to_splines(
             client_system,
             modified_phrases_dict,  # accounting for currently-applied rules
@@ -606,7 +610,7 @@ def generate_splines(system_name):
 
     plt.xlim(xlims)
     plt.gca().set_aspect('equal', adjustable='box')
-    # plt.axis('off')
+    plt.axis('off')
     # Save and return the SVG plot
     return jsonify({'image': save_plot_as_svg()})
 
