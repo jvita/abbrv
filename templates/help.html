@@ -6,7 +6,28 @@
 
 {% block content %}
 <div class="main-content"></div>
-<h2>Overview</h2>
+<div id=""toc">
+    <h2>Table of Contents</h2>
+    <ul>
+        <li><a href="#overview">Overview</a></li>
+        <ul>
+            <li><a href="#terminology">Terminology</a></li>
+            <li><a href="#basics">Basics</a></li>
+        </ul>
+        <li><a href="#designing_a_system">Designing a system</a></li>
+        <ul>
+            <li><a href="#drafting_your_glyphs">Drafting your glyphs</a></li>
+            <li><a href="#abbreviating_common_phrases">Abbreviating common phrases</a></li>
+            <li><a href="#introducing_modes">Introducing modes</a></li>
+            <li><a href="#defining_preprocessing_rules">Defining pre-processing rules</li>
+            <li><a href="#general_advice">General advice</li>
+        </ul>
+        <li><a href="#writing">Writing</a></li>
+    </ul>
+</div>
+<hr>
+
+<h2 id="overview">Overview</h2>
 <br>
 This page outlines the key functionalities of <b>abbrv</b> and how it can be used to design a shorthand system.
 Note that this program was built with orthographic systems in mind (Orthic, in particular), and that as a result some of the functions and design choices may be better suited for working with these systems.
@@ -14,7 +35,7 @@ While it should still be possible to use <b>abbrv</b> to design a phonetic syste
 
 <br>
 <br>
-<h3>Terminology</h3>
+<h3 id="terminology">Terminology</h3>
 
 In <b>abbrv</b>, the following terminology is used:
 <ol>
@@ -28,12 +49,26 @@ In <b>abbrv</b>, the following terminology is used:
     <li><b>Mode</b>: a new glyph, or a modified form of an existing glyph, which is used in specific cases depending upon the surrounding text. For example, in Orthic, the practice of omitting <code>th-</code> at the beginning of a word and elevating the subsequent glyphs above the baseline.</li>
 </ol>
 
-<hr>
-<h2 id="text_to_glyphs">Converting text to glyphs</h2>
+<h3 id="basics">Basics</h3>
 <br>
 
-Before beginning to design a new shorthand system, it will be useful to review the basics of how <b>abbrv</b> processes text, converts words to glyphs, and draws the glyphs.
-Understanding these rules will be particularly useful when drafting your own glyphs and debugging any issues.
+Before doing anything, you must first select the system that you want to use:
+
+<div style="text-align: center; padding: 20px;">
+    <img src="/static/data/images/system_selector.png" alt="The system selector dropdown menu." />
+    <figcaption style="margin-top: 10px;">
+        The system selector dropdown menu. Choose a system to begin writing in it on the <a href="{{ url_for('write') }}">write page</a> or editing it on the <a href="{{ url_for('draft') }}">draft page</a>. If no system is selected, any edits you make will be for a new system, which you can then export to store locally. The currently-available systems are listed first, followed by the buttons:
+        <br>
+        <b>Download</b>: download an existing system from the server.
+        <br>
+        <b>Import</b>: import an existing system from your local files.
+        <br>
+        <b>Export</b>: export your current system to a local file.
+    </figcaption>
+</div>
+
+Once you have selected a system, it will be useful to review the basics of how <b>abbrv</b> processes text, converts words to glyphs, and draws the glyphs.
+Understanding these rules will be particularly useful when designing your own system and debugging any issues.
 <br>
 <br>
 The following steps are applied in order:
@@ -63,7 +98,7 @@ Using <b>abbrv</b> to design a new shorthand system will typically involves four
 
 <br>
 <br>
-<h3>Drafting your glyphs</h3>
+<h3 id="drafting_your_glyphs">Drafting your glyphs</h3>
 
 A glyph is defined using one or more <a href="https://mathworld.wolfram.com/CubicSpline.html" target="_blank">cubic splines</a>.
 Individual splines are created by specifying the positions of the spline knot points, which are then smoothly interpolated between to construct the spline.
@@ -166,7 +201,7 @@ The buttons panel can be used for saving, deleting and "freezing" glyphs, and fo
 
 <br>
 <br>
-<h3>Abbreviating common phrases</h3>
+<h3 id="abbreviating_common_phrases">Abbreviating common phrases</h3>
 When saving a glyph, you can choose the "as phrase" option to specify that the glyph corresponds to an entire word or phrase.
 This is similar to a regular glyph, with the difference that it can only be used to represent an entire word rather than a subset of a word.
 For example, if you define a glyph for the word <code>do</code>, it will <i>not</i> also be used in the word <code>adore</code>.
@@ -179,7 +214,7 @@ However, if you save <code>do</code> directly as a glyph (not as a phrase), then
 
 <br>
 <br>
-<h3>Introducing modes</h3>
+<h3 id="introducing_modes">Introducing modes</h3>
 A "mode" is similar to a phrase and a regular glyph, with the additional flexibility of being able to be used to replace any pattern using a <a href="https://regexone.com/">regular expression</a>.
 I recommend asking an LLM to write a regex for you (e.g. "please write a regex that matches 'a' and 'o' before 'm' or 'n'"), then using the site <a href="https://regex101.com/">regex101</a> to make sure that the matching is working properly.
 
@@ -191,12 +226,17 @@ I recommend asking an LLM to write a regex for you (e.g. "please write a regex t
 Some examples of rules:
 
 <ul>
-    <li><b>Name</b>: "elevate 'th-'"; <b>regex</b>: <code>\bth</code>.</li>
-    <li><b>Name</b>: "'ay' diphthong"; <b>regex</b>: <code>(?$lt;![dtjqmnv])(ay|ya)</code>.</li>
+    <li><b>Name</b>: elevate "th-""; <b>regex</b>: <code>\bth</code>.</li>
+    <li><b>Name</b>: "ay" diphthong; <b>regex</b>: <code>(?$lt;![dtjqmnv])(ay|ya)</code>.</li>
+    <li><b>Name</b>: "s" after "e/i"; <b>regex</b>: <code>(?$lt;=[ei])s(?![hlr])</code>.</li>
+    <ul>
+        <li>This pattern can be very useful for modifying a single-character glyph based on the preceding character without having to modify every other possible preceding glyph. For example, modifying <code>s</code> after <code>e</code> or <code>i</code> without also modifying <code>ge</code>, <code>ki</code>, <code>ce</code>, ...</li>
+        <li>Note that this can sometimes require more creative uses of regular expressions. In the example here, we have to be careful to specify that it should not match if the <code>s</code> is followed by <code>h</code>, <code>l</code>, or <code>r</code>, since all of these have modified forms when combined with <code>s</code>.</li>
+    </ul>
 </ul>
 
 <br>
-<h3>Defining pre-processing rules</h3>
+<h3 id="defining_preprocessing_rules">Defining pre-processing rules</h3>
 A rule is a way of specifying find-and-replace operations that can be used to modify the text before mapping to glyphs.
 The <a href="{{ url_for('rules') }}">rules page</a> can be used for defining new rules.
 
@@ -208,15 +248,26 @@ The <a href="{{ url_for('rules') }}">rules page</a> can be used for defining new
 Some examples of rules:
 
 <ul>
-    <li><b>Name</b>: "remove consecutive duplicates"; <b>regex</b>: <code>(.)\1+</code>; <b>replacement</b>: <code>\1</code>.</li>
+    <li><b>Name</b>: remove consecutive duplicates; <b>regex</b>: <code>(.)\1+</code>; <b>replacement</b>: <code>\1</code>.</li>
     <ul>
         <li>Note the use of <code>\1</code> for the replacement text, which replaces the matched pattern with the text prior to the match.</li>
     </ul>
-    <li><b>Name</b>: "omit 'e' in '-ed'"; <b>regex</b>: <code>\b(\w*?ed\b</code>; <b>replacement</b>: <code>\1d</code>.</li>
+    <li><b>Name</b>: omit "e" in "-ed"; <b>regex</b>: <code>\b(\w*?ed\b</code>; <b>replacement</b>: <code>\1d</code>.</li>
+</ul>
+
+<h3 id="general_advice">General advice</h3>
+<ul>
+    <li>Start by defining glyphs for your alphabet or phenomes.</li>
+    <li>If implementing an existing system (Gregg, Pitman, Teeline, ...), try writing any examples from the system's documentation and adding modes/phrases to your implementation as necessary.</li>
+    <li>When working with a two-character pattern, use a "mode" if only the first character requires a modified pattern.This can help reduce the total number of glyphs + modes that you have to define.</li>
+    <ul>
+        <li>For example, in Orthic the glyph for <code>f</code> must be modified if followed by <code>e</code> or <code>i</code>, but the following character is left unchanged. By defining this modification as a mode rather than a glyph, you can avoid having to define even more multi-character glyphs that <i>start</i> with <code>e</code> (e.g., if you already defined the glyphs <code>em</code>, <code>ec</code>, and <code>en</code>, you don't also have to define <code>fem</code>, <code>fec</code>, and <code>fin</code>).</li>
+    </ul>
+    <!-- <li>Define new glyphs sparingly; use modes when possible. This can help reduce the total number of glyphs + phrases + modes that you have to define.</li> -->
 </ul>
 
 <hr>
-<h2>Writing</h2>
+<h2 id="writing">Writing</h2>
 The <a href="{{ url_for('write') }}">write page</a> can be used for testing out your newly-created shorthand system.
 This can be useful while drafting your glyphs to confirm that they are being drawn and joined as you expect them to be.
 The buttons can be used to choose which modifications you would like applied to your text:
