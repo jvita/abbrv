@@ -501,16 +501,16 @@ def merge_word_splines(char_splines):
         else:
             # Process each array in the list of arrays for the current character
             for pi, points_array in enumerate(char_arrays):
-                shifted_points = points_array + current_shift
-                if (pi == 0) and (not first_char_in_word):
+                shifted_points = np.array(points_array)
+                if not first_char_in_word:
                     # If not the first character in the word, shift the first array so that its first point is at [0, 0]
-                    shifted_points -= points_array[0]
+                    shifted_points -= np.array(char_arrays[0][0])
 
-                current_word.append(shifted_points)
-                first_char_in_word = False
+                current_word.append(shifted_points + current_shift)
 
-                # Update the shift to the last point of the last array in the current character
+            # Update the shift to the last point of the last array in the current character
             current_shift = current_word[-1][-1]  # Last point of the last array
+            first_char_in_word = False
 
     # After the loop, add the last word if it's not empty
     if current_word:
@@ -566,16 +566,18 @@ def generate_splines(system_name):
         # Process each word in the line
         for word in word_splines:
             xmin = word[0][:, 0].min()
+
             for points in word:
                 shifted_points = points
                 shifted_points[:, 0] -= xmin  # handle negative shift in first char
                 shifted_points += current_shift
-                splines_to_plot.append(shifted_points)
 
                 # Update line and overall horizontal boundaries
                 line_x_pos = max(shifted_points[:, 0].max(), line_x_pos)
                 right_most_point = max(shifted_points[:, 0].max(), right_most_point)
                 left_most_point = min(shifted_points[:, 0].min(), left_most_point)
+
+                splines_to_plot.append(shifted_points)
 
             # Shift for the next word
             current_shift = np.array([line_x_pos + space_between_words, 0])
@@ -587,7 +589,7 @@ def generate_splines(system_name):
         # Adjust vertical offset for the current line
         current_vertical_offset -= highest_point_current_line
 
-        # Plot the splines for this line
+        # Plot the splines for this lini
         for points in splines_to_plot:
             shifted_points = points + np.array([0, current_vertical_offset])
             plot_spline(shifted_points, show_dots, show_knots)  # Reusable plot helper function
@@ -604,7 +606,7 @@ def generate_splines(system_name):
 
     plt.xlim(xlims)
     plt.gca().set_aspect('equal', adjustable='box')
-    plt.axis('off')
+    # plt.axis('off')
     # Save and return the SVG plot
     return jsonify({'image': save_plot_as_svg()})
 
@@ -612,7 +614,7 @@ def generate_splines(system_name):
 def plot_spline(points, show_dots=True, show_knots=False):
     """Plots individual splines."""
     if points.shape[0] == 1 and show_dots:
-        plt.plot(points[:, 0], points[:, 1], 'ko', markersize=2.1)
+        plt.plot(points[:, 0], points[:, 1], 'ko', markersize=1.0)
     else:
         x, y = interpolate_points(points)
         plt.plot(x, y, 'k', linewidth=2, solid_capstyle='round')
