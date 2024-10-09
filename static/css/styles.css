@@ -20,7 +20,8 @@
     --background-color: #ffffff;
     --disabled-color: #4d4a4a;
     --accent-color: #a1a09f;
-    --ink-color: #0B0B0B;
+    /* --ink-color: #0B0B0B; */
+    --ink-color: #366df6;
     --selected-color: #366df6;
     --dark-selected-color: #2250c6;
     --freeze-color: #3ca2b6;
