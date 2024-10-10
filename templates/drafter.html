@@ -174,7 +174,7 @@ function drawGrid() {
 
     // Draw horizontal lines at intervals of 240, starting at 80 up to 2980
     gridCtx.beginPath();  // Start a new path for the horizontal lines
-    for (let y = 80; y <= 2980; y += 240) {
+    for (let y = 80; y <= 2980; y += 120) {
         gridCtx.moveTo(0, y);     // Start point of the line at (0, y)
         gridCtx.lineTo(3040, y);  // End point of the line at (3040, y)
     }
@@ -182,7 +182,7 @@ function drawGrid() {
 
     // Draw vertical lines at intervals of 240, starting at 80 up to 2980
     gridCtx.beginPath();  // Start a new path for the horizontal lines
-    for (let x = 80; x <= 2980; x += 240) {
+    for (let x = 80; x <= 2980; x += 120) {
         gridCtx.moveTo(x, 0);     // Start point of the line at (0, y)
         gridCtx.lineTo(x, 3040);  // End point of the line at (3040, y)
     }
@@ -200,13 +200,13 @@ function drawPoints(points = null, color = colorSelected) {
     if (!points) {
         selectedPoints.forEach(([x, y]) => {
             splineCtx.beginPath();
-            splineCtx.arc(centerOffset + x * cellSize, centerOffset - y * cellSize, 5, 0, Math.PI * 2);
+            splineCtx.arc(centerOffset + x * cellSize, centerOffset - y * cellSize, 6, 0, Math.PI * 2);
             splineCtx.fill();
         });
     } else {
         points.forEach(([x, y]) => {
             splineCtx.beginPath();
-            splineCtx.arc(centerOffset + x * cellSize, centerOffset - y * cellSize, 5, 0, Math.PI * 2);
+            splineCtx.arc(centerOffset + x * cellSize, centerOffset - y * cellSize, 6, 0, Math.PI * 2);
             splineCtx.fill();
         });
     }
@@ -257,7 +257,7 @@ function plotSpline(points, color = colorInk, callback = null) {
         axios.post('/spline', { points })
             .then(response => {
                 splineCtx.beginPath();
-                splineCtx.lineWidth = 4; // Thicker line width for spline
+                splineCtx.lineWidth = 5; // Thicker line width for spline
                 splineCtx.strokeStyle = color;
                 splineCtx.lineCap = 'round'
                 const spline = response.data.spline;
