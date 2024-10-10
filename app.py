@@ -418,29 +418,7 @@ def text_to_splines(system, modified_phrases_dict, text, modes, abbrv_words=Fals
     while i < len(text):
         matched = False
 
-        # Step 1: Try matching each regex pattern starting at the current index
-        longest_match = None  # for only matching the longest found pattern
-        best_value = None
-        for mode in modes:
-            regex = modes_dict[mode]['pattern']
-            value = modes_dict[mode]['points']
-
-            pattern = re.compile(regex)
-            match = pattern.match(text, i)  # Check if the regex matches at the current position
-            if match:
-                match_length = len(match.group())
-                if longest_match is None or match_length > len(longest_match.group()):
-                    longest_match = match
-                    best_value = value
-
-        # Add the corresponding points value to the list
-        if best_value is not None:
-            glyphs.append(best_value)
-            # Move the index forward by the length of the matched substring
-            i += len(longest_match.group(0))
-            matched = True
-
-        # Step 2: If no regex pattern matched, check for phrases in phrases_dict
+        # Step 1: Check for phrases in phrases_dict
         if not matched and abbrv_words:
             best_phrase = None
             best_value = None
@@ -463,6 +441,28 @@ def text_to_splines(system, modified_phrases_dict, text, modes, abbrv_words=Fals
                 # Move the index forward by the length of the matched phrase
                 i += max_phrase_len
                 matched = True
+
+        # Step 2: Try matching each regex pattern starting at the current index
+        longest_match = None  # for only matching the longest found pattern
+        best_value = None
+        for mode in modes:
+            regex = modes_dict[mode]['pattern']
+            value = modes_dict[mode]['points']
+
+            pattern = re.compile(regex)
+            match = pattern.match(text, i)  # Check if the regex matches at the current position
+            if match:
+                match_length = len(match.group())
+                if longest_match is None or match_length > len(longest_match.group()):
+                    longest_match = match
+                    best_value = value
+
+        # Add the corresponding points value to the list
+        if best_value is not None:
+            glyphs.append(best_value)
+            # Move the index forward by the length of the matched substring
+            i += len(longest_match.group(0))
+            matched = True
 
         # Step 3: If no phrase or regex matched, check the longest match in char_dict
         if not matched:
