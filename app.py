@@ -465,6 +465,7 @@ def text_to_splines(system, modified_phrases_dict, text, modes, abbrv_words=Fals
             matched = True
 
         # Step 3: If no phrase or regex matched, check the longest match in char_dict
+        print(text)
         if not matched:
             max_key_len = 0
             best_match = None
@@ -473,6 +474,7 @@ def text_to_splines(system, modified_phrases_dict, text, modes, abbrv_words=Fals
             # Iterate over each key in char_dict to find the longest match at the current position
             for key, value in glyphs_dict.items():
                 if text[i:i + len(key)] == key and len(key) > max_key_len:
+                    print(f'Matched: {key=}')
                     max_key_len = len(key)
                     best_match = key
                     best_value = value
