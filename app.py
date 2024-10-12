@@ -450,12 +450,19 @@ def text_to_splines(system, modified_phrases_dict, text, modes, abbrv_words=Fals
             value = modes_dict[mode]['points']
 
             pattern = re.compile(regex)
-            match = pattern.match(text, i)  # Check if the regex matches at the current position
-            if match:
-                match_length = len(match.group())
+            match = re.search(pattern, text[i:])
+            print(match, match.start() if match is not None else None)
+            if match and match.start() == 0:
+                match_length = len(match.group(0))
                 if longest_match is None or match_length > len(longest_match.group()):
                     longest_match = match
                     best_value = value
+            # match = pattern.match(text, i)  # Check if the regex matches at the current position
+            # if match:
+            #     match_length = len(match.group())
+            #     if longest_match is None or match_length > len(longest_match.group()):
+            #         longest_match = match
+            #         best_value = value
 
         # Add the corresponding points value to the list
         if best_value is not None:
@@ -465,7 +472,6 @@ def text_to_splines(system, modified_phrases_dict, text, modes, abbrv_words=Fals
             matched = True
 
         # Step 3: If no phrase or regex matched, check the longest match in char_dict
-        print(text)
         if not matched:
             max_key_len = 0
             best_match = None
@@ -474,7 +480,6 @@ def text_to_splines(system, modified_phrases_dict, text, modes, abbrv_words=Fals
             # Iterate over each key in char_dict to find the longest match at the current position
             for key, value in glyphs_dict.items():
                 if text[i:i + len(key)] == key and len(key) > max_key_len:
-                    print(f'Matched: {key=}')
                     max_key_len = len(key)
                     best_match = key
                     best_value = value
