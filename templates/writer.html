@@ -85,16 +85,6 @@
 
         document.getElementById('downloadButton').addEventListener('click', downloadSVG);
 
-        // Select the multi-select dropdown or checkboxes
-        const modeCheckboxes = document.querySelectorAll('input[name="modes"]');
-
-        // Add change event listener to each checkbox
-        modeCheckboxes.forEach(function (checkbox) {
-            checkbox.addEventListener('change', function () {
-                updatePlot();
-            });
-        });
-
         // Function to escape special characters for HTML
         function escapeHtml(unsafe) {
             return unsafe
@@ -163,11 +153,21 @@
             }
         }
 
+        // Select the multi-select dropdown or checkboxes
+        const modeCheckboxes = document.querySelectorAll('input[name="modes"]');
+
+        // Add change event listener to each checkbox
+        modeCheckboxes.forEach(function (checkbox) {
+            checkbox.addEventListener('change', function () {
+                updatePlot();
+            });
+        });
+
         let debounceTimeout;
 
         function updatePlot() {
 
-            console.log('selectedSystem', selectedSystem)
+            console.log('updatePlot()')
             if (!selectedSystem) {
                 $('#output').html('<p>Please select a system first.</p>');
             } else {

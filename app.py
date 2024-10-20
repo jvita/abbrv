@@ -407,6 +407,139 @@ def process_text(text, applied_rules, system):
 
     return text, modified_phrases_dict
 
+def tokenize_string(word, system):
+    """
+    Tokenizes a single word using a dictionary of regular expressions and corresponding lists of arrays.
+    The function searches for the tokenization with the fewest possible tokens and prioritizes the largest actual match.
+    If multiple tokenizations have the same number of tokens, it prioritizes the largest token.
+    If tokenizations have the same largest token, it prioritizes the one using the longest regex pattern for that token.
+    If regex patterns for the largest token are the same length, it checks the lengths of regex patterns for the remaining tokens.
+    """
+    # Pre-compile all regular expressions for efficiency
+    regex_dict = {k: v for k, v in list(system['glyphs'].items())[17:]}
+    regex_dict.update({
+        v['pattern']: v['points'] for v in system['modes'].values()
+    })
+    regex_dict = {re.compile(pattern): value for pattern, value in regex_dict.items()}
+
+    # Cache results to avoid recalculating for the same word (Memoization)
+    memo = {}
+
+    def compare_regex_lengths(tokenization_a, tokenization_b):
+        """Helper function to compare regex pattern lengths for two tokenizations."""
+        for (regex_a, regex_b) in zip(tokenization_a, tokenization_b):
+            if len(regex_a) != len(regex_b):
+                return len(regex_a) > len(regex_b)
+        return False  # If all regexes are the same length, consider them equal
+
+    def find_best_tokenization(start):
+        # Base case: if we've reached the end of the word, return an empty list
+        if start == len(word):
+            return [], 0, 0, []  # (tokenization, number of tokens, length of largest token, list of regex patterns)
+
+        # If this start point is already computed, return the cached result
+        if start in memo:
+            return memo[start]
+
+        best_tokenization = None
+        fewest_tokens = float('inf')
+        longest_token_length = 0
+        regex_list_for_best_tokenization = []
+
+        # Try to find the best match at this starting point
+        for pattern, array_list in regex_dict.items():
+            match = pattern.match(word, start)
+            if match:
+                match_length = len(match.group())
+                remaining_tokens, remaining_count, largest_remaining_token, remaining_regex_list = find_best_tokenization(start + match_length)
+
+                current_largest_token = max(match_length, largest_remaining_token)
+                current_regex_list = [pattern.pattern] + remaining_regex_list
+                candidate_tokenization = array_list + remaining_tokens
+                candidate_token_count = 1 + remaining_count
+
+                # Select candidate with fewer tokens
+                if candidate_token_count < fewest_tokens:
+                    fewest_tokens = candidate_token_count
+                    longest_token_length = current_largest_token
+                    regex_list_for_best_tokenization = current_regex_list
+                    best_tokenization = candidate_tokenization
+
+                # If the same number of tokens, select the one with the longest single token
+                elif candidate_token_count == fewest_tokens:
+                    if current_largest_token > longest_token_length:
+                        longest_token_length = current_largest_token
+                        regex_list_for_best_tokenization = current_regex_list
+                        best_tokenization = candidate_tokenization
+                    # If the largest token length is the same, check regex length for the largest token
+                    elif current_largest_token == longest_token_length:
+                        # If the first regex is longer, prefer this tokenization
+                        if len(current_regex_list[0]) > len(regex_list_for_best_tokenization[0]):
+                            regex_list_for_best_tokenization = current_regex_list
+                            best_tokenization = candidate_tokenization
+                        # If the first regex is the same length, compare subsequent regex patterns
+                        elif len(current_regex_list[0]) == len(regex_list_for_best_tokenization[0]):
+                            if compare_regex_lengths(current_regex_list, regex_list_for_best_tokenization):
+                                regex_list_for_best_tokenization = current_regex_list
+                                best_tokenization = candidate_tokenization
+
+        # Cache the result
+        memo[start] = (best_tokenization, fewest_tokens, longest_token_length, regex_list_for_best_tokenization)
+        return memo[start]
+
+    # Start the recursive search from the beginning of the word
+    final_tokenization, _, _, _ = find_best_tokenization(0)
+    return final_tokenization
+    
+def tokenize_with_multi_words(text, system, multi_word_tokens):
+    """
+    Tokenizes the text by first finding multi-word tokens, then tokenizing the remaining words.
+    Returns a list of lists, where each inner list contains tokens for one word or phrase.
+    """
+
+    regex_list = list(system['glyphs'].keys())[17:]
+    regex_list += [p['pattern'] for p in system['modes'].values()]
+
+    # Step 1: Find multi-word tokens
+    text_with_placeholders, multi_word_matches = find_multi_word_tokens(text, multi_word_tokens)
+
+    # Step 2: Tokenize remaining single words using tokenize_string()
+    remaining_words = text_with_placeholders.split()
+    all_tokens = []
+    
+    for word in remaining_words:
+        if word == "§":
+            # This is a placeholder for a multi-word token
+            all_tokens.append(system['phrases'][multi_word_matches.pop(0)])  # Keep multi-word as a single token list
+        else:
+
+            # Tokenize the remaining word and append the token list for that word
+            all_tokens.append(tokenize_string(word, system))
+
+    return all_tokens
+
+def find_multi_word_tokens(text, multi_word_tokens):
+    """
+    Finds and extracts multi-word tokens from the text.
+    Returns the text with multi-word tokens replaced by placeholders and the list of multi-word matches.
+    """
+    matches = []
+    # Escape special regex characters in the multi-word tokens
+    escaped_tokens = [re.escape(token) for token in multi_word_tokens]
+    
+    # Create a regex pattern that matches any of the multi-word tokens
+    multi_word_pattern = re.compile(r'\b(' + '|'.join(escaped_tokens) + r')\b')
+    
+    # Replace multi-word tokens with a placeholder and store them in the matches list
+    def replace_multi_word(match):
+        matches.append([match.group()])  # tokenization should be a list of lists
+        return "§"  # Placeholder for multi-word token
+
+    # Replace multi-word tokens in the text
+    new_text = multi_word_pattern.sub(replace_multi_word, text)
+    
+    return new_text, matches
+
 def text_to_splines(system, modified_phrases_dict, text, modes, abbrv_words=False):
     glyphs_dict = system['glyphs']
     modes_dict = system['modes']
@@ -451,7 +584,6 @@ def text_to_splines(system, modified_phrases_dict, text, modes, abbrv_words=Fals
 
             pattern = re.compile(regex)
             match = re.search(pattern, text[i:])
-            print(match, match.start() if match is not None else None)
             if match and match.start() == 0:
                 match_length = len(match.group(0))
                 if longest_match is None or match_length > len(longest_match.group()):
@@ -496,41 +628,77 @@ def text_to_splines(system, modified_phrases_dict, text, modes, abbrv_words=Fals
 
     return glyphs
 
-def merge_word_splines(char_splines):
+def tokens_to_splines(tokens, token_map):
+
+    splines = []
+    for word_tokens in tokens:
+        tmp = []
+        for t in word_tokens:
+            tmp.extend(token_map[t])
+        splines.append(tmp)
+
+    return splines
+
+# def merge_word_splines(char_splines):
+#     # Initialize a list to store the concatenated points for each word
+#     words = []
+#     current_word = []
+
+#     # Initialize the shift to [0, 0] for the first character
+#     current_shift = np.array([0, 0])
+#     first_char_in_word = True
+#     for char_arrays in char_splines:
+#         if char_arrays is None:
+#             # If None is encountered, it marks the end of a word
+#             if current_word:
+#                 words.append(current_word)  # Add the current word to the words list
+#                 current_word = []  # Reset for the next word
+#             current_shift = np.array([0, 0])  # Reset the shift for the next word
+#             first_char_in_word = True
+#         else:
+#             # Process each array in the list of arrays for the current character
+#             for pi, points_array in enumerate(char_arrays):
+#                 shifted_points = np.array(points_array)
+#                 if not first_char_in_word:
+#                     # If not the first character in the word, shift the first array so that its first point is at [0, 0]
+#                     shifted_points -= np.array(char_arrays[0][0])
+
+#                 current_word.append(shifted_points + current_shift)
+
+#             # Update the shift to the last point of the last array in the current character
+#             current_shift = current_word[-1][-1]  # Last point of the last array
+#             first_char_in_word = False
+
+#     # After the loop, add the last word if it's not empty
+#     if current_word:
+#         words.append(current_word)
+
+#     return words
+
+def merge_word_splines(text_splines):
     # Initialize a list to store the concatenated points for each word
     words = []
-    current_word = []
 
     # Initialize the shift to [0, 0] for the first character
-    current_shift = np.array([0, 0])
-    first_char_in_word = True
-    for char_arrays in char_splines:
-        if char_arrays is None:
-            # If None is encountered, it marks the end of a word
-            if current_word:
-                words.append(current_word)  # Add the current word to the words list
-                current_word = []  # Reset for the next word
-            current_shift = np.array([0, 0])  # Reset the shift for the next word
-            first_char_in_word = True
-        else:
-            # Process each array in the list of arrays for the current character
-            for pi, points_array in enumerate(char_arrays):
-                shifted_points = np.array(points_array)
-                if not first_char_in_word:
-                    # If not the first character in the word, shift the first array so that its first point is at [0, 0]
-                    shifted_points -= np.array(char_arrays[0][0])
+    for word_splines in text_splines:
+        current_word = []
+        current_shift = np.array([0, 0])
+        # Process each array in the list of arrays for the current character
+        for pi, points_array in enumerate(word_splines):
+            shifted_points = np.array(points_array)
+            # if not first_char_in_word:
+            if pi != 0:
+                # If not the first character in the word, shift the first array so that its first point is at [0, 0]
+                shifted_points -= shifted_points[0]
 
-                current_word.append(shifted_points + current_shift)
-
+            current_word.append(shifted_points + current_shift)
             # Update the shift to the last point of the last array in the current character
             current_shift = current_word[-1][-1]  # Last point of the last array
-            first_char_in_word = False
 
-    # After the loop, add the last word if it's not empty
-    if current_word:
-        words.append(current_word)
+        words.append(current_word)  # Add the current word to the words list
 
     return words
+
 
 @app.route('/generate_splines/<system_name>', methods=['POST'])
 def generate_splines(system_name):
@@ -550,11 +718,23 @@ def generate_splines(system_name):
 
     client_system = json.loads(request.form.get('system'))
 
+    # all_mappings = client_system['glyphs']
+    # all_mappings.update(client_system['phrases'])
+    # all_mappings.update(
+    #     {v['pattern']: v['points'] for v in client_system['modes'].values()}
+    #     )
+    
+    # all_mappings = {
+    #     k: [np.array(p) for p in l] for k,l in all_mappings.items()
+    # }
+
     abbrv_words = 'abbrv_words' in request.form
     show_dots = 'show_dots' in request.form
     show_knots = 'show_knot_points' in request.form
     show_baselines = 'show_baselines' in request.form
     modes = request.form.getlist('modes')
+    print(f'{modes=}')
+    client_system['modes'] = {k:v for k,v in client_system['modes'].items() if k in modes}
     rules = request.form.getlist('rules')
 
     text, modified_phrases_dict = process_text(text, rules, client_system)
@@ -571,13 +751,23 @@ def generate_splines(system_name):
             current_vertical_offset -= line_spacing
             continue
 
-        word_splines = merge_word_splines(text_to_splines(
-            client_system,
-            modified_phrases_dict,  # accounting for currently-applied rules
-            line,
-            modes,
-            abbrv_words
-            ))
+        splines = tokenize_with_multi_words(line, client_system, modified_phrases_dict)
+
+        # print(f'{tokens=}')
+        # TODO: need to map regex patterns to splines immediately, since otherwise
+        # things like "ing" won't find the spline of 'ing\b'
+
+        # splines = tokens_to_splines(tokens, all_mappings)
+
+        word_splines = merge_word_splines(splines)
+
+        # word_splines = merge_word_splines(text_to_splines(
+        #     client_system,
+        #     modified_phrases_dict,  # accounting for currently-applied rules
+        #     line,
+        #     modes,
+        #     abbrv_words
+        #     ))
         current_shift = np.array([0, 0])
         line_x_pos, splines_to_plot = 0, []
 
