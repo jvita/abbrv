@@ -376,6 +376,10 @@ function handleGlyphSelect(glyph, glyphPoints = null, append = false) {
                 );
         }
 
+        if (selectedPoints.length === 0) {
+            // selecting the first set of points, so re-center
+            centerGridView();
+        }
         selectedPoints = selectedPoints.concat(shiftedAppendPoints)
 
         selectedGlyphs.push(glyph)
@@ -770,7 +774,7 @@ rebuildGlyphList();
 rebuildPhrasesList();
 rebuildModesList();
 
-document.addEventListener("DOMContentLoaded", function() {
+function centerGridView() {
     const gridContainer = document.querySelector('.grid-container');
     const containerWidth = gridContainer.clientWidth;
     const containerHeight = gridContainer.clientHeight;
@@ -779,6 +783,10 @@ document.addEventListener("DOMContentLoaded", function() {
 
     gridContainer.scrollLeft = (gridWidth - containerWidth) / 2;
     gridContainer.scrollTop = (gridHeight - containerHeight) / 2;
+}
+
+document.addEventListener("DOMContentLoaded", function() {
+    centerGridView()
 });
 
 characterField.focus();
