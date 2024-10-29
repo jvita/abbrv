@@ -492,7 +492,7 @@ def tokenize_string(word, system):
     final_tokenization, _, _, _ = find_best_tokenization(0)
     return final_tokenization
     
-def tokenize_with_multi_words(text, system, multi_word_tokens):
+def tokenize_with_multi_words(text, system, multi_word_tokens, abbrv_words=False):
     """
     Tokenizes the text by first finding multi-word tokens, then tokenizing the remaining words.
     Returns a list of lists, where each inner list contains tokens for one word or phrase.
@@ -502,7 +502,11 @@ def tokenize_with_multi_words(text, system, multi_word_tokens):
     regex_list += [p['pattern'] for p in system['modes'].values()]
 
     # Step 1: Find multi-word tokens
-    text_with_placeholders, multi_word_matches = find_multi_word_tokens(text, multi_word_tokens)
+    if abbrv_words:
+        text_with_placeholders, multi_word_matches = find_multi_word_tokens(text, multi_word_tokens)
+    else:
+        text_with_placeholders = text
+        multi_word_matches = []
 
     # Step 2: Tokenize remaining single words using tokenize_string()
     remaining_words = text_with_placeholders.split()
@@ -625,7 +629,9 @@ def generate_splines(system_name):
             current_vertical_offset -= line_spacing
             continue
 
-        splines = tokenize_with_multi_words(line, client_system, modified_phrases_dict)
+        splines = tokenize_with_multi_words(
+            line, client_system, modified_phrases_dict, abbrv_words
+            )
 
         word_splines = merge_word_splines(splines)
 
