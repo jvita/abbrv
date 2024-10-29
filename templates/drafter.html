@@ -376,10 +376,10 @@ function handleGlyphSelect(glyph, glyphPoints = null, append = false) {
                 );
         }
 
-        if (selectedPoints.length === 0) {
-            // selecting the first set of points, so re-center
-            centerGridView();
-        }
+        // if (selectedPoints.length === 0) {
+        //     // selecting the first set of points, so re-center
+        //     centerGridView();
+        // }
         selectedPoints = selectedPoints.concat(shiftedAppendPoints)
 
         selectedGlyphs.push(glyph)

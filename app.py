@@ -404,18 +404,13 @@ def merge_word_splines(text_splines):
     # Initialize a list to store the concatenated points for each word
     words = []
 
-    print(f'{len(text_splines)=}')
-
     # Initialize the shift to [0, 0] for the first character
     for word_splines in text_splines:
-        print(f'{len(word_splines)=}')
         current_word = []
         current_shift = np.array([0, 0])
         # Process each array in the list of arrays for the current character
         for gi, glyph_splines in enumerate(word_splines):
-            print(f'{len(glyph_splines)=}')
             for points in glyph_splines:
-                print(f'{points=}')
                 shifted_points = np.array(points)
                 if gi != 0:
                     # If not the first character in the word, shift the first array so that its first point is at [0, 0]
