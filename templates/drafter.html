@@ -492,7 +492,7 @@ function rebuildPhrasesList() {
         listItem.addEventListener('click', (event) => {
             characterField.focus()
             characterField.value = phrase
-            handleGlyphSelect(phrase, points)
+            handleGlyphSelect(phrase, points, event.ctrlKey)
             refreshButtons();
             updatePointsField();
         });
@@ -516,7 +516,7 @@ function rebuildModesList() {
         listItem.addEventListener('click', (event) => {
             characterField.focus()
             characterField.value = mode
-            handleGlyphSelect(mode, modeSplineData[mode]['points'])
+            handleGlyphSelect(mode, modeSplineData[mode]['points'], event.ctrlKey)
             refreshButtons();
             updatePointsField();
 
