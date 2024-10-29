@@ -24,17 +24,8 @@ app = Flask(__name__)
 
 # File paths for single-character and multi-character splines
 SYSTEMS_FOLDER = 'static/data/systems'
-# GLYPHS_FILE = 'static/data/glyphs.json'
-# PHRASES_FILE = 'static/data/phrases.json'
-# MODES_FILE = 'static/data/modes.json'
-# RULES_FILE = 'static/data/rules.json'
 current_system = None
 systems = {}
-# glyphs_dict = {}
-# phrases_dict = {}
-# modified_phrases_dict = {}
-# modes_dict = {}
-# rules_list = []
 
 @app.route('/spline', methods=['POST'])
 def spline():
@@ -61,38 +52,6 @@ def spline():
     except Exception as e:
         print(f"Error in spline calculation: {e}")
         return jsonify({'spline': []})
-
-# @app.route('/save', methods=['POST'])
-# def save():
-#     data = request.json
-#     name = data['name']
-#     points = data['points']
-#     as_mode = data['as_mode']
-#     as_phrase = data['as_phrase']
-
-#     adjusted_points = [adjust_points(p, np.array([-0.5, -0.5])) for p in points]
-
-#     if as_phrase:
-#         file_name = PHRASES_FILE
-#     elif as_mode:
-#         file_name = MODES_FILE
-#     else:  # as glyph
-#         file_name = GLYPHS_FILE
-
-#     # Load existing data
-#     existing_data = load_json_file(file_name)
-
-#     # Update or add new entry
-#     if as_mode:
-#         existing_data[name] = {'points': adjusted_points, 'pattern': data['pattern']}
-#     else:
-#         existing_data[name] = adjusted_points
-
-#     # Save updated data
-#     with open(file_name, 'w') as f:
-#         json.dump(existing_data, f, indent=4)
-
-#     return jsonify({'status': 'success'})
 
 @app.route('/set_selected_system', methods=['POST'])
 def set_selected_system():
@@ -165,120 +124,6 @@ def save_system(system_name):
             if os.path.exists(file_path):
                 os.remove(file_path)
         os.rmdir(temp_dir)
-
-# @app.route('/load_glyphs')
-# def load_glyphs():
-#     # chars = {}
-
-#     # Load single-glyph splines
-#     try:
-#         with open(GLYPHS_FILE, 'r') as f:
-#             chars = json.load(f)
-#             # chars_data = json.load(f)
-#             # chars.update({k: [adjust_points(p, np.array([0.5, 0.5])) for p in v] for k, v in chars_data.items()})
-#     except FileNotFoundError:
-#         chars = {}
-#         # pass
-
-#     return jsonify(chars)
-
-# @app.route('/load_phrases')
-# def load_phrases():
-#     # phrases = {}
-
-#     # Load single-glyph splines
-#     try:
-#         with open(PHRASES_FILE, 'r') as f:
-#             phrases = json.load(f)
-#             # phrases_dict = json.load(f)
-#             # phrases.update({k: [adjust_points(p, np.array([0.5, 0.5])) for p in v] for k, v in phrases_dict.items()})
-#     except FileNotFoundError:
-#         phrases = {}
-#         # pass
-
-#     return jsonify(phrases)
-
-
-# @app.route('/load_modes')
-# def load_modes():
-#     # modes = {}
-
-#     # Load single-glyph splines
-#     try:
-#         with open(MODES_FILE, 'r') as f:
-#             modes = json.load(f)
-#             # modes_data = json.load(f)
-#             # modes.update({
-#             #     k: {
-#             #         'points': [
-#             #             adjust_points(p, np.array([0.5, 0.5])) for p in v_dct['points']
-#             #             ],
-#             #         'pattern': v_dct['pattern']
-#             #         }
-#             #     for k, v_dct in modes_data.items()
-#             #     })
-#     except FileNotFoundError:
-#         modes = {}
-#         # pass
-
-#     return jsonify(modes)
-
-# # Load the rules from the JSON file
-# @app.route('/load_rules', methods=['GET'])
-# def load_rules():
-#     global rules_list
-#     try:
-#         with open(RULES_FILE, 'r') as file:
-#             rules = json.load(file)
-#     except FileNotFoundError:
-#         rules = []
-#     rules_list = rules
-#     return jsonify(rules_list)
-
-# # Save the rules to the JSON file
-# @app.route('/save_rules', methods=['POST'])
-# def save_rules():
-#     global rules_list
-#     rules_list = request.json
-#     with open(RULES_FILE, 'w') as f:
-#         json.dump(rules_list, f)
-#     return jsonify({"message": "Rules saved successfully!"}), 200
-
-# @app.route('/delete', methods=['POST'])
-# def delete():
-#     data = request.json
-#     name = data['name']
-#     as_mode = data['as_mode']
-#     as_phrase = data['as_phrase']
-
-#     if as_phrase:
-#         file_name = PHRASES_FILE
-#     elif as_mode:
-#         file_name = MODES_FILE
-#     else:  # as glyph
-#         file_name = GLYPHS_FILE
-
-#     # Load existing data
-#     try:
-#         with open(file_name, 'r') as f:
-#             existing_data = json.load(f)
-#     except FileNotFoundError:
-#         existing_data = {}
-
-#     # Remove the specified element
-#     if name in existing_data:
-#         del existing_data[name]
-
-#         # Save updated data
-#         with open(file_name, 'w') as f:
-#             json.dump(existing_data, f, indent=4)
-
-#         return jsonify({'status': 'success'})
-#     else:
-#         return jsonify({'status': 'error', 'message': 'Name not found'})
-
-# def execute_on_refresh():
-#     get_data()
 
 # Writer code
 def load_json_file(filename):
@@ -455,7 +300,7 @@ def tokenize_string(word, system):
 
                 current_largest_token = max(match_length, largest_remaining_token)
                 current_regex_list = [pattern.pattern] + remaining_regex_list
-                candidate_tokenization = array_list + remaining_tokens
+                candidate_tokenization = [array_list] + remaining_tokens
 
                 candidate_token_count = 1 + remaining_count
 
@@ -518,7 +363,7 @@ def tokenize_with_multi_words(text, system, multi_word_tokens, abbrv_words=False
             all_tokens.append(system['phrases'][multi_word_matches.pop(0)])  # Keep multi-word as a single token list
         else:
             # Tokenize the remaining word and append the token list for that word
-            all_tokens.append(tokenize_string(word, system))
+            all_tokens.extend([tokenize_string(word, system)])
 
     return all_tokens
 
@@ -559,19 +404,26 @@ def merge_word_splines(text_splines):
     # Initialize a list to store the concatenated points for each word
     words = []
 
+    print(f'{len(text_splines)=}')
+
     # Initialize the shift to [0, 0] for the first character
     for word_splines in text_splines:
+        print(f'{len(word_splines)=}')
         current_word = []
         current_shift = np.array([0, 0])
         # Process each array in the list of arrays for the current character
         for gi, glyph_splines in enumerate(word_splines):
-            shifted_points = np.array(glyph_splines)
-            if gi != 0:
-                # If not the first character in the word, shift the first array so that its first point is at [0, 0]
-                shifted_points -= shifted_points[0]
-            current_word.append(shifted_points + current_shift)
+            print(f'{len(glyph_splines)=}')
+            for points in glyph_splines:
+                print(f'{points=}')
+                shifted_points = np.array(points)
+                if gi != 0:
+                    # If not the first character in the word, shift the first array so that its first point is at [0, 0]
+                    # shifted_points -= shifted_points[0]
+                    shifted_points -= glyph_splines[0][0]
+                current_word.append(shifted_points + current_shift)
 
-            # Update the shift to the last point of the last array in the current character
+        # Update the shift to the last point of the last array in the current character
             current_shift = current_word[-1][-1]  # Last point of the last array
 
         words.append(current_word)  # Add the current word to the words list
