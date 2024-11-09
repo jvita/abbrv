@@ -430,6 +430,7 @@ function refreshButtons() {
 function refreshSaveButton() {
     // can't do things if no points selected, or character of selected points is not specified
     saveButton.disabled = (selectedPoints.length === 0) || (characterField.value === '')
+    saveDropdown.disabled = saveButton.disabled
     saveDropdown.display = saveButton.disabled ? 'none' : 'block'
 
     const noneSelected = (selectedPoints.length === 0) || (selectedPoints[selectedPoints.length - 1].length === 0)
@@ -477,6 +478,7 @@ function rebuildGlyphList() {
             handleGlyphSelect(glyph, null, event.ctrlKey)
             refreshButtons();
             updatePointsField();
+            // scrollIfNeeded(listItem)
         });
         glyphsList.appendChild(listItem);
     }
@@ -722,8 +724,10 @@ function keyCheck(event) {
 
 // Bind the input event on textarea and change event on checkboxes
 characterField.addEventListener('keyup', function(event) {
-    debouncedKeyCheck(event);
-    refreshButtons();
+    if (event.key !== 'Control') {
+        debouncedKeyCheck(event);
+        refreshButtons();
+    }
 })
 
 function sortAndDisplayList() {
