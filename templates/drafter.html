@@ -32,8 +32,8 @@
                         <span class="visually-hidden">Toggle Dropdown</span>
                     </button>
                     <ul class="dropdown-menu">
-                        <li><a id="deleteMode" class="dropdown-item" href="#" id="deleteAsOption">mode</a></li>
-                        <li><a id="deletePhrase" class="dropdown-item" href="#" id="deleteAsOption">phrase</a></li>
+                        <li><a id="deleteMode" class="dropdown-item" href="#">mode</a></li>
+                        <li><a id="deletePhrase" class="dropdown-item" href="#">phrase</a></li>
                     </ul>
                 </div>
             </div>
@@ -45,8 +45,8 @@
                         <span class="visually-hidden">Toggle Dropdown</span>
                     </button>
                     <ul class="dropdown-menu">
-                        <li><a id="saveMode" class="dropdown-item" href="#" id="saveAsOption">as mode</a></li>
-                        <li><a id="savePhrase" class="dropdown-item" href="#" id="saveAsOption">as phrase</a></li>
+                        <li><a id="saveMode" class="dropdown-item" href="#">as mode</a></li>
+                        <li><a id="savePhrase" class="dropdown-item" href="#">as phrase</a></li>
                     </ul>
                 </div>
             </div>
@@ -430,7 +430,7 @@ function refreshButtons() {
 function refreshSaveButton() {
     // can't do things if no points selected, or character of selected points is not specified
     saveButton.disabled = (selectedPoints.length === 0) || (characterField.value === '')
-    saveDropdown.disabled = saveButton.disabled
+    saveDropdown.display = saveButton.disabled ? 'none' : 'block'
 
     const noneSelected = (selectedPoints.length === 0) || (selectedPoints[selectedPoints.length - 1].length === 0)
     clearButton.disabled = noneSelected
@@ -605,11 +605,11 @@ confirmSaveMode.addEventListener('click', () => {
             characterField.value = '';
             characterField.focus();
 
-            // Hide the modal after saving
-            const saveModeModal = bootstrap.Modal.getInstance(document.getElementById('saveModeModal'));
-            saveModeModal.hide();
         }
     }
+    // Hide the modal after saving
+    const saveModeModal = bootstrap.Modal.getInstance(document.getElementById('saveModeModal'));
+    saveModeModal.hide();
 });
 
 saveMode.addEventListener('click', () => {

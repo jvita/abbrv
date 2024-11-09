@@ -360,7 +360,7 @@ def tokenize_with_multi_words(text, system, multi_word_tokens, abbrv_words=False
     for word in remaining_words:
         if word == "§":
             # This is a placeholder for a multi-word token
-            all_tokens.append(system['phrases'][multi_word_matches.pop(0)])  # Keep multi-word as a single token list
+            all_tokens.append([multi_word_tokens[multi_word_matches.pop(0)]])  # Keep multi-word as a single token list
         else:
             # Tokenize the remaining word and append the token list for that word
             all_tokens.extend([tokenize_string(word, system)])
