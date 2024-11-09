@@ -112,7 +112,6 @@
             localStorage.setItem('systems', systemsJson);
 
             const systemsJson2 = localStorage.getItem('systems');
-            console.log(JSON.parse(systemsJson2))
 
             saveSystemToServer(selectedSystem, systems[selectedSystem])
         }

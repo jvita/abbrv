@@ -44,7 +44,7 @@
                     <button id="saveDropdown" type="button" class="btn btn-primary dropdown-toggle dropdown-toggle-split flex-grow-0" data-bs-toggle="dropdown" aria-expanded="false">
                         <span class="visually-hidden">Toggle Dropdown</span>
                     </button>
-                    <ul class="dropdown-menu">
+                    <ul class="dropdown-menu" id="saveDropdownOptions">
                         <li><a id="saveMode" class="dropdown-item" href="#">as mode</a></li>
                         <li><a id="savePhrase" class="dropdown-item" href="#">as phrase</a></li>
                     </ul>
@@ -101,6 +101,7 @@ const splineCtx = splineCanvas.getContext('2d');
 const characterField = document.getElementById('character');
 const saveButton = document.getElementById('saveButton');
 const saveDropdown = document.getElementById('saveDropdown');
+const saveDropdownOptions = document.getElementById('saveDropdownOptions');
 const saveMode = document.getElementById('saveMode');
 const savePhrase = document.getElementById('savePhrase');
 const confirmSaveMode = document.getElementById('confirmSaveMode');
@@ -430,8 +431,15 @@ function refreshButtons() {
 function refreshSaveButton() {
     // can't do things if no points selected, or character of selected points is not specified
     saveButton.disabled = (selectedPoints.length === 0) || (characterField.value === '')
-    saveDropdown.disabled = saveButton.disabled
-    saveDropdown.display = saveButton.disabled ? 'none' : 'block'
+    
+    // for hiding dropdown options; have to use 'show' tag
+    if (!saveButton.disabled) {
+        saveDropdown.disabled = false;              // Enable the dropdown button
+        saveDropdownOptions.classList.remove('show');  // Ensure menu is hidden
+    } else {
+        saveDropdown.disabled = true;               // Disable the dropdown button
+        saveDropdownOptions.classList.remove('show');  // Hide the dropdown menu
+    }
 
     const noneSelected = (selectedPoints.length === 0) || (selectedPoints[selectedPoints.length - 1].length === 0)
     clearButton.disabled = noneSelected
