@@ -702,6 +702,7 @@ freezeButton.addEventListener('click', () => {
     if (freezeButton.textContent === 'Freeze') { // freeze
         frozenPoints = selectedPoints.map(point => point.slice())
         selectedPoints = []
+        selectedGlyphs = []
 
         refreshButtons();
 
