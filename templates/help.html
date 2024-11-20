@@ -78,23 +78,21 @@ The following steps are applied in order:
     <br>
     <li>Any user-defined <a href="#phrases">phrases</a> are mapped to their corresponding glyphs (accounting for the modifications due to the previous step).</li>
     <br>
-    <li>Any user-defined <a href="#modes">modes</a> are applied by searching for patterns matching their regular expressions, then mapping them to the corresponding glyphs</li>
-    <br>
-        <li>All remaining un-mapped words are parsed from left to right, breaking them up into their longest possible glyphs. For example, the word <code>match</code> could be decomposed into the glyphs <code>m</code>, <code>a</code>, and <code>tch</code> (in Orthic).</li>
+    <li>All remaining un-mapped words are parsed from left to right, breaking them up into their longest possible glyphs based on the defined <a href="#glyphs">glyphs</a> and <a href="#modes">modes</a>. For example, the word <code>match</code> could be decomposed into the glyphs <code>m</code>, <code>a</code>, and <code>tch</code> (in Orthic). <code>that</code> could be decomposed into the glyphs <code>th-</code>, <code>a</code>, and <code>t</code>.</li>
     <br>
     <li>All words are drawn in the following manner:</li>
     <ol type="a">
         <li>The first glyph in a word is drawn as-is, using the baseline as the origin.</li>
         <li>Subsequent glyphs in the same word are shifted so that the first knot of the current glyph aligns with the last knot of the previous glyph.</li>
-        <li>Words are shifted horizontally to ensure a fixed width between the left-most point of the current word and the right-most point of the previous word.</li>
-        <li>Lines are shifted vertically to ensure a fixed width between the highest point of the current line and the lowest point of the previous line.</li>
+        <!-- <li>Words are shifted horizontally to ensure a fixed width between the left-most point of the current word and the right-most point of the previous word.</li>
+        <li>Lines are shifted vertically to ensure a fixed width between the highest point of the current line and the lowest point of the previous line.</li> -->
     </ol>
 </ol>
 
 <hr>
 <h2 id="designing_a_system">Designing a system</h2>
 
-Using <b>abbrv</b> to design a new shorthand system will typically involves four main steps: 1) drafting your glyphs, 2) abbreviating common phrases, 3) introducing <code>modes</code>, and 4) defining pre-processing rules.
+Using <b>abbrv</b> to design a new shorthand system will typically involve four main steps: 1) drafting your glyphs, 2) abbreviating common phrases, 3) introducing <code>modes</code>, and 4) defining pre-processing rules.
 
 <br>
 <br>
@@ -227,12 +225,18 @@ Some examples of rules:
 
 <ul>
     <li><b>Name</b>: elevate "th-""; <b>regex</b>: <code>\bth</code>.</li>
-    <li><b>Name</b>: "ay" diphthong; <b>regex</b>: <code>(?$lt;![dtjqmnv])(ay|ya)</code>.</li>
-    <li><b>Name</b>: "s" after "e/i"; <b>regex</b>: <code>(?$lt;=[ei])s(?![hlr])</code>.</li>
+    <li><b>Name</b>: "ay" diphthong; <b>regex</b>: <code>(?&lt;![dtjqmnv])(ay|ya)</code>.</li>
     <ul>
+        <li>Note the use of <code>(?&lt;![dtjqmnv])</code> to only match <code>(ay|ya)</code> if not preceded by any of the letters <code>dtjqmnv</code>.</li>
+    </ul>
+    <li><b>Name</b>: "s" after "e/i"; <b>regex</b>: <code>(?&lt;=[ei])s(?![hlr])</code>.</li>
+    <ul>
+        <li>Note the use of <code>(?![hlr])</code> to only match <code>s</code> if not followed by any of the letters <code>hlr</code>.</li>
+    </ul>
+    <!-- <ul>
         <li>This pattern can be very useful for modifying a single-character glyph based on the preceding character without having to modify every other possible preceding glyph. For example, modifying <code>s</code> after <code>e</code> or <code>i</code> without also modifying <code>ge</code>, <code>ki</code>, <code>ce</code>, ...</li>
         <li>Note that this can sometimes require more creative uses of regular expressions. In the example here, we have to be careful to specify that it should not match if the <code>s</code> is followed by <code>h</code>, <code>l</code>, or <code>r</code>, since all of these have modified forms when combined with <code>s</code>.</li>
-    </ul>
+    </ul> -->
 </ul>
 
 <br>
@@ -258,11 +262,12 @@ Some examples of rules:
 <h3 id="general_advice">General advice</h3>
 <ul>
     <li>Start by defining glyphs for your alphabet or phenomes.</li>
-    <li>If implementing an existing system (Gregg, Pitman, Teeline, ...), try writing any examples from the system's documentation and adding modes/phrases to your implementation as necessary.</li>
-    <li>When working with a two-character pattern, use a "mode" if only the first character requires a modified pattern.This can help reduce the total number of glyphs + modes that you have to define.</li>
+    <li>If implementing an existing system (Gregg, Pitman, Teeline, ...), try writing any examples from the system's documentation and adding modes/phrases/rules to your implementation as necessary.</li>
+    <li>Define your shorter glyphs first. Take extra care that they are exactly to your liking before moving on. This can help avoid having to repeatedly modify longer glyphs every time you make adjustments to the shorter glyphs that comprise them.</li>
+    <!-- <li>When working with a two-character pattern, use a "mode" if only the first character requires a modified pattern.This can help reduce the total number of glyphs + modes that you have to define.</li>
     <ul>
         <li>For example, in Orthic the glyph for <code>f</code> must be modified if followed by <code>e</code> or <code>i</code>, but the following character is left unchanged. By defining this modification as a mode rather than a glyph, you can avoid having to define even more multi-character glyphs that <i>start</i> with <code>e</code> (e.g., if you already defined the glyphs <code>em</code>, <code>ec</code>, and <code>en</code>, you don't also have to define <code>fem</code>, <code>fec</code>, and <code>fin</code>).</li>
-    </ul>
+    </ul> -->
     <!-- <li>Define new glyphs sparingly; use modes when possible. This can help reduce the total number of glyphs + phrases + modes that you have to define.</li> -->
 </ul>
 
@@ -303,7 +308,7 @@ Compared to the same quote written in the "ordinary" style with the following mo
     <li>(mode) write <code>you-</code> as an elevated <code>y</code>.</li>
     <li>(phrase) abbreviate <code>cannot</code> as <code>cnt</code>.</li>
     <li>(phrase) abbreviate <code>do</code> as <code>d</code>.</li>
-    <li>(glyph) define the glyph <code>gr</code> to make it slightly (borderline imperceptibly...) smoother than <code>g</code> joined directly to <code>r</code>.</li>
+    <li>(glyph) define the glyph <code>gr</code> to make it slightly (imperceptibly?) smoother than <code>g</code> joined directly to <code>r</code>.</li>
     <li>(mode) smooth the dipthong <code>ea</code>.</li>
     <li>(mode) omit the prefix <code>th-</code>, and elevate the rest of the word.</li>
     <li>(mode) write the suffix <code>-ings</code> as a long downard curve with a sharp tail.</li>
