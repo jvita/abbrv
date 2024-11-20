@@ -375,6 +375,10 @@ def find_multi_word_tokens(text, multi_word_tokens):
     matches = []
     # Escape special regex characters in the multi-word tokens
     escaped_tokens = [re.escape(token) for token in multi_word_tokens]
+
+    # Sort largest -> smallest so that longer phrases are matched over shorter ones
+    # e.g., "of the" over "of"
+    escaped_tokens = sorted(escaped_tokens, key=lambda x: len(x), reverse=True)
     
     # Create a regex pattern that matches any of the multi-word tokens
     multi_word_pattern = re.compile(r'\b(' + '|'.join(escaped_tokens) + r')\b')
