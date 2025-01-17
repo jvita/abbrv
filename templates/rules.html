@@ -8,7 +8,7 @@
 <div class="main-content"></div>
     <!-- Add New Rule -->
     <h3>Rules</h3>
-    <div>Rules can be used to modify text prior to translation into shorthand glyphs. They are applied using find-and-replace operations with <a href="https://regexone.com/" target="_blank">regular expressions</a>. If you don't want to learn how to write regular expressions (which can be a bit of a pain), try asking your friendly neighborhood LLM to write them for you! The site <a href="https://regex101.com/">regex101</a> can be useful for making sure that your regular expression is working properly.</div>
+    <div>Rules can be used to modify text prior to translation into shorthand glyphs. They are applied using find-and-replace operations with <a href="https://regexone.com/" target="_blank">regular expressions</a>. If you don't want to learn how to write regular expressions (which can be a bit of a pain), try asking your friendly neighborhood LLM to write them for you! The site <a href="https://regex101.com/">regex101</a> can be useful for making sure that your regex is working properly.</div>
     <hr>
     <form id="addRuleForm" class="d-flex flex-row align-items-end">
         <div class="flex-grow-1 me-2">
@@ -36,6 +36,10 @@
             <button type="submit" class="btn btn-primary" style="margin-bottom:2px">Add</button>
         </div>
     </form>
+
+    <div class="mt-4 d-flex justify-content-around">
+        Note: the arrow buttons can be used to re-order the list. Rules higher in the list will be applied first.
+    </div>
 
     <!-- Rule List (placed at the bottom) -->
     <div class="mt-4">
@@ -82,15 +86,32 @@ function renderRules() {
         replacementSpan.innerHTML = `<strong>Replacement:</strong> ${rule.replacement}`;
         ruleContent.appendChild(replacementSpan);
 
+        // Create the move up button
+        const moveUpButton = document.createElement('button');
+        moveUpButton.className = 'btn btn-primary btn-sm me-2';
+        moveUpButton.innerHTML = '<i class="bi bi-arrow-up"></i>';
+        moveUpButton.onclick = () => moveRuleUp(index);
+
+        // Create the move down button
+        const moveDownButton = document.createElement('button');
+        moveDownButton.className = 'btn btn-primary btn-sm me-2';
+        moveDownButton.innerHTML = '<i class="bi bi-arrow-down"></i>';
+        moveDownButton.onclick = () => moveRuleDown(index);
+
         // Create the delete button (right side)
         const deleteButton = document.createElement('button');
         deleteButton.className = 'btn btn-danger btn-sm';
         deleteButton.textContent = 'Delete';
         deleteButton.onclick = () => deleteRule(index); // Attach delete function
 
-        // Append the content and delete button to the rule item
+        // Append the content and buttons to the rule item
+        const buttonContainer = document.createElement('div');
+        buttonContainer.appendChild(moveUpButton);
+        buttonContainer.appendChild(moveDownButton);
+        buttonContainer.appendChild(deleteButton);
+
         ruleItem.appendChild(ruleContent);
-        ruleItem.appendChild(deleteButton);
+        ruleItem.appendChild(buttonContainer);
 
         // Append the rule item to the list
         rulesList.appendChild(ruleItem);
@@ -121,6 +142,28 @@ function deleteRule(index) {
     rules.splice(index, 1); // Remove the rule from the array
     saveSystems();
     renderRules(); // Ensure the updated list is displayed after deletion
+}
+
+// Function to move a rule up
+function moveRuleUp(index) {
+    if (index > 0) {
+        const temp = rules[index];
+        rules[index] = rules[index - 1];
+        rules[index - 1] = temp;
+        saveSystems();
+        renderRules();
+    }
+}
+
+// Function to move a rule down
+function moveRuleDown(index) {
+    if (index < rules.length - 1) {
+        const temp = rules[index];
+        rules[index] = rules[index + 1];
+        rules[index + 1] = temp;
+        saveSystems();
+        renderRules();
+    }
 }
 
 // On page load, load existing rules
