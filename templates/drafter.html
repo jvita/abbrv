@@ -255,29 +255,88 @@ function updatePointsField() {
 
 function plotSpline(points, color = colorInk, callback = null) {
     if (points.length > 1) {
-        axios.post('/spline', { points })
-            .then(response => {
-                splineCtx.beginPath();
-                splineCtx.lineWidth = 5; // Thicker line width for spline
-                splineCtx.strokeStyle = color;
-                splineCtx.lineCap = 'round'
-                const spline = response.data.spline;
-                spline.forEach(([x, y], index) => {
-                    const plotX = (x + (gridSize / 2)) * (splineCanvas.width / gridSize);
-                    const plotY = splineCanvas.height - ((y + (gridSize / 2)) * (splineCanvas.height / gridSize));
-                    if (index === 0) {
-                        splineCtx.moveTo(plotX, plotY);
-                    } else {
-                        splineCtx.lineTo(plotX, plotY);
-                    }
-                });
-                splineCtx.stroke();
+        // Generate the cubic spline in JavaScript
+        const t = points.map((_, i) => i / (points.length - 1));
 
-                // Redraw the points
-                if (callback) {
-                    callback();
-                }
+        const interpolate = (t, values) => {
+            const n = values.length;
+            const a = values.slice();
+            const b = new Array(n).fill(0);
+            const d = new Array(n).fill(0);
+            const h = new Array(n - 1).fill(0).map((_, i) => t[i + 1] - t[i]);
+
+            const alpha = new Array(n - 1).fill(0).map((_, i) => {
+                if (i === 0) return 0;
+                return (3 / h[i] * (a[i + 1] - a[i]) - 3 / h[i - 1] * (a[i] - a[i - 1]));
             });
+
+            const c = new Array(n).fill(0);
+            const l = new Array(n).fill(1);
+            const mu = new Array(n).fill(0);
+            const z = new Array(n).fill(0);
+
+            for (let i = 1; i < n - 1; i++) {
+                l[i] = 2 * (t[i + 1] - t[i - 1]) - h[i - 1] * mu[i - 1];
+                mu[i] = h[i] / l[i];
+                z[i] = (alpha[i] - h[i - 1] * z[i - 1]) / l[i];
+            }
+
+            for (let j = n - 2; j >= 0; j--) {
+                c[j] = z[j] - mu[j] * c[j + 1];
+                b[j] = (a[j + 1] - a[j]) / h[j] - h[j] * (c[j + 1] + 2 * c[j]) / 3;
+                d[j] = (c[j + 1] - c[j]) / (3 * h[j]);
+            }
+
+            return { a, b, c, d, t };
+        };
+
+        const splinePoints = (coeffs, numPoints) => {
+            const { a, b, c, d, t } = coeffs;
+            const result = [];
+
+            for (let i = 0; i < t.length - 1; i++) {
+                const step = (t[i + 1] - t[i]) / numPoints;
+                for (let j = 0; j <= numPoints; j++) {
+                    const x = t[i] + j * step;
+                    const dx = x - t[i];
+                    const value = a[i] + b[i] * dx + c[i] * dx ** 2 + d[i] * dx ** 3;
+                    result.push(value);
+                }
+            }
+
+            return result;
+        };
+
+        const x = points.map(p => p[0]);
+        const y = points.map(p => p[1]);
+
+        const xCoeffs = interpolate(t, x);
+        const yCoeffs = interpolate(t, y);
+
+        const xDense = splinePoints(xCoeffs, 20);
+        const yDense = splinePoints(yCoeffs, 20);
+
+        splineCtx.beginPath();
+        splineCtx.lineWidth = 5; // Thicker line width for spline
+        splineCtx.strokeStyle = color;
+        splineCtx.lineCap = 'round';
+
+        xDense.forEach((x, index) => {
+            const plotX = x * splineCanvas.width
+            const plotY = (1 - yDense[index]) * splineCanvas.height
+            if (index === 0) {
+                splineCtx.moveTo(plotX, plotY);
+            } else {
+                splineCtx.lineTo(plotX, plotY);
+            }
+        });
+
+        splineCtx.stroke();
+
+        // Redraw the points
+        if (callback) {
+            callback();
+        }
     }
     // always draw the points, even if they'll get redrawn later
     // to avoid no points being drawn if there's only 1
