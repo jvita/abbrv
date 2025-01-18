@@ -237,6 +237,8 @@ def process_text(text, applied_rules, system):
     for rule in system['rules']:
         if rule['name'] not in applied_rules: continue
 
+        print('Applying rule:', rule['name'])
+
         text = re.sub(rule["regex"], rule["replacement"], text)
 
     # Also apply the rules to phrases_dict so that it detects the modified phrases
@@ -336,7 +338,7 @@ def tokenize_string(word, system):
     # Start the recursive search from the beginning of the word
     final_tokenization, _, _, _ = find_best_tokenization(0)
     return final_tokenization
-    
+
 def tokenize_with_multi_words(text, system, multi_word_tokens, abbrv_words=False):
     """
     Tokenizes the text by first finding multi-word tokens, then tokenizing the remaining words.
@@ -356,7 +358,7 @@ def tokenize_with_multi_words(text, system, multi_word_tokens, abbrv_words=False
     # Step 2: Tokenize remaining single words using tokenize_string()
     remaining_words = text_with_placeholders.split()
     all_tokens = []
-    
+
     for word in remaining_words:
         if word == "§":
             # This is a placeholder for a multi-word token
@@ -379,10 +381,10 @@ def find_multi_word_tokens(text, multi_word_tokens):
     # Sort largest -> smallest so that longer phrases are matched over shorter ones
     # e.g., "of the" over "of"
     escaped_tokens = sorted(escaped_tokens, key=lambda x: len(x), reverse=True)
-    
+
     # Create a regex pattern that matches any of the multi-word tokens
     multi_word_pattern = re.compile(r'\b(' + '|'.join(escaped_tokens) + r')\b')
-    
+
     # Replace multi-word tokens with a placeholder and store them in the matches list
     def replace_multi_word(match):
         matches.append(match.group())  # tokenization should be a list of lists
@@ -390,7 +392,7 @@ def find_multi_word_tokens(text, multi_word_tokens):
 
     # Replace multi-word tokens in the text
     new_text = multi_word_pattern.sub(replace_multi_word, text)
-    
+
     return new_text, matches
 
 def tokens_to_splines(tokens, token_map):
@@ -453,7 +455,7 @@ def generate_splines(system_name):
     # all_mappings.update(
     #     {v['pattern']: v['points'] for v in client_system['modes'].values()}
     #     )
-    
+
     # all_mappings = {
     #     k: [np.array(p) for p in l] for k,l in all_mappings.items()
     # }
