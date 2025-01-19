@@ -165,6 +165,41 @@
 
         let debounceTimeout;
 
+        function processTextAndSendToBackend(text, system, multiWordTokens, selectedSystem) {
+            /**
+             * Processes a string of text by splitting it into lines, tokenizing each line,
+             * and sending the tokenized results to a backend using AJAX.
+             */
+
+            // Split the text into lines
+            const lines = text.split('\n');
+
+            // Tokenize each line
+            const tokenizedResults = lines.map(line => tokenizeWithMultiWords(line, system, multiWordTokens, false));
+
+            // Prepare the data to send to the backend as FormData
+            const form = document.getElementById('text-form');
+            const formData = new FormData(form);
+            formData.append('tokenizedSplines', JSON.stringify(tokenizedResults));
+
+            // Send the results to the backend using AJAX
+            $.ajax({
+                type: 'POST',
+                url: `/generate_splines/${selectedSystem}`,
+                data: formData, // Send the FormData object
+                processData: false, // Prevent jQuery from processing the data
+                contentType: false, // Let the browser set the correct Content-Type
+                success: function(response) {
+                    // Assuming the server returns the raw SVG markup as part of the response
+                    $('#output').html(response.image);
+                },
+                error: function() {
+                    $('#output').html('<p>Error generating plot.</p>');
+                }
+            });
+        }
+
+
         function updatePlot() {
             if (!selectedSystem) {
                 $('#output').html('<p>Please select a system first.</p>');
@@ -177,27 +212,29 @@
                 // Process the text and rules
                 const [processedText, modifiedPhrasesDict] = processText(text, rules, selectedSystem);
 
-                // Update the FormData object with the modified values
-                formData.set('text', processedText);
-                formData.set('modifiedPhrasesDict', JSON.stringify(modifiedPhrasesDict));
-                formData.set('system', JSON.stringify(systems[selectedSystem]));
+                processTextAndSendToBackend(processedText, systems[selectedSystem], modifiedPhrasesDict, selectedSystem)
 
-                console.log('Processed text: ', processedText);
+                // console.log('tokens:', tokens)
 
-                $.ajax({
-                    type: 'POST',
-                    url: `/generate_splines/${selectedSystem}`,
-                    data: formData, // Send the FormData object
-                    processData: false, // Prevent jQuery from processing the data
-                    contentType: false, // Let the browser set the correct Content-Type
-                    success: function(response) {
-                        // Assuming the server returns the raw SVG markup as part of the response
-                        $('#output').html(response.image);
-                    },
-                    error: function() {
-                        $('#output').html('<p>Error generating plot.</p>');
-                    }
-                });
+                // // Update the FormData object with the modified values
+                // formData.set('text', processedText);
+                // formData.set('modifiedPhrasesDict', JSON.stringify(modifiedPhrasesDict));
+                // formData.set('system', JSON.stringify(systems[selectedSystem]));
+
+                // $.ajax({
+                //     type: 'POST',
+                //     url: `/generate_splines/${selectedSystem}`,
+                //     data: formData, // Send the FormData object
+                //     processData: false, // Prevent jQuery from processing the data
+                //     contentType: false, // Let the browser set the correct Content-Type
+                //     success: function(response) {
+                //         // Assuming the server returns the raw SVG markup as part of the response
+                //         $('#output').html(response.image);
+                //     },
+                //     error: function() {
+                //         $('#output').html('<p>Error generating plot.</p>');
+                //     }
+                // });
             }
         }
 
@@ -278,6 +315,117 @@
             return spacedText.trim();
         }
 
+        function tokenizeString(word, system) {
+            /**
+             * Tokenizes a single word using a dictionary of regular expressions and corresponding lists of arrays.
+             * The function searches for the tokenization with the fewest possible tokens and prioritizes the largest actual match.
+             */
+            const regexDict = Object.fromEntries(Object.entries(system.glyphs).slice(17));
+            Object.entries(system.modes).forEach(([key, value]) => {
+                regexDict[value.pattern] = value.points;
+            });
+
+            const regexList = Object.entries(regexDict).map(([pattern, value]) => ({ pattern: new RegExp(pattern), value }));
+            const memo = {};
+
+            function compareRegexLengths(tokenizationA, tokenizationB) {
+                for (let i = 0; i < Math.min(tokenizationA.length, tokenizationB.length); i++) {
+                    if (tokenizationA[i].length !== tokenizationB[i].length) {
+                        return tokenizationA[i].length > tokenizationB[i].length;
+                    }
+                }
+                return false;
+            }
+
+            function findBestTokenization(start) {
+                if (start === word.length) {
+                    return { tokens: [], count: 0, longestToken: 0, regexList: [] };
+                }
+
+                if (memo[start]) return memo[start];
+
+                let bestTokenization = null;
+                let fewestTokens = Infinity;
+                let longestTokenLength = 0;
+                let regexListForBest = [];
+
+                for (const { pattern, value } of regexList) {
+                    const match = word.slice(start).match(pattern);
+                    if (match && match.index === 0) {
+                        const matchLength = match[0].length;
+                        const remaining = findBestTokenization(start + matchLength);
+
+                        const currentLongestToken = Math.max(matchLength, remaining.longestToken);
+                        const currentRegexList = [pattern.source, ...remaining.regexList];
+                        const candidateTokens = [value, ...remaining.tokens];
+
+                        const candidateTokenCount = 1 + remaining.count;
+
+                        if (candidateTokenCount < fewestTokens ||
+                            (candidateTokenCount === fewestTokens && currentLongestToken > longestTokenLength) ||
+                            (candidateTokenCount === fewestTokens && currentLongestToken === longestTokenLength && compareRegexLengths(currentRegexList, regexListForBest))) {
+                            fewestTokens = candidateTokenCount;
+                            longestTokenLength = currentLongestToken;
+                            regexListForBest = currentRegexList;
+                            bestTokenization = candidateTokens;
+                        }
+                    }
+                }
+
+                memo[start] = { tokens: bestTokenization, count: fewestTokens, longestToken: longestTokenLength, regexList: regexListForBest };
+                return memo[start];
+            }
+
+            return findBestTokenization(0).tokens;
+        }
+
+        function tokenizeWithMultiWords(text, system, multiWordTokens, abbrvWords = false) {
+            /**
+            * Tokenizes the text by first finding multi-word tokens, then tokenizing the remaining words.
+            */
+
+            const regexList = Object.keys(system.glyphs).slice(17);
+            regexList.push(...Object.values(system.modes).map((mode) => mode.pattern));
+
+            let multiWordMatches = [];
+            let textWithPlaceholders;
+
+            if (abbrvWords) {
+                ({ textWithPlaceholders, multiWordMatches } = findMultiWordTokens(text, multiWordTokens));
+            } else {
+                textWithPlaceholders = text;
+            }
+
+            const remainingWords = textWithPlaceholders.split(/\s+/);
+            const allTokens = [];
+
+            for (const word of remainingWords) {
+                if (word === '§') {
+                    allTokens.push([multiWordTokens[multiWordMatches.shift()]]);
+                } else {
+                    allTokens.push(tokenizeString(word, system));
+                }
+            }
+
+            return allTokens;
+        }
+
+        function findMultiWordTokens(text, multiWordTokens) {
+            /**
+            * Finds and extracts multi-word tokens from the text.
+            */
+            const matches = [];
+            const escapedTokens = multiWordTokens.map((token) => token.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+            const sortedTokens = escapedTokens.sort((a, b) => b.length - a.length);
+            const multiWordPattern = new RegExp(`\\b(${sortedTokens.join('|')})\\b`, 'g');
+
+            const newText = text.replace(multiWordPattern, (match) => {
+                matches.push(match);
+                return '§';
+            });
+
+            return { textWithPlaceholders: newText, multiWordMatches: matches };
+        }
     });
 </script>
 {% endblock %}

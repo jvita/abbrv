@@ -349,13 +349,13 @@ def generate_splines(system_name):
     - line_spacing: Vertical space between lines.
     """
 
-    text = request.form['text']
-    if not text:
-        return jsonify({'image': None})
-
     space_between_words, line_spacing = 0.2, 0.2
 
-    client_system = json.loads(request.form.get('system'))
+    # text = request.form['text']
+    # if not text:
+    #     return jsonify({'image': None})
+
+    # client_system = json.loads(request.form.get('system'))
 
     # all_mappings = client_system['glyphs']
     # all_mappings.update(client_system['phrases'])
@@ -367,14 +367,16 @@ def generate_splines(system_name):
     #     k: [np.array(p) for p in l] for k,l in all_mappings.items()
     # }
 
-    abbrv_words = 'abbrv_words' in request.form
+    # abbrv_words = 'abbrv_words' in request.form
     show_dots = 'show_dots' in request.form
     show_knots = 'show_knot_points' in request.form
     show_baselines = 'show_baselines' in request.form
-    modes = request.form.getlist('modes')
-    client_system['modes'] = {k:v for k,v in client_system['modes'].items() if k in modes}
+    # modes = request.form.getlist('modes')
+    # client_system['modes'] = {k:v for k,v in client_system['modes'].items() if k in modes}
 
-    modified_phrases_dict  = json.loads(request.form.get('modifiedPhrasesDict'))
+    # modified_phrases_dict  = json.loads(request.form.get('modifiedPhrasesDict'))
+
+    tokenized_splines = json.loads(request.form.get('tokenizedSplines'))
 
     plt.figure(figsize=(8, 8))  # Initialize figure
 
@@ -383,14 +385,15 @@ def generate_splines(system_name):
     line_positions = []  # Store y-positions of each line
 
     # Process each line of the text
-    for line in text.splitlines():
-        if not len(line):  # empty line
-            current_vertical_offset -= line_spacing
-            continue
+    # for line in text.splitlines():
+    #     if not len(line):  # empty line
+    #         current_vertical_offset -= line_spacing
+    #         continue
 
-        splines = tokenize_with_multi_words(
-            line, client_system, modified_phrases_dict, abbrv_words
-            )
+    #     splines = tokenize_with_multi_words(
+    #         line, client_system, modified_phrases_dict, abbrv_words
+    #         )
+    for splines in tokenized_splines:
 
         word_splines = merge_word_splines(splines)
 
