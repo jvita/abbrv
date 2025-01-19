@@ -314,13 +314,26 @@ select, input[type="checkbox"] {
     margin-top: 5px;
 }
 
+/* #output {
+    width: 100%;
+    height: auto;
+    border: 1px solid black;
+    max-height: 600px;
+} */
+
+/* #output {
+    display: block;
+    width: 800px;
+    height: 800px;
+    border: 1px solid black;
+} */
+
 #output {
     margin-top: 20px;
     text-align: center;
-    /* max-width: 100%; */
-    /* height: 300px; */
     width: auto;
     max-height: 600px;
+    border: 1px solid black;
 }
 
 svg {
