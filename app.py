@@ -27,32 +27,6 @@ SYSTEMS_FOLDER = 'static/data/systems'
 current_system = None
 systems = {}
 
-@app.route('/spline', methods=['POST'])
-def spline():
-    points = request.json['points']
-    if not points:
-        return jsonify({'spline': []})
-
-    points = np.array(points)
-    x = points[:, 0] * 152 - 76
-    y = points[:, 1] * 152 - 76
-    t = np.linspace(0, 1, len(points))
-
-    num_plot_points = points.shape[0]*20
-
-    x_dense = CubicSpline(t, x, bc_type='natural')(np.linspace(0, 1, num_plot_points))
-    y_dense = CubicSpline(t, y, bc_type='natural')(np.linspace(0, 1, num_plot_points))
-
-    if len(x_dense) < 2:
-        return jsonify({'spline': []})
-
-    try:
-        spline_points = list(zip(x_dense.tolist(), y_dense.tolist()))
-        return jsonify({'spline': spline_points})
-    except Exception as e:
-        print(f"Error in spline calculation: {e}")
-        return jsonify({'spline': []})
-
 @app.route('/set_selected_system', methods=['POST'])
 def set_selected_system():
     system = request.json.get('system')
@@ -177,40 +151,6 @@ def interpolate_points(points, num_points=100):
 
     return x_spline, y_spline
 
-def split_into_words(text):
-    # Regular expression to split text by words, digits, and punctuation
-    return re.findall(r'[A-Za-z]+|\d|[^\w\s]', text)
-
-def split_text_with_linebreaks(text, max_width):
-    # Split by lines first to preserve existing line breaks
-    lines = text.splitlines()
-    result = []
-
-    for line in lines:
-        # words = line.split()
-        words = split_into_words(line)
-        current_line = []
-        current_length = 0
-
-        for word in words:
-            # Check if adding the next word exceeds the max_width
-            if current_length + len(word) + (len(current_line) > 0) > max_width:
-                # Join the current line into a string and append it to the result
-                result.append(' '.join(current_line))
-                # Start a new line with the current word
-                current_line = [word]
-                current_length = len(word)
-            else:
-                # Add the word to the current line
-                current_line.append(word)
-                current_length += len(word) + (len(current_line) > 1)
-
-        # Append the last processed line
-        if current_line:
-            result.append(' '.join(current_line))
-
-    return result
-
 def add_spaces_around_punctuation(text):
     # Define a regex pattern to match punctuation and digits
     pattern = r'(\d|[!\"#$%&\'()*+,-./:;<=>?@[\\\]^_`{|}~])'
@@ -220,39 +160,6 @@ def add_spaces_around_punctuation(text):
 
     # Return the modified text, stripping any extra spaces at the ends
     return spaced_text.strip()
-
-def process_text(text, applied_rules, system):
-
-    text = text.lower()
-
-    # remove unsupported punctuation
-    for p in ["'"]:
-        text = text.replace(p, '')
-    for p in ['/', '\\', '-']:
-        text = text.replace(p, ' ')
-
-    text = add_spaces_around_punctuation(text)
-
-    # Apply all user-defined rules
-    for rule in system['rules']:
-        if rule['name'] not in applied_rules: continue
-
-        print('Applying rule:', rule['name'])
-
-        text = re.sub(rule["regex"], rule["replacement"], text)
-
-    # Also apply the rules to phrases_dict so that it detects the modified phrases
-    modified_phrases_dict = {}
-
-    for k, v in system['phrases'].items():
-        for rule in system['rules']:
-            if rule['name'] not in applied_rules: continue
-
-            k = re.sub(rule["regex"], rule["replacement"], k)
-
-        modified_phrases_dict[k] = v
-
-    return text, modified_phrases_dict
 
 def tokenize_string(word, system):
     """
@@ -466,9 +373,8 @@ def generate_splines(system_name):
     show_baselines = 'show_baselines' in request.form
     modes = request.form.getlist('modes')
     client_system['modes'] = {k:v for k,v in client_system['modes'].items() if k in modes}
-    rules = request.form.getlist('rules')
 
-    text, modified_phrases_dict = process_text(text, rules, client_system)
+    modified_phrases_dict  = json.loads(request.form.get('modifiedPhrasesDict'))
 
     plt.figure(figsize=(8, 8))  # Initialize figure
 

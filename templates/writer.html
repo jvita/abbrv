@@ -166,19 +166,30 @@
         let debounceTimeout;
 
         function updatePlot() {
-
-            console.log('updatePlot()')
             if (!selectedSystem) {
                 $('#output').html('<p>Please select a system first.</p>');
             } else {
-                const formData = $('#text-form').serializeArray();
-                formData.push({name: 'system', value: JSON.stringify(systems[selectedSystem])})
+                const form = document.getElementById('text-form');
+                const formData = new FormData(form);
+                const text = formData.get('text');
+                const rules = formData.getAll('rules');
+
+                // Process the text and rules
+                const [processedText, modifiedPhrasesDict] = processText(text, rules, selectedSystem);
+
+                // Update the FormData object with the modified values
+                formData.set('text', processedText);
+                formData.set('modifiedPhrasesDict', JSON.stringify(modifiedPhrasesDict));
+                formData.set('system', JSON.stringify(systems[selectedSystem]));
+
+                console.log('Processed text: ', processedText);
 
                 $.ajax({
                     type: 'POST',
                     url: `/generate_splines/${selectedSystem}`,
-                    // data: $('#text-form').serialize(),
-                    data: $.param(formData),  // use $.param to serialize the formData array
+                    data: formData, // Send the FormData object
+                    processData: false, // Prevent jQuery from processing the data
+                    contentType: false, // Let the browser set the correct Content-Type
                     success: function(response) {
                         // Assuming the server returns the raw SVG markup as part of the response
                         $('#output').html(response.image);
@@ -189,6 +200,7 @@
                 });
             }
         }
+
 
         function debounce(func, delay) {
             return function(...args) {
@@ -213,6 +225,59 @@
         updatePlot();
 
         document.getElementById('text').focus();
+
+        function processText(text, appliedRules, system) {
+            // Convert text to lowercase
+            text = text.toLowerCase();
+
+            // Remove unsupported punctuation
+            for (let p of ["'"]) {
+                text = text.replaceAll(p, '');
+            }
+            for (let p of ['/', '\\', '-']) {
+                text = text.replaceAll(p, ' ');
+            }
+
+            text = addSpacesAroundPunctuation(text);
+
+            // Apply all user-defined rules
+            for (let rule of systems[system].rules) {
+                if (!appliedRules.includes(rule.name)) continue;
+
+                const regex = new RegExp(rule.regex, 'g');
+                text = text.replace(regex, rule.replacement);
+            }
+
+            // Also apply the rules to phrases_dict so that it detects the modified phrases
+            const modifiedPhrasesDict = {};
+
+            for (let [key, value] of Object.entries(systems[system].phrases)) {
+                let modifiedKey = key;
+
+                for (let rule of systems[system].rules) {
+                    if (!appliedRules.includes(rule.name)) continue;
+
+                    const regex = new RegExp(rule.regex, 'g');
+                    modifiedKey = modifiedKey.replace(regex, rule.replacement);
+                }
+
+                modifiedPhrasesDict[modifiedKey] = value;
+            }
+
+            return [ text, modifiedPhrasesDict ];
+        }
+
+        function addSpacesAroundPunctuation(text) {
+            // Define a regex pattern to match punctuation and digits
+            const pattern = /([\d!"#$%&'()*+,-./:;<=>?@[\\\]^_`{|}~])/g;
+
+            // Substitute with spaces before and after the matched characters
+            const spacedText = text.replace(pattern, ' $1 ');
+
+            // Return the modified text, stripping any extra spaces at the ends
+            return spacedText.trim();
+        }
+
     });
 </script>
 {% endblock %}
