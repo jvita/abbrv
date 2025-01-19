@@ -302,17 +302,6 @@ def find_multi_word_tokens(text, multi_word_tokens):
 
     return new_text, matches
 
-def tokens_to_splines(tokens, token_map):
-
-    splines = []
-    for word_tokens in tokens:
-        tmp = []
-        for t in word_tokens:
-            tmp.extend(token_map[t])
-        splines.append(tmp)
-
-    return splines
-
 def merge_word_splines(text_splines):
     # Initialize a list to store the concatenated points for each word
     words = []
@@ -393,15 +382,17 @@ def generate_splines(system_name):
     #     splines = tokenize_with_multi_words(
     #         line, client_system, modified_phrases_dict, abbrv_words
     #         )
-    for splines in tokenized_splines:
+    for word_splines in tokenized_splines:
 
-        word_splines = merge_word_splines(splines)
+        # word_splines = merge_word_splines(splines)
+        # print(word_splines)
 
         current_shift = np.array([0, 0])
         line_x_pos, splines_to_plot = 0, []
 
         # Process each word in the line
         for word in word_splines:
+            word = [np.array(c) for c in word]  # because JS sends as lists
             xmin = word[0][:, 0].min()
 
             for points in word:

@@ -167,15 +167,18 @@
 
         function processTextAndSendToBackend(text, system, multiWordTokens, selectedSystem) {
             /**
-             * Processes a string of text by splitting it into lines, tokenizing each line,
-             * and sending the tokenized results to a backend using AJAX.
-             */
+            * Processes a string of text by splitting it into lines, tokenizing each line,
+            * merging word splines, and sending the tokenized results to a backend using AJAX.
+            */
 
             // Split the text into lines
             const lines = text.split('\n');
 
-            // Tokenize each line
-            const tokenizedResults = lines.map(line => tokenizeWithMultiWords(line, system, multiWordTokens, false));
+            // Tokenize each line and merge word splines
+            const tokenizedResults = lines.map(line => {
+                const tokenizedLine = tokenizeWithMultiWords(line, system, multiWordTokens, false);
+                return mergeWordSplines(tokenizedLine);
+            });
 
             // Prepare the data to send to the backend as FormData
             const form = document.getElementById('text-form');
@@ -197,6 +200,46 @@
                     $('#output').html('<p>Error generating plot.</p>');
                 }
             });
+        }
+
+        function mergeWordSplines(textSplines) {
+            /**
+            * Merges word splines by concatenating points for each word and adjusting shifts.
+            */
+            const words = [];
+
+            textSplines.forEach(wordSplines => {
+                const currentWord = [];
+                let currentShift = [0, 0];
+
+                wordSplines.forEach((glyphSplines, gi) => {
+                    glyphSplines.forEach(points => {
+                        const shiftedPoints = points.map(point => [...point]); // Clone points
+
+                        if (gi !== 0) {
+                            const shiftDelta = glyphSplines[0][0];
+                            for (let i = 0; i < shiftedPoints.length; i++) {
+                                shiftedPoints[i][0] -= shiftDelta[0];
+                                shiftedPoints[i][1] -= shiftDelta[1];
+                            }
+                        }
+
+                        shiftedPoints.forEach(point => {
+                            point[0] += currentShift[0];
+                            point[1] += currentShift[1];
+                        });
+
+                        currentWord.push(shiftedPoints);
+                    });
+
+                    // Update the shift to the last point of the last array in the current glyph
+                    currentShift = currentWord[currentWord.length - 1][currentWord[currentWord.length - 1].length - 1];
+                });
+
+                words.push(currentWord);
+            });
+
+            return words;
         }
 
 
