@@ -71,20 +71,31 @@
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
     $(document).ready(function() {
+        let options = {};
+
         // Function to retrieve the checkbox states and set variables accordingly
         function updateOptions() {
-            const options = {
+            options = {
                 abbrv_words: document.getElementById('abbrv_words').checked,
                 show_baselines: document.getElementById('show_baselines').checked,
                 show_dots: document.getElementById('show_dots').checked,
                 show_knot_points: document.getElementById('show_knot_points').checked
             };
 
-            console.log(options); // For debugging purposes
-
             // Use the options object as needed in your code
             return options;
         }
+
+        // Add event listeners only to specific predefined checkboxes
+        const predefinedCheckboxes = ['abbrv_words', 'show_baselines', 'show_dots', 'show_knot_points'];
+        predefinedCheckboxes.forEach(id => {
+            const checkbox = document.getElementById(id);
+            if (checkbox) {
+                checkbox.addEventListener('change', updateOptions);
+            }
+        });
+
+        updateOptions();
 
         function downloadSVG() {
             const svgElement = document.getElementById('output');
@@ -201,33 +212,11 @@
 
             // Tokenize each line and merge word splines
             const tokenizedResults = lines.map(line => {
-                const tokenizedLine = tokenizeWithMultiWords(line, system, multiWordTokens, false);
+                const tokenizedLine = tokenizeWithMultiWords(line, system, multiWordTokens);
                 return mergeWordSplines(tokenizedLine);
             });
 
-            // // Prepare the data to send to the backend as FormData
-            // const form = document.getElementById('text-form');
-            // const formData = new FormData(form);
-            // formData.append('tokenizedSplines', JSON.stringify(tokenizedResults));
-
             generateSplines(tokenizedResults)
-            // $('#output').html('<p>Error generating plot.</p>');
-
-            // // Send the results to the backend using AJAX
-            // $.ajax({
-            //     type: 'POST',
-            //     url: `/generate_splines/${selectedSystem}`,
-            //     data: formData, // Send the FormData object
-            //     processData: false, // Prevent jQuery from processing the data
-            //     contentType: false, // Let the browser set the correct Content-Type
-            //     success: function(response) {
-            //         // Assuming the server returns the raw SVG markup as part of the response
-            //         $('#output').html(response.image);
-            //     },
-            //     error: function() {
-            //         $('#output').html('<p>Error generating plot.</p>');
-            //     }
-            // });
         }
 
         function mergeWordSplines(textSplines) {
@@ -269,80 +258,6 @@
 
             return words;
         }
-
-        // function generateSplines(tokenizedSplines) {
-        //     /**
-        //     * Generates and plots splines for tokenized text. Handles line breaks and adjustments.
-        //     * Adjusted for SVG's flipped y-axis.
-        //     */
-
-        //     const spaceBetweenWords = 0.2;
-        //     const lineSpacing = 0.2;
-
-        //     const showDots = document.getElementById('show_dots').checked;
-        //     const showKnots = document.getElementById('show_knot_points').checked;
-        //     const showBaselines = document.getElementById('show_baselines').checked;
-
-        //     const svgContainer = document.getElementById('output');
-        //     svgContainer.innerHTML = ''; // Clear any existing SVG
-
-        //     let currentVerticalOffset = 0;
-        //     let rightMostPoint = 0;
-        //     let leftMostPoint = 0;
-        //     let lowestPoint = 0;
-        //     let highestPoint = 0;
-        //     const linePositions = [];
-
-        //     tokenizedSplines.forEach(wordSplines => {
-        //         let currentShift = [0, 0];
-        //         let lineXPos = 0;
-        //         const splinesToPlot = [];
-
-        //         wordSplines.forEach(word => {
-        //             word.forEach(points => {
-        //                 const shiftedPoints = points.map(([x, y]) => [x, -y]); // Flip y-axis
-        //                 const xmin = word[0][0][0]; // First character's first point
-
-        //                 for (let i = 0; i < shiftedPoints.length; i++) {
-        //                     shiftedPoints[i][0] -= xmin;
-        //                     shiftedPoints[i][0] += currentShift[0];
-        //                     shiftedPoints[i][1] += currentShift[1];
-        //                 }
-
-        //                 lineXPos = Math.max(lineXPos, shiftedPoints[shiftedPoints.length - 1][0]);
-        //                 rightMostPoint = Math.max(rightMostPoint, shiftedPoints[shiftedPoints.length - 1][0]);
-        //                 leftMostPoint = Math.min(leftMostPoint, shiftedPoints[0][0]);
-
-        //                 splinesToPlot.push(shiftedPoints);
-        //             });
-
-        //             currentShift = [lineXPos + spaceBetweenWords, 0];
-        //         });
-
-        //         const highestPointCurrentLine = Math.max(...splinesToPlot.flat().map(([x, y]) => -y)); // Flip y-axis for comparison
-        //         const lowestPointCurrentLine = Math.min(...splinesToPlot.flat().map(([x, y]) => -y)); // Flip y-axis for comparison
-
-        //         highestPoint = Math.max(highestPoint, highestPointCurrentLine);
-        //         lowestPoint = Math.min(lowestPoint, lowestPointCurrentLine);
-
-        //         currentVerticalOffset += highestPointCurrentLine; // Adjust for SVG coordinate system
-
-        //         splinesToPlot.forEach(points => {
-        //             const adjustedPoints = points.map(([x, y]) => [x, y + currentVerticalOffset]);
-        //             plotSpline(adjustedPoints, showDots, showKnots);
-        //         });
-
-        //         linePositions.push(currentVerticalOffset);
-        //         currentVerticalOffset += lowestPointCurrentLine - lineSpacing; // Adjust for spacing
-        //     });
-
-        //     if (showBaselines) {
-        //         plotBaselines(linePositions.map(pos => -pos), [leftMostPoint - spaceBetweenWords, rightMostPoint + spaceBetweenWords]);
-        //     }
-
-        //     finalizePlot(rightMostPoint, -highestPoint, -lowestPoint, lineSpacing); // Flip y for final bounding box
-        // }
-
 
         function generateSplines(tokenizedSplines) {
             /**
@@ -417,113 +332,241 @@
             finalizePlot(leftMostPoint, rightMostPoint, highestPoint, lowestPoint, lineSpacing, spaceBetweenWords);
         }
 
-function plotSpline(points, showDots, showKnots) {
-    /**
-    * Plots a cubic spline using the given points as knot points on the SVG canvas,
-    * generating the spline curve and ensuring all points form a single continuous spline.
-    */
-    const svg = document.getElementById('output');
+                function plotSpline(points, showDots, showKnots) {
+            /**
+            * Plots a cubic spline using the given points as knot points on the SVG canvas,
+            * generating the spline curve and ensuring all points form a single continuous spline.
+            * Uses natural boundary conditions, handling duplicate first and last points without closing the loop.
+            */
+            const svg = document.getElementById('output');
 
-    if (points.length >= 2) { // Ensure at least two points to draw a spline
-        const t = points.map((_, i) => i / (points.length - 1));
+            console.log('points', points);
 
-        const interpolate = (t, values) => {
-            const n = values.length;
-            const a = values.slice();
-            const b = new Array(n).fill(0);
-            const d = new Array(n).fill(0);
-            const h = new Array(n - 1).fill(0).map((_, i) => t[i + 1] - t[i]);
+            if (points.length >= 2) { // Ensure at least two points to draw a spline
 
-            const alpha = new Array(n - 1).fill(0).map((_, i) => {
-                if (i === 0) return 0;
-                return (3 / h[i] * (a[i + 1] - a[i]) - 3 / h[i - 1] * (a[i] - a[i - 1]));
-            });
+                // Remove duplicate consecutive points to avoid zero-length segments
+                const uniquePoints = points.filter((point, i, arr) => {
+                    return i === 0 || point[0] !== arr[i - 1][0] || point[1] !== arr[i - 1][1];
+                });
 
-            const c = new Array(n).fill(0);
-            const l = new Array(n).fill(1);
-            const mu = new Array(n).fill(0);
-            const z = new Array(n).fill(0);
+                const t = uniquePoints.map((_, i) => i / (uniquePoints.length - 1));
 
-            for (let i = 1; i < n - 1; i++) {
-                l[i] = 2 * (t[i + 1] - t[i - 1]) - h[i - 1] * mu[i - 1];
-                mu[i] = h[i] / l[i];
-                z[i] = (alpha[i] - h[i - 1] * z[i - 1]) / l[i];
-            }
+                const interpolate = (t, values) => {
+                    const n = values.length;
+                    const a = values.slice();
+                    const b = new Array(n).fill(0);
+                    const d = new Array(n).fill(0);
+                    const h = new Array(n - 1).fill(0).map((_, i) => t[i + 1] - t[i]);
 
-            for (let j = n - 2; j >= 0; j--) {
-                c[j] = z[j] - mu[j] * c[j + 1];
-                b[j] = (a[j + 1] - a[j]) / h[j] - h[j] * (c[j + 1] + 2 * c[j]) / 3;
-                d[j] = (c[j + 1] - c[j]) / (3 * h[j]);
-            }
+                    const alpha = new Array(n).fill(0);
+                    for (let i = 1; i < n - 1; i++) {
+                        alpha[i] = (3.0 / h[i] * (a[i + 1] - a[i]) - 3.0 / h[i - 1] * (a[i] - a[i - 1]));
+                    }
 
-            return { a, b, c, d, t };
-        };
+                    const c = new Array(n).fill(0);
+                    const l = new Array(n).fill(1);
+                    const mu = new Array(n).fill(0);
+                    const z = new Array(n).fill(0);
 
-        const splinePoints = (coeffs, numPoints) => {
-            const { a, b, c, d, t } = coeffs;
-            const result = [];
+                    for (let i = 1; i < n - 1; i++) {
+                        l[i] = 2.0 * (t[i + 1] - t[i - 1]) - h[i - 1] * mu[i - 1];
+                        mu[i] = h[i] / l[i];
+                        z[i] = (alpha[i] - h[i - 1] * z[i - 1]) / l[i];
+                    }
 
-            for (let i = 0; i < t.length - 1; i++) {
-                const step = (t[i + 1] - t[i]) / numPoints;
-                for (let j = 0; j <= numPoints; j++) {
-                    const x = t[i] + j * step;
-                    const dx = x - t[i];
-                    const value = a[i] + b[i] * dx + c[i] * dx ** 2 + d[i] * dx ** 3;
-                    result.push(value);
+                    l[n - 1] = 1;
+                    z[n - 1] = 0;
+                    c[n - 1] = 0;
+
+                    for (let j = n - 2; j >= 0; j--) {
+                        c[j] = z[j] - mu[j] * c[j + 1];
+                        b[j] = (a[j + 1] - a[j]) / h[j] - h[j] * (c[j + 1] + 2 * c[j]) / 3.0;
+                        d[j] = (c[j + 1] - c[j]) / (3.0 * h[j]);
+                    }
+
+                    return { a, b, c, d, t };
+                };
+
+                const splinePoints = (coeffs, numPoints) => {
+                    const { a, b, c, d, t } = coeffs;
+                    const result = [];
+
+                    for (let i = 0; i < t.length - 1; i++) {
+                        const step = (t[i + 1] - t[i]) / numPoints;
+                        for (let j = 0; j <= numPoints; j++) {
+                            const x = t[i] + j * step;
+                            const dx = x - t[i];
+                            const value = a[i] + b[i] * dx + c[i] * dx ** 2 + d[i] * dx ** 3;
+                            result.push(value);
+                        }
+                    }
+
+                    return result;
+                };
+
+                const x = uniquePoints.map(p => p[0]);
+                const y = uniquePoints.map(p => p[1]);
+
+                const xCoeffs = interpolate(t, x);
+                const yCoeffs = interpolate(t, y);
+
+                const xDense = splinePoints(xCoeffs, 20);
+                const yDense = splinePoints(yCoeffs, 20);
+
+                let d = `M ${xDense[0]} ${yDense[0]}`;
+                for (let i = 1; i < xDense.length; i++) {
+                    d += ` L ${xDense[i]} ${yDense[i]}`;
                 }
+
+                const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                path.setAttribute('d', d);
+                path.setAttribute('fill', 'none');
+                path.setAttribute('stroke', 'black');
+                path.setAttribute('stroke-width', '0.01');
+                path.setAttribute('stroke-linecap', 'round'); // Set rounded line caps
+                svg.appendChild(path);
             }
 
-            return result;
-        };
+            // Optionally show dots at points
+            if (showDots) {
+                points.forEach(([x, y]) => {
+                    const dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                    dot.setAttribute('cx', x);
+                    dot.setAttribute('cy', y);
+                    dot.setAttribute('r', 2);
+                    dot.setAttribute('fill', 'red');
+                    svg.appendChild(dot);
+                });
+            }
 
-        const x = points.map(p => p[0]);
-        const y = points.map(p => p[1]);
-
-        const xCoeffs = interpolate(t, x);
-        const yCoeffs = interpolate(t, y);
-
-        const xDense = splinePoints(xCoeffs, 20);
-        const yDense = splinePoints(yCoeffs, 20);
-
-        let d = `M ${xDense[0]} ${yDense[0]}`;
-        for (let i = 1; i < xDense.length; i++) {
-            d += ` L ${xDense[i]} ${yDense[i]}`;
+            // Optionally show knots as blue squares
+            if (showKnots) {
+                points.forEach(([x, y]) => {
+                    const knot = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+                    knot.setAttribute('x', x - 0.01);
+                    knot.setAttribute('y', y - 0.01);
+                    knot.setAttribute('width', 0.02);
+                    knot.setAttribute('height', 0.02);
+                    knot.setAttribute('fill', 'blue');
+                    svg.appendChild(knot);
+                });
+            }
         }
 
-        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-        path.setAttribute('d', d);
-        path.setAttribute('fill', 'none');
-        path.setAttribute('stroke', 'black');
-        path.setAttribute('stroke-width', '0.01');
-        path.setAttribute('stroke-linecap', 'round'); // Set rounded line caps
-        svg.appendChild(path);
-    }
 
-    // Optionally show dots at points
-    if (showDots) {
-        points.forEach(([x, y]) => {
-            const dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-            dot.setAttribute('cx', x);
-            dot.setAttribute('cy', y);
-            dot.setAttribute('r', 2);
-            dot.setAttribute('fill', 'red');
-            svg.appendChild(dot);
-        });
-    }
+        // function plotSpline(points, showDots, showKnots) {
+        //     /**
+        //     * Plots a cubic spline using the given points as knot points on the SVG canvas,
+        //     * generating the spline curve and ensuring all points form a single continuous spline.
+        //     */
+        //     const svg = document.getElementById('output');
 
-    // Optionally show knots as blue squares
-    if (showKnots) {
-        points.forEach(([x, y]) => {
-            const knot = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-            knot.setAttribute('x', x - 1);
-            knot.setAttribute('y', y - 1);
-            knot.setAttribute('width', 2);
-            knot.setAttribute('height', 2);
-            knot.setAttribute('fill', 'blue');
-            svg.appendChild(knot);
-        });
-    }
-}
+        //     console.log('points', points)
+
+        //     if (points.length >= 2) { // Ensure at least two points to draw a spline
+        //         const t = points.map((_, i) => i / (points.length - 1));
+
+        //         const interpolate = (t, values) => {
+        //             const n = values.length;
+        //             const a = values.slice();
+        //             const b = new Array(n).fill(0);
+        //             const d = new Array(n).fill(0);
+        //             const h = new Array(n - 1).fill(0).map((_, i) => t[i + 1] - t[i]);
+
+        //             const alpha = new Array(n).fill(0);
+        //             for (let i = 1; i < n - 1; i++) {
+        //                 alpha[i] = (3 / h[i] * (a[i + 1] - a[i]) - 3 / h[i - 1] * (a[i] - a[i - 1]));
+        //             }
+
+        //             const c = new Array(n).fill(0);
+        //             const l = new Array(n).fill(1);
+        //             const mu = new Array(n).fill(0);
+        //             const z = new Array(n).fill(0);
+
+        //             for (let i = 1; i < n - 1; i++) {
+        //                 l[i] = 2 * (t[i + 1] - t[i - 1]) - h[i - 1] * mu[i - 1];
+        //                 mu[i] = h[i] / l[i];
+        //                 z[i] = (alpha[i] - h[i - 1] * z[i - 1]) / l[i];
+        //             }
+
+        //             l[n - 1] = 1;
+        //             z[n - 1] = 0;
+        //             c[n - 1] = 0;
+
+        //             for (let j = n - 2; j >= 0; j--) {
+        //                 c[j] = z[j] - mu[j] * c[j + 1];
+        //                 b[j] = (a[j + 1] - a[j]) / h[j] - h[j] * (c[j + 1] + 2 * c[j]) / 3;
+        //                 d[j] = (c[j + 1] - c[j]) / (3 * h[j]);
+        //             }
+
+        //             return { a, b, c, d, t };
+        //         };
+
+        //         const splinePoints = (coeffs, numPoints) => {
+        //             const { a, b, c, d, t } = coeffs;
+        //             const result = [];
+
+        //             for (let i = 0; i < t.length - 1; i++) {
+        //                 const step = (t[i + 1] - t[i]) / numPoints;
+        //                 for (let j = 0; j <= numPoints; j++) {
+        //                     const x = t[i] + j * step;
+        //                     const dx = x - t[i];
+        //                     const value = a[i] + b[i] * dx + c[i] * dx ** 2 + d[i] * dx ** 3;
+        //                     result.push(value);
+        //                 }
+        //             }
+
+        //             return result;
+        //         };
+
+        //         const x = points.map(p => p[0]);
+        //         const y = points.map(p => p[1]);
+
+        //         const xCoeffs = interpolate(t, x);
+        //         const yCoeffs = interpolate(t, y);
+
+        //         const xDense = splinePoints(xCoeffs, 20);
+        //         const yDense = splinePoints(yCoeffs, 20);
+
+        //         let d = `M ${xDense[0]} ${yDense[0]}`;
+        //         for (let i = 1; i < xDense.length; i++) {
+        //             d += ` L ${xDense[i]} ${yDense[i]}`;
+        //         }
+
+        //         const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        //         path.setAttribute('d', d);
+        //         path.setAttribute('fill', 'none');
+        //         path.setAttribute('stroke', 'black');
+        //         path.setAttribute('stroke-width', '0.01');
+        //         path.setAttribute('stroke-linecap', 'round'); // Set rounded line caps
+        //         svg.appendChild(path);
+        //     }
+
+        //     // Optionally show dots at points
+        //     if (showDots) {
+        //         points.forEach(([x, y]) => {
+        //             const dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        //             dot.setAttribute('cx', x);
+        //             dot.setAttribute('cy', y);
+        //             dot.setAttribute('r', 2);
+        //             dot.setAttribute('fill', 'red');
+        //             svg.appendChild(dot);
+        //         });
+        //     }
+
+        //     // Optionally show knots as blue squares
+        //     if (showKnots) {
+        //         points.forEach(([x, y]) => {
+        //             const knot = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        //             knot.setAttribute('x', x - 1);
+        //             knot.setAttribute('y', y - 1);
+        //             knot.setAttribute('width', 2);
+        //             knot.setAttribute('height', 2);
+        //             knot.setAttribute('fill', 'blue');
+        //             svg.appendChild(knot);
+        //         });
+        //     }
+        // }
 
 
         function plotBaselines(positions, xlims) {
@@ -571,28 +614,6 @@ function plotSpline(points, showDots, showKnots) {
                 const [processedText, modifiedPhrasesDict] = processText(text, rules, selectedSystem);
 
                 processTextAndSendToBackend(processedText, systems[selectedSystem], modifiedPhrasesDict, selectedSystem)
-
-                // console.log('tokens:', tokens)
-
-                // // Update the FormData object with the modified values
-                // formData.set('text', processedText);
-                // formData.set('modifiedPhrasesDict', JSON.stringify(modifiedPhrasesDict));
-                // formData.set('system', JSON.stringify(systems[selectedSystem]));
-
-                // $.ajax({
-                //     type: 'POST',
-                //     url: `/generate_splines/${selectedSystem}`,
-                //     data: formData, // Send the FormData object
-                //     processData: false, // Prevent jQuery from processing the data
-                //     contentType: false, // Let the browser set the correct Content-Type
-                //     success: function(response) {
-                //         // Assuming the server returns the raw SVG markup as part of the response
-                //         $('#output').html(response.image);
-                //     },
-                //     error: function() {
-                //         $('#output').html('<p>Error generating plot.</p>');
-                //     }
-                // });
             }
         }
 
@@ -737,7 +758,7 @@ function plotSpline(points, showDots, showKnots) {
             return findBestTokenization(0).tokens;
         }
 
-        function tokenizeWithMultiWords(text, system, multiWordTokens, abbrvWords = false) {
+        function tokenizeWithMultiWords(text, system, multiWordTokens) {
             /**
             * Tokenizes the text by first finding multi-word tokens, then tokenizing the remaining words.
             */
@@ -748,7 +769,7 @@ function plotSpline(points, showDots, showKnots) {
             let multiWordMatches = [];
             let textWithPlaceholders;
 
-            if (abbrvWords) {
+            if (options['abbrv_words']) {
                 ({ textWithPlaceholders, multiWordMatches } = findMultiWordTokens(text, multiWordTokens));
             } else {
                 textWithPlaceholders = text;
@@ -773,20 +794,31 @@ function plotSpline(points, showDots, showKnots) {
             * Finds and extracts multi-word tokens from the text.
             */
             const matches = [];
+
+            // Check if multiWordTokens is an object
+            if (typeof multiWordTokens === 'object' && !Array.isArray(multiWordTokens)) {
+                // Convert object keys to an array
+                multiWordTokens = Object.keys(multiWordTokens);
+            }
+
+            // Validate that multiWordTokens is now an array
+            if (!Array.isArray(multiWordTokens)) {
+                throw new Error('multiWordTokens must be an array or an object with keys as tokens.');
+            }
+
             const escapedTokens = multiWordTokens.map((token) => token.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
             const sortedTokens = escapedTokens.sort((a, b) => b.length - a.length);
             const multiWordPattern = new RegExp(`\\b(${sortedTokens.join('|')})\\b`, 'g');
 
-            console.log('mwp', multiWordPattern)
-
             const newText = text.replace(multiWordPattern, (match) => {
-                console.log('match', match)
+                console.log('match', match);
                 matches.push(match);
                 return '§';
             });
 
             return { textWithPlaceholders: newText, multiWordMatches: matches };
         }
+
     });
 </script>
 {% endblock %}

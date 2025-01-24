@@ -254,6 +254,9 @@ function updatePointsField() {
 }
 
 function plotSpline(points, color = colorInk, callback = null) {
+
+    console.log(points)
+
     if (points.length > 1) {
         // Generate the cubic spline in JavaScript
         const t = points.map((_, i) => i / (points.length - 1));
@@ -603,23 +606,29 @@ function rebuildModesList() {
 saveButton.addEventListener('click', () => {
     if (selectedPoints.length) {
 
-        const data = {
-            name: characterField.value.trim(),
-            points: selectedPoints.map(spline =>
-                spline.map(([x, y]) => [(x + gridSize / 2) / gridSize, (y + gridSize / 2) / gridSize])
-                ),
-            as_mode: false,
-            as_phrase: false,
-        };
+        // const data = {
+        //     name: characterField.value.trim(),
+        //     points: selectedPoints.map(spline =>
+        //         spline.map(([x, y]) => [(x + gridSize / 2) / gridSize, (y + gridSize / 2) / gridSize])
+        //         ),
+        //     as_mode: false,
+        //     as_phrase: false,
+        // };
 
         const newName = characterField.value.trim()
 
+        console.log(gridSize)
+        console.log(selectedPoints)
+
         // points have to be rescaled to [0, 1], then shifted by [0.5, 0.5]
         const newPoints = selectedPoints.map(spline =>
-                spline.map(([x, y]) => [(x + gridSize / 2) / gridSize - 0.5, (y + gridSize / 2) / gridSize - 0.5])
+                spline.map(([x, y]) => [(x + gridSize / 2.) / gridSize - 0.5, (y + gridSize / 2.) / gridSize - 0.5])
                 )
 
-        glyphSplineData[newName] = newPoints
+        console.log('newPoints', newPoints)
+
+        // glyphSplineData[newName] = newPoints
+        glyphSplineData[newName] = selectedPoints
         saveSystems();  // from index.html
 
         rebuildGlyphList();
@@ -664,7 +673,8 @@ confirmSaveMode.addEventListener('click', () => {
             const newPoints = selectedPoints.map(spline =>
                     spline.map(([x, y]) => [(x + gridSize / 2) / gridSize - 0.5, (y + gridSize / 2) / gridSize - 0.5])
                     )
-            modeSplineData[modeName.value.trim()] = {points: newPoints, pattern: modePattern.value.trim()}
+            // modeSplineData[modeName.value.trim()] = {points: newPoints, pattern: modePattern.value.trim()}
+            modeSplineData[modeName.value.trim()] = {points: selectedPoints, pattern: modePattern.value.trim()}
             saveSystems()
 
             rebuildModesList();
@@ -695,7 +705,8 @@ savePhrase.addEventListener('click', () => {
         const newPoints = selectedPoints.map(spline =>
                 spline.map(([x, y]) => [(x + gridSize / 2) / gridSize - 0.5, (y + gridSize / 2) / gridSize - 0.5])
                 )
-        phraseSplineData[characterField.value.trim()] = newPoints
+        // phraseSplineData[characterField.value.trim()] = newPoints
+        phraseSplineData[characterField.value.trim()] = selectedPoints
         saveSystems()
 
         rebuildPhrasesList();
