@@ -71,6 +71,21 @@
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
     $(document).ready(function() {
+        // Function to retrieve the checkbox states and set variables accordingly
+        function updateOptions() {
+            const options = {
+                abbrv_words: document.getElementById('abbrv_words').checked,
+                show_baselines: document.getElementById('show_baselines').checked,
+                show_dots: document.getElementById('show_dots').checked,
+                show_knot_points: document.getElementById('show_knot_points').checked
+            };
+
+            console.log(options); // For debugging purposes
+
+            // Use the options object as needed in your code
+            return options;
+        }
+
         function downloadSVG() {
             const svgElement = document.getElementById('output');
 
@@ -195,8 +210,6 @@
             // const formData = new FormData(form);
             // formData.append('tokenizedSplines', JSON.stringify(tokenizedResults));
 
-            console.log(tokenizedResults)
-
             generateSplines(tokenizedResults)
             // $('#output').html('<p>Error generating plot.</p>');
 
@@ -257,6 +270,80 @@
             return words;
         }
 
+        // function generateSplines(tokenizedSplines) {
+        //     /**
+        //     * Generates and plots splines for tokenized text. Handles line breaks and adjustments.
+        //     * Adjusted for SVG's flipped y-axis.
+        //     */
+
+        //     const spaceBetweenWords = 0.2;
+        //     const lineSpacing = 0.2;
+
+        //     const showDots = document.getElementById('show_dots').checked;
+        //     const showKnots = document.getElementById('show_knot_points').checked;
+        //     const showBaselines = document.getElementById('show_baselines').checked;
+
+        //     const svgContainer = document.getElementById('output');
+        //     svgContainer.innerHTML = ''; // Clear any existing SVG
+
+        //     let currentVerticalOffset = 0;
+        //     let rightMostPoint = 0;
+        //     let leftMostPoint = 0;
+        //     let lowestPoint = 0;
+        //     let highestPoint = 0;
+        //     const linePositions = [];
+
+        //     tokenizedSplines.forEach(wordSplines => {
+        //         let currentShift = [0, 0];
+        //         let lineXPos = 0;
+        //         const splinesToPlot = [];
+
+        //         wordSplines.forEach(word => {
+        //             word.forEach(points => {
+        //                 const shiftedPoints = points.map(([x, y]) => [x, -y]); // Flip y-axis
+        //                 const xmin = word[0][0][0]; // First character's first point
+
+        //                 for (let i = 0; i < shiftedPoints.length; i++) {
+        //                     shiftedPoints[i][0] -= xmin;
+        //                     shiftedPoints[i][0] += currentShift[0];
+        //                     shiftedPoints[i][1] += currentShift[1];
+        //                 }
+
+        //                 lineXPos = Math.max(lineXPos, shiftedPoints[shiftedPoints.length - 1][0]);
+        //                 rightMostPoint = Math.max(rightMostPoint, shiftedPoints[shiftedPoints.length - 1][0]);
+        //                 leftMostPoint = Math.min(leftMostPoint, shiftedPoints[0][0]);
+
+        //                 splinesToPlot.push(shiftedPoints);
+        //             });
+
+        //             currentShift = [lineXPos + spaceBetweenWords, 0];
+        //         });
+
+        //         const highestPointCurrentLine = Math.max(...splinesToPlot.flat().map(([x, y]) => -y)); // Flip y-axis for comparison
+        //         const lowestPointCurrentLine = Math.min(...splinesToPlot.flat().map(([x, y]) => -y)); // Flip y-axis for comparison
+
+        //         highestPoint = Math.max(highestPoint, highestPointCurrentLine);
+        //         lowestPoint = Math.min(lowestPoint, lowestPointCurrentLine);
+
+        //         currentVerticalOffset += highestPointCurrentLine; // Adjust for SVG coordinate system
+
+        //         splinesToPlot.forEach(points => {
+        //             const adjustedPoints = points.map(([x, y]) => [x, y + currentVerticalOffset]);
+        //             plotSpline(adjustedPoints, showDots, showKnots);
+        //         });
+
+        //         linePositions.push(currentVerticalOffset);
+        //         currentVerticalOffset += lowestPointCurrentLine - lineSpacing; // Adjust for spacing
+        //     });
+
+        //     if (showBaselines) {
+        //         plotBaselines(linePositions.map(pos => -pos), [leftMostPoint - spaceBetweenWords, rightMostPoint + spaceBetweenWords]);
+        //     }
+
+        //     finalizePlot(rightMostPoint, -highestPoint, -lowestPoint, lineSpacing); // Flip y for final bounding box
+        // }
+
+
         function generateSplines(tokenizedSplines) {
             /**
             * Generates and plots splines for tokenized text. Handles line breaks and adjustments.
@@ -280,7 +367,7 @@
             const linePositions = [];
 
             tokenizedSplines.forEach(wordSplines => {
-                let currentShift = [0, 0];
+                let currentShift = [0, 0]
                 let lineXPos = 0;
                 const splinesToPlot = [];
 
@@ -308,10 +395,11 @@
                 const highestPointCurrentLine = Math.max(...splinesToPlot.flat().map(([x, y]) => y));
                 const lowestPointCurrentLine = Math.min(...splinesToPlot.flat().map(([x, y]) => y));
 
-                highestPoint = Math.max(highestPoint, highestPointCurrentLine)
-                lowestPoint = Math.min(lowestPoint, lowestPointCurrentLine)
-
                 currentVerticalOffset -= highestPointCurrentLine;
+                // currentVerticalOffset += lowestPointCurrentLine - lineSpacing;
+
+                highestPoint = Math.max(highestPoint, highestPointCurrentLine + currentVerticalOffset)
+                lowestPoint = Math.min(lowestPoint, lowestPointCurrentLine + currentVerticalOffset)
 
                 splinesToPlot.forEach(points => {
                     const adjustedPoints = points.map(([x, y]) => [x, y + currentVerticalOffset]);
@@ -326,50 +414,117 @@
                 plotBaselines(linePositions, [leftMostPoint - spaceBetweenWords, rightMostPoint + spaceBetweenWords]);
             }
 
-            finalizePlot(rightMostPoint, highestPoint, lowestPoint, lineSpacing);
+            finalizePlot(leftMostPoint, rightMostPoint, highestPoint, lowestPoint, lineSpacing, spaceBetweenWords);
         }
 
-        function plotSpline(points, showDots, showKnots) {
-            /**
-            * Plots individual splines on the SVG canvas.
-            */
-            const svg = document.getElementById('output');
-            const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+function plotSpline(points, showDots, showKnots) {
+    /**
+    * Plots a cubic spline using the given points as knot points on the SVG canvas,
+    * generating the spline curve and ensuring all points form a single continuous spline.
+    */
+    const svg = document.getElementById('output');
 
-            let d = `M ${points[0][0]} ${points[0][1]}`;
-            for (let i = 1; i < points.length; i++) {
-                d += ` L ${points[i][0]} ${-points[i][1]}`;
+    if (points.length >= 2) { // Ensure at least two points to draw a spline
+        const t = points.map((_, i) => i / (points.length - 1));
+
+        const interpolate = (t, values) => {
+            const n = values.length;
+            const a = values.slice();
+            const b = new Array(n).fill(0);
+            const d = new Array(n).fill(0);
+            const h = new Array(n - 1).fill(0).map((_, i) => t[i + 1] - t[i]);
+
+            const alpha = new Array(n - 1).fill(0).map((_, i) => {
+                if (i === 0) return 0;
+                return (3 / h[i] * (a[i + 1] - a[i]) - 3 / h[i - 1] * (a[i] - a[i - 1]));
+            });
+
+            const c = new Array(n).fill(0);
+            const l = new Array(n).fill(1);
+            const mu = new Array(n).fill(0);
+            const z = new Array(n).fill(0);
+
+            for (let i = 1; i < n - 1; i++) {
+                l[i] = 2 * (t[i + 1] - t[i - 1]) - h[i - 1] * mu[i - 1];
+                mu[i] = h[i] / l[i];
+                z[i] = (alpha[i] - h[i - 1] * z[i - 1]) / l[i];
             }
 
-            path.setAttribute('d', d);
-            path.setAttribute('fill', 'none');
-            path.setAttribute('stroke', 'black');
-            path.setAttribute('stroke-width', '0.01');
-            svg.appendChild(path);
-
-            if (showDots) {
-                points.forEach(([x, y]) => {
-                    const dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-                    dot.setAttribute('cx', x);
-                    dot.setAttribute('cy', y);
-                    dot.setAttribute('r', 2);
-                    dot.setAttribute('fill', 'red');
-                    svg.appendChild(dot);
-                });
+            for (let j = n - 2; j >= 0; j--) {
+                c[j] = z[j] - mu[j] * c[j + 1];
+                b[j] = (a[j + 1] - a[j]) / h[j] - h[j] * (c[j + 1] + 2 * c[j]) / 3;
+                d[j] = (c[j + 1] - c[j]) / (3 * h[j]);
             }
 
-            if (showKnots) {
-                points.forEach(([x, y]) => {
-                    const knot = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-                    knot.setAttribute('x', x - 1);
-                    knot.setAttribute('y', y - 1);
-                    knot.setAttribute('width', 2);
-                    knot.setAttribute('height', 2);
-                    knot.setAttribute('fill', 'blue');
-                    svg.appendChild(knot);
-                });
+            return { a, b, c, d, t };
+        };
+
+        const splinePoints = (coeffs, numPoints) => {
+            const { a, b, c, d, t } = coeffs;
+            const result = [];
+
+            for (let i = 0; i < t.length - 1; i++) {
+                const step = (t[i + 1] - t[i]) / numPoints;
+                for (let j = 0; j <= numPoints; j++) {
+                    const x = t[i] + j * step;
+                    const dx = x - t[i];
+                    const value = a[i] + b[i] * dx + c[i] * dx ** 2 + d[i] * dx ** 3;
+                    result.push(value);
+                }
             }
+
+            return result;
+        };
+
+        const x = points.map(p => p[0]);
+        const y = points.map(p => p[1]);
+
+        const xCoeffs = interpolate(t, x);
+        const yCoeffs = interpolate(t, y);
+
+        const xDense = splinePoints(xCoeffs, 20);
+        const yDense = splinePoints(yCoeffs, 20);
+
+        let d = `M ${xDense[0]} ${yDense[0]}`;
+        for (let i = 1; i < xDense.length; i++) {
+            d += ` L ${xDense[i]} ${yDense[i]}`;
         }
+
+        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        path.setAttribute('d', d);
+        path.setAttribute('fill', 'none');
+        path.setAttribute('stroke', 'black');
+        path.setAttribute('stroke-width', '0.01');
+        path.setAttribute('stroke-linecap', 'round'); // Set rounded line caps
+        svg.appendChild(path);
+    }
+
+    // Optionally show dots at points
+    if (showDots) {
+        points.forEach(([x, y]) => {
+            const dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+            dot.setAttribute('cx', x);
+            dot.setAttribute('cy', y);
+            dot.setAttribute('r', 2);
+            dot.setAttribute('fill', 'red');
+            svg.appendChild(dot);
+        });
+    }
+
+    // Optionally show knots as blue squares
+    if (showKnots) {
+        points.forEach(([x, y]) => {
+            const knot = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+            knot.setAttribute('x', x - 1);
+            knot.setAttribute('y', y - 1);
+            knot.setAttribute('width', 2);
+            knot.setAttribute('height', 2);
+            knot.setAttribute('fill', 'blue');
+            svg.appendChild(knot);
+        });
+    }
+}
+
 
         function plotBaselines(positions, xlims) {
             /**
@@ -385,17 +540,22 @@
                 line.setAttribute('stroke', 'grey');
                 line.setAttribute('stroke-dasharray', '0.02, 0.02');
                 line.setAttribute('stroke-width', '0.005');
-                
+
                 // Prepend the line to the SVG element to ensure it is below other elements
                 svg.insertBefore(line, svg.firstChild);
             });
         }
 
-        function finalizePlot(rightMostPoint, highestPoint, lowestPoint, lineSpacing) {
-            console.log(highestPoint, lowestPoint, lineSpacing)
+        function finalizePlot(leftMostPoint, rightMostPoint, highestPoint, lowestPoint, lineSpacing, spaceBetweenWords) {
             const svg = document.getElementById('output');
-            svg.setAttribute('viewBox', `0 ${lowestPoint } ${rightMostPoint} ${highestPoint - lowestPoint + 2 * lineSpacing}`); // Normalize viewBox
+            svg.setAttribute('viewBox', `${leftMostPoint - 2 * spaceBetweenWords} -${Math.abs(lowestPoint - lineSpacing)} ${rightMostPoint + 4 * spaceBetweenWords} ${highestPoint - lowestPoint + 2 * lineSpacing}`); // Normalize viewBox
+            // svg.setAttribute('viewBox', `0 ${highestPoint - lineSpacing} ${rightMostPoint} ${Math.abs(highestPoint - lowestPoint) + 2 * lineSpacing}`); // Normalize viewBox
             svg.setAttribute('preserveAspectRatio', 'xMidYMid meet'); // Scale uniformly
+            // Get the height of the SVG
+            const svgHeight = svg.getAttribute('height') || svg.viewBox.baseVal.height;
+
+            // Apply the transformation
+            svg.setAttribute('transform', `scale(1, -1) translate(0, -${svgHeight})`);
         }
 
         function updatePlot() {
@@ -617,7 +777,10 @@
             const sortedTokens = escapedTokens.sort((a, b) => b.length - a.length);
             const multiWordPattern = new RegExp(`\\b(${sortedTokens.join('|')})\\b`, 'g');
 
+            console.log('mwp', multiWordPattern)
+
             const newText = text.replace(multiWordPattern, (match) => {
+                console.log('match', match)
                 matches.push(match);
                 return '§';
             });

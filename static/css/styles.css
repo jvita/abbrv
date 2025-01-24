@@ -332,7 +332,7 @@ select, input[type="checkbox"] {
     margin-top: 20px;
     text-align: center;
     width: auto;
-    max-height: 600px;
+    max-height: 400px;
     border: 1px solid black;
 }
 
