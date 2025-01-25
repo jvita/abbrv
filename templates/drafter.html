@@ -415,7 +415,7 @@ function handleGlyphSelect(glyph, glyphPoints = null, append = false) {
     if (glyph !== null) {
         // selecting un-selected character
         const newPoints = glyphPoints ? glyphPoints : (glyph in glyphSplineData ? glyphSplineData[glyph] : [])
-        
+
         // glyphSplineData is assumed to be relative to the origin (0, 0).
         // since the center of the grid is (0.5, 0.5), glyphSplineData has to be shifted when plotting
         const shiftedNewPoints = newPoints.map(spline =>
@@ -493,7 +493,7 @@ function refreshButtons() {
 function refreshSaveButton() {
     // can't do things if no points selected, or character of selected points is not specified
     saveButton.disabled = (selectedPoints.length === 0) || (characterField.value === '')
-    
+
     // for hiding dropdown options; have to use 'show' tag
     if (!saveButton.disabled) {
         saveDropdown.disabled = false;              // Enable the dropdown button
@@ -625,10 +625,7 @@ saveButton.addEventListener('click', () => {
                 spline.map(([x, y]) => [(x + gridSize / 2.) / gridSize - 0.5, (y + gridSize / 2.) / gridSize - 0.5])
                 )
 
-        console.log('newPoints', newPoints)
-
-        // glyphSplineData[newName] = newPoints
-        glyphSplineData[newName] = selectedPoints
+        glyphSplineData[newName] = newPoints
         saveSystems();  // from index.html
 
         rebuildGlyphList();
@@ -673,8 +670,7 @@ confirmSaveMode.addEventListener('click', () => {
             const newPoints = selectedPoints.map(spline =>
                     spline.map(([x, y]) => [(x + gridSize / 2) / gridSize - 0.5, (y + gridSize / 2) / gridSize - 0.5])
                     )
-            // modeSplineData[modeName.value.trim()] = {points: newPoints, pattern: modePattern.value.trim()}
-            modeSplineData[modeName.value.trim()] = {points: selectedPoints, pattern: modePattern.value.trim()}
+            modeSplineData[modeName.value.trim()] = {points: newPoints, pattern: modePattern.value.trim()}
             saveSystems()
 
             rebuildModesList();
@@ -705,8 +701,7 @@ savePhrase.addEventListener('click', () => {
         const newPoints = selectedPoints.map(spline =>
                 spline.map(([x, y]) => [(x + gridSize / 2) / gridSize - 0.5, (y + gridSize / 2) / gridSize - 0.5])
                 )
-        // phraseSplineData[characterField.value.trim()] = newPoints
-        phraseSplineData[characterField.value.trim()] = selectedPoints
+        phraseSplineData[characterField.value.trim()] = newPoints
         saveSystems()
 
         rebuildPhrasesList();
