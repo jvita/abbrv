@@ -302,7 +302,9 @@
                             shiftedPoints[i][1] += currentShift[1];
                         }
 
-                        lineXPos = Math.max(lineXPos, shiftedPoints[shiftedPoints.length - 1][0]);
+                        const xmax = shiftedPoints.reduce((maxX, point) => Math.max(maxX, point[0]), -Infinity);
+                        // lineXPos = Math.max(lineXPos, shiftedPoints[shiftedPoints.length - 1][0]);
+                        lineXPos = Math.max(lineXPos, xmax);
                         rightMostPoint = Math.max(rightMostPoint, shiftedPoints[shiftedPoints.length - 1][0]);
                         leftMostPoint = Math.min(leftMostPoint, shiftedPoints[0][0]);
 
