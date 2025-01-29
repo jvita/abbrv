@@ -165,6 +165,7 @@
             });
         });
 
+        // TODO: need to update 'modes' when checkboxes changes
         const modesDropdownItems = document.getElementById('modesDropdownItems');
 
         // Check if there are any rules
@@ -201,7 +202,7 @@
 
         let debounceTimeout;
 
-        function processTextAndSendToBackend(text, system, multiWordTokens, selectedSystem) {
+        function processTextAndSendToBackend(text, system, activeModes, multiWordTokens, selectedSystem) {
             /**
             * Processes a string of text by splitting it into lines, tokenizing each line,
             * merging word splines, and sending the tokenized results to a backend using AJAX.
@@ -213,7 +214,7 @@
             // Tokenize each line and merge word splines
             const tokenizedResults = lines.map(line => {
                 if (line.length > 0) {
-                    const tokenizedLine = tokenizeWithMultiWords(line, system, multiWordTokens);
+                    const tokenizedLine = tokenizeWithMultiWords(line, system, activeModes, multiWordTokens);
                     return mergeWordSplines(tokenizedLine);
                 }
             });
@@ -506,11 +507,12 @@
                 const formData = new FormData(form);
                 const text = formData.get('text');
                 const rules = formData.getAll('rules');
+                const activeModes = formData.getAll('modes');
 
                 // Process the text and rules
                 const [processedText, modifiedPhrasesDict] = processText(text, rules, selectedSystem);
 
-                processTextAndSendToBackend(processedText, systems[selectedSystem], modifiedPhrasesDict, selectedSystem)
+                processTextAndSendToBackend(processedText, systems[selectedSystem], activeModes, modifiedPhrasesDict, selectedSystem)
             }
         }
 
@@ -591,12 +593,12 @@
             return spacedText.trim();
         }
 
-        function tokenizeString(word, system) {
+        function tokenizeString(word, system, activeModes) {
             /**
              * Tokenizes a single word using a dictionary of regular expressions and corresponding lists of arrays.
              * The function searches for the tokenization with the fewest possible tokens and prioritizes the largest actual match.
              */
-            // const regexDict = Object.fromEntries(Object.entries(system.glyphs).slice(17));
+
             const regexDict = Object.fromEntries(Object.entries(system.glyphs));
 
             const cleanRegexDict = {}
@@ -606,7 +608,9 @@
                 cleanRegexDict[cleanPattern] = regexDict[key]
             }
 
-            Object.entries(system.modes).forEach(([key, value]) => {
+            // Note: don't do regex escaping on the mode patterns, since those
+            // should already be valid regex strings
+            Object.entries(system.modes).filter(([key, _]) => activeModes.includes(key)).forEach(([key, value]) => {
                 cleanRegexDict[value.pattern] = value.points;
             });
 
@@ -664,13 +668,13 @@
             return findBestTokenization(0).tokens;
         }
 
-        function tokenizeWithMultiWords(text, system, multiWordTokens) {
+        function tokenizeWithMultiWords(text, system, activeModes, multiWordTokens) {
             /**
             * Tokenizes the text by first finding multi-word tokens, then tokenizing the remaining words.
             */
 
-            const regexList = Object.keys(system.glyphs).slice(17);
-            regexList.push(...Object.values(system.modes).map((mode) => mode.pattern));
+            // const regexList = Object.keys(system.glyphs).slice(1);
+            // regexList.push(...Object.entries(system.modes).filter(([key, _]) => activeModes.includes(key)).map(([_, mode]) => mode.pattern));
 
             let multiWordMatches = [];
             let textWithPlaceholders;
@@ -688,7 +692,7 @@
                 if (word === '§') {
                     allTokens.push([multiWordTokens[multiWordMatches.shift()]]);
                 } else {
-                    allTokens.push(tokenizeString(word, system));
+                    allTokens.push(tokenizeString(word, system, activeModes));
                 }
             }
 
