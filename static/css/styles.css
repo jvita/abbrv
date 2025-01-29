@@ -330,6 +330,7 @@ select, input[type="checkbox"] {
 
 #output {
     margin-top: 20px;
+    margin-bottom: 20px;
     text-align: center;
     width: auto;
     max-height: 400px;
