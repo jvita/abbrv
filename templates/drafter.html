@@ -617,9 +617,6 @@ saveButton.addEventListener('click', () => {
 
         const newName = characterField.value.trim()
 
-        console.log(gridSize)
-        console.log(selectedPoints)
-
         // points have to be rescaled to [0, 1], then shifted by [0.5, 0.5]
         const newPoints = selectedPoints.map(spline =>
                 spline.map(([x, y]) => [(x + gridSize / 2.) / gridSize - 0.5, (y + gridSize / 2.) / gridSize - 0.5])
