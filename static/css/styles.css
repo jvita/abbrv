@@ -38,6 +38,7 @@ html, body {
     background-color: var(--background-color);
     color: #333;
     padding: 20px;
+    padding-top: 0px;
     scrollbar-color: var(--accent-color) var(--background-color);
     justify-content: center;
     align-items: center;
