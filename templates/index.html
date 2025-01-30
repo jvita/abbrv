@@ -366,6 +366,17 @@
             loadSystemsAndUpdateDropdown();
         });
 
+    $(document).ready(function() {
+        $('.navbar-toggler').click(function() {
+            $('#navbarNav').toggleClass('show');
+        });
+        $('.nav-link').click(function() {
+            if ($('.navbar-toggler').is(':visible')) {
+                $('#navbarNav').removeClass('show');
+            }
+        });
+    });
+
     </script>
 
     <!-- Include child JavaScript if needed -->

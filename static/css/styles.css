@@ -339,10 +339,10 @@ select, input[type="checkbox"] {
 }
 
 svg {
-    max-width: 95%;
-    max-height: 95%;
-    width: 95%; /* Ensures the SVG scales properly */
-    height: 95%; /* Ensures the SVG scales properly */
+    max-width: 100%;
+    max-height: 100%;
+    width: 100%; /* Ensures the SVG scales properly */
+    height: 100%; /* Ensures the SVG scales properly */
     /* border-radius: 10px;
     box-shadow: 0 0 15px rgba(0, 0, 0, 0.1); */
 }
