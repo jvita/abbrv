@@ -44,6 +44,7 @@ def available_systems():
 
 @app.route('/load_system_data/<system_name>', methods=['GET'])
 def load_system_data(system_name):
+    get_data()  # force re-load from zip files
     # This only sends the data for local download
 
     global systems

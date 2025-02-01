@@ -201,13 +201,11 @@
 
         let debounceTimeout;
 
-        function processTextAndSendToBackend(text, system, activeModes, multiWordTokens, selectedSystem) {
+        function processTextAndSendToBackend(text, system, activeModes, multiWordTokens, multiWordMatches) {
             /**
             * Processes a string of text by splitting it into lines, tokenizing each line,
             * merging word splines, and sending the tokenized results to a backend using AJAX.
             */
-
-            console.log('multiWordTokens', multiWordTokens)
 
             // Split the text into lines
             const lines = text.split('\n').map(line => line.trim()).filter(line => line !== '');
@@ -215,17 +213,7 @@
             // Tokenize each line and merge word splines
             const tokenizedResults = lines.map(line => {
                 if (line.length > 0) {
-                    // Apply multi word
-                    let multiWordMatches = [];
-                    let textWithPlaceholders;
-
-                    if (options['abbrv_words']) {
-                        ({ textWithPlaceholders, multiWordMatches } = findMultiWordTokens(line, multiWordTokens));
-                    } else {
-                        textWithPlaceholders = line;
-                    }
-
-                    const tokenizedLine = tokenizeWithMultiWords(textWithPlaceholders, system, activeModes, multiWordTokens);
+                    const tokenizedLine = tokenizeWithMultiWords(line, system, activeModes, multiWordTokens, multiWordMatches);
                     return mergeWordSplines(tokenizedLine);
                 }
             });
@@ -520,14 +508,10 @@
                 const rules = formData.getAll('rules');
                 const activeModes = formData.getAll('modes');
 
-                // TODO: phrases should be processed _before_ applying rules
-                // example problem: "come" and "came" both become "cme" after "a/o rule"
-
                 // Process the text and rules
-                const [processedText, modifiedPhrasesDict] = processText(text, rules, selectedSystem);
+                const [processedText, multiWordMatches] = processText(text, rules, selectedSystem);
 
-                processTextAndSendToBackend(processedText, systems[selectedSystem], activeModes, systems[selectedSystem].phrases, selectedSystem)
-                // processTextAndSendToBackend(processedText, systems[selectedSystem], activeModes, modifiedPhrasesDict, selectedSystem)
+                processTextAndSendToBackend(processedText, systems[selectedSystem], activeModes, systems[selectedSystem].phrases, multiWordMatches)
             }
         }
 
@@ -570,6 +554,13 @@
 
             text = addSpacesAroundPunctuation(text);
 
+            // Add placeholders for phrases
+            let multiWordMatches = [];
+
+            if (options['abbrv_words']) {
+                ({ text, multiWordMatches } = findMultiWordTokens(text, systems[selectedSystem].phrases));
+            }
+
             // Apply all user-defined rules
             for (let rule of systems[system].rules) {
                 if (!appliedRules.includes(rule.name)) continue;
@@ -578,23 +569,7 @@
                 text = text.replace(regex, rule.replacement);
             }
 
-            // Also apply the rules to phrases_dict so that it detects the modified phrases
-            const modifiedPhrasesDict = {};
-
-            for (let [key, value] of Object.entries(systems[system].phrases)) {
-                let modifiedKey = key;
-
-                for (let rule of systems[system].rules) {
-                    if (!appliedRules.includes(rule.name)) continue;
-
-                    const regex = new RegExp(rule.regex, 'g');
-                    modifiedKey = modifiedKey.replace(regex, rule.replacement);
-                }
-
-                modifiedPhrasesDict[modifiedKey] = value;
-            }
-
-            return [ text, modifiedPhrasesDict ];
+            return [ text, multiWordMatches];
         }
 
         function addSpacesAroundPunctuation(text) {
@@ -724,7 +699,7 @@
                 return '§';
             });
 
-            return { textWithPlaceholders: newText, multiWordMatches: matches };
+            return { text: newText, multiWordMatches: matches };
         }
 
     });
