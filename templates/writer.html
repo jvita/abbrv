@@ -586,76 +586,77 @@
         function tokenizeString(word, system, activeModes) {
             const regexDict = Object.fromEntries(Object.entries(system.glyphs));
 
-            const cleanRegexDict = {}
+            const cleanRegexDict = {};
             for (const key in regexDict) {
                 const cleanPattern = key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-                cleanRegexDict[cleanPattern] = regexDict[key]
+                cleanRegexDict[cleanPattern] = regexDict[key];
             }
 
-            // TODO: modes should be applied before all other glyphs (except phrases).
-            // example: 'every' should always be 'eve' first, since 'eve' is a mode
-
+            const modeRegexDict = {};
             Object.entries(system.modes).filter(([key, _]) => activeModes.includes(key)).forEach(([key, value]) => {
-                cleanRegexDict[value.pattern] = value.points;
+                modeRegexDict[value.pattern] = value.points;
             });
 
-            const regexList = Object.entries(cleanRegexDict).map(([pattern, value]) => ({ pattern: new RegExp(`^(?:${pattern})`, 'u'), value }));
+            const regexList = [
+                ...Object.entries(modeRegexDict).map(([pattern, value]) => ({ pattern: new RegExp(`^(?:${pattern})`, 'u'), value, isMode: true })),
+                ...Object.entries(cleanRegexDict).map(([pattern, value]) => ({ pattern: new RegExp(`^(?:${pattern})`, 'u'), value, isMode: false }))
+            ];
+
             const memo = {};
 
-            function compareRegexLengths(tokenizationA, tokenizationB) {
-                for (let i = 0; i < Math.min(tokenizationA.length, tokenizationB.length); i++) {
-                    if (tokenizationA[i].length !== tokenizationB[i].length) {
-                        return tokenizationA[i].length > tokenizationB[i].length;
-                    }
+            function compareTokenizations(a, b) {
+                if (a.modeCount !== b.modeCount) {
+                    return a.modeCount > b.modeCount;
+                }
+                if (a.count !== b.count) {
+                    return a.count < b.count;
+                }
+                if (a.longestToken !== b.longestToken) {
+                    return a.longestToken > b.longestToken;
                 }
                 return false;
             }
 
             function findBestTokenization(start) {
                 if (start === word.length) {
-                    return { tokens: [], count: 0, longestToken: 0, regexList: [] };
+                    return { tokens: [], count: 0, longestToken: 0, regexList: [], modeCount: 0 };
                 }
 
                 if (memo[start]) return memo[start];
 
                 let bestTokenization = null;
-                let fewestTokens = Infinity;
-                let longestTokenLength = 0;
-                let regexListForBest = [];
 
-                for (const { pattern, value } of regexList) {
+                for (const { pattern, value, isMode } of regexList) {
                     const match = word.slice(start).match(pattern);
                     if (match && match.index === 0) {
-                        console.log('match', match)
                         if (pattern.source.includes('\\b') && start > 0 && /\w/.test(word[start - 1])) {
-                            continue; // Ensure \b matches at an actual word boundary
+                            continue;
                         }
 
                         const matchLength = match[0].length;
                         const remaining = findBestTokenization(start + matchLength);
 
-                        const currentLongestToken = Math.max(matchLength, remaining.longestToken);
-                        const currentRegexList = [pattern.source, ...remaining.regexList];
-                        const candidateTokens = [value, ...remaining.tokens];
+                        const currentTokenization = {
+                            tokens: [value, ...remaining.tokens],
+                            count: 1 + remaining.count,
+                            longestToken: Math.max(matchLength, remaining.longestToken),
+                            regexList: [pattern.source, ...remaining.regexList],
+                            modeCount: (isMode ? 1 : 0) + remaining.modeCount
+                        };
 
-                        const candidateTokenCount = 1 + remaining.count;
-
-                        if (candidateTokenCount < fewestTokens ||
-                            (candidateTokenCount === fewestTokens && currentLongestToken > longestTokenLength) ||
-                            (candidateTokenCount === fewestTokens && currentLongestToken === longestTokenLength && compareRegexLengths(currentRegexList, regexListForBest))) {
-                            fewestTokens = candidateTokenCount;
-                            longestTokenLength = currentLongestToken;
-                            regexListForBest = currentRegexList;
-                            bestTokenization = candidateTokens;
+                        if (!bestTokenization || compareTokenizations(currentTokenization, bestTokenization)) {
+                            bestTokenization = currentTokenization;
                         }
                     }
                 }
 
-                memo[start] = { tokens: bestTokenization, count: fewestTokens, longestToken: longestTokenLength, regexList: regexListForBest };
-                return memo[start];
+                memo[start] = bestTokenization;
+                return bestTokenization;
             }
 
-            return findBestTokenization(0).tokens;
+            const result = findBestTokenization(0);
+            console.log('Final token regex patterns:', result.regexList);
+            return result.tokens;
         }
 
         function tokenizeWithMultiWords(textWithPlaceholders, system, activeModes, multiWordTokens, multiWordMatches) {
