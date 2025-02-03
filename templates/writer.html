@@ -23,7 +23,7 @@
                 <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
                     <li class="dropdown-item button-container align-items-center">
                         <input type="checkbox" id="abbrv_words" name="abbrv_words" style="max-height: 20px; max-width: 20px; min-width: 20px" checked>
-                        <label for="abbrv_words" style="flex: 6;">Use word abbreviations</label>
+                        <label for="abbrv_words" style="flex: 6;">Use phrase abbreviations</label>
                     </li>
                     <li class="dropdown-item button-container align-items-center">
                         <input type="checkbox" id="show_baselines" name="show_baselines" style="max-height: 20px; max-width: 20px; min-width: 20px" checked>
@@ -262,11 +262,14 @@
         }
 
         const scalingFactor = 6.0;
+        const plottedPoints = new Set(); // Persistent set of plotted points
 
         function generateSplines(tokenizedSplines) {
             /**
             * Generates and plots splines for tokenized text. Handles line breaks and adjustments.
             */
+
+            plottedPoints.clear()  // reset on each redraw
 
             const spaceBetweenWords = 0.2*scalingFactor;
             const lineSpacing = 0.2*scalingFactor;
@@ -294,7 +297,11 @@
                     const shiftedPointsFirst = word[0].map(([x, y]) => [x*scalingFactor, y*scalingFactor]); // Clone points
                     const xmin = shiftedPointsFirst.reduce((minX, point) => Math.min(minX, point[0]), Infinity);
 
-                    word.forEach(points => {
+                    word.forEach((points, index) => {
+                        // Skip plotting the first set of points if it contains only one point
+                        if (index === 0 && points.length === 1) {
+                            return;
+                        }
                         // scale to avoid numerical issues in spline for small shapes
                         const shiftedPoints = points.map(([x, y]) => [x*scalingFactor, y*scalingFactor]); // Clone points
 
@@ -346,44 +353,59 @@
             /**
              * Plots individual splines.
              * @param {Array} points - Array of points where each point is [x, y].
-             * @param {boolean} showDots - Whether to show dots.
+             * @param {boolean} showDots - Whether to show dots (only if a single unique point exists).
              * @param {boolean} showKnots - Whether to show knots.
              */
 
             const svgElement = document.getElementById('output');
 
+            console.log('dots, knots', showDots, showKnots)
+
             if (points.length === 1 && showDots) {
-                const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-                circle.setAttribute('cx', points[0][0]);
-                circle.setAttribute('cy', points[0][1]);
-                circle.setAttribute('r', 1);
-                circle.setAttribute('fill', 'black');
-                svgElement.appendChild(circle);
+                const key = `${points[0][0]},${points[0][1]}`;
+                // if ((!plottedPoints.has(key)) && (plottedPoints.size > 0)) {
+                if (!plottedPoints.has(key)) {
+                    const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                    circle.setAttribute('cx', points[0][0]);
+                    circle.setAttribute('cy', points[0][1]);
+                    circle.setAttribute('r', 0.01 * scalingFactor);
+                    circle.setAttribute('fill', 'black');
+                    svgElement.appendChild(circle);
+                    plottedPoints.add(key);
+                }
             } else {
+                points.forEach(([px, py]) => {
+                    const key = `${px},${py}`;
+                    if (!plottedPoints.has(key)) {
+                        plottedPoints.add(key);
+                    }
+                });
+
                 const { x, y } = interpolatePoints(points);
                 const pathData = x.map((xi, i) => `${i === 0 ? 'M' : 'L'} ${xi} ${y[i]}`).join(' ');
 
                 const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
                 path.setAttribute('d', pathData);
                 path.setAttribute('stroke', 'black');
-                path.setAttribute('stroke-width', 0.01*scalingFactor);
+                path.setAttribute('stroke-width', 0.01 * scalingFactor);
                 path.setAttribute('fill', 'none');
                 path.setAttribute('stroke-linecap', 'round');
                 svgElement.appendChild(path);
             }
 
             if (showKnots) {
+                console.log('drawing knots')
                 points.forEach(([px, py]) => {
                     const knot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+
                     knot.setAttribute('cx', px);
                     knot.setAttribute('cy', py);
-                    knot.setAttribute('r', 3);
+                    knot.setAttribute('r', 0.01 * scalingFactor);
                     knot.setAttribute('fill', 'red');
                     svgElement.appendChild(knot);
                 });
             }
         }
-
 
         function interpolatePoints(points, numPoints = 100) {
             /**
