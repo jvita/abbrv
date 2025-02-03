@@ -584,7 +584,6 @@
         }
 
         function tokenizeString(word, system, activeModes) {
-            console.log('word', word)
             const regexDict = Object.fromEntries(Object.entries(system.glyphs));
 
             const cleanRegexDict = {};
@@ -637,6 +636,7 @@
                 for (const { pattern, value, isMode } of regexList) {
                     const match = word.slice(start).match(pattern);
                     if (match && match.index === 0) {
+
                         const matchLength = match[0].length;
                         const remaining = findBestTokenization(start + matchLength);
 
