@@ -592,6 +592,9 @@
                 cleanRegexDict[cleanPattern] = regexDict[key]
             }
 
+            // TODO: modes should be applied before all other glyphs (except phrases).
+            // example: 'every' should always be 'eve' first, since 'eve' is a mode
+
             Object.entries(system.modes).filter(([key, _]) => activeModes.includes(key)).forEach(([key, value]) => {
                 cleanRegexDict[value.pattern] = value.points;
             });
@@ -623,6 +626,7 @@
                 for (const { pattern, value } of regexList) {
                     const match = word.slice(start).match(pattern);
                     if (match && match.index === 0) {
+                        console.log('match', match)
                         if (pattern.source.includes('\\b') && start > 0 && /\w/.test(word[start - 1])) {
                             continue; // Ensure \b matches at an actual word boundary
                         }
