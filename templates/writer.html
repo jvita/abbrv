@@ -584,6 +584,7 @@
         }
 
         function tokenizeString(word, system, activeModes) {
+            console.log('word', word)
             const regexDict = Object.fromEntries(Object.entries(system.glyphs));
 
             const cleanRegexDict = {};
@@ -617,6 +618,13 @@
                 return false;
             }
 
+            function isValidWordBoundary(start, matchLength) {
+                const before = start > 0 ? word[start - 1] : null;
+                const after = start + matchLength < word.length ? word[start + matchLength] : null;
+
+                return (!before || /\W/.test(before)) || (!after || /\W/.test(after));
+            }
+
             function findBestTokenization(start) {
                 if (start === word.length) {
                     return { tokens: [], count: 0, longestToken: 0, regexList: [], modeCount: 0 };
@@ -629,12 +637,12 @@
                 for (const { pattern, value, isMode } of regexList) {
                     const match = word.slice(start).match(pattern);
                     if (match && match.index === 0) {
-                        if (pattern.source.includes('\\b') && start > 0 && /\w/.test(word[start - 1])) {
-                            continue;
-                        }
-
                         const matchLength = match[0].length;
                         const remaining = findBestTokenization(start + matchLength);
+
+                        if (pattern.source.includes('\\b') && !isValidWordBoundary(start, matchLength)) {
+                            continue;
+                        }
 
                         const currentTokenization = {
                             tokens: [value, ...remaining.tokens],

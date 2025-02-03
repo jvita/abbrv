@@ -80,7 +80,7 @@
     </nav>
 
 
-    <div class="container-fluid mt-4" id="content">
+    <div class="container-fluid mt-3" id="content">
         {% block content %}
         <!-- Content from the individual applications will be injected here -->
         {% endblock %}
@@ -105,6 +105,7 @@
         document.getElementById('downloadSystem').addEventListener('click', handleDownloadSystems);
 
         function saveSystems() {
+            console.log('Saving system...')
             // TODO: this is inefficient; should only update current system
             // TODO: there can be an issue when you make an edit in one page,
             // then make another edit in a second page without refreshing first.
