@@ -658,7 +658,6 @@
                         const matchLength = match[0].length;
                         const remaining = findBestTokenization(start + matchLength);
 
-                        console.log(pattern, start, 'wb:', isValidWordBoundary(start, matchLength))
                         if (pattern.source.includes('\\b') && !isValidWordBoundary(start, matchLength)) {
                             continue;
                         }
