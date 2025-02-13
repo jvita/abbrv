@@ -5,22 +5,10 @@
     box-sizing: border-box;
 }
 
-/* :root {
-    --background-color: #fdfbec;
-    --disabled-color: #4d4a4a;
-    --accent-color: #dbd2ba;
-    --ink-color: #0B0B0B;
-    --selected-color: #a67c52;
-    --dark-selected-color: #583909;
-    --freeze-color: #166354;
-    --frozen-color: #12433a;
-} */
-
 :root {
     --background-color: #ffffff;
     --disabled-color: #4d4a4a;
     --accent-color: #a1a09f;
-    /* --ink-color: #0B0B0B; */
     --ink-color: #366df6;
     --selected-color: #366df6;
     --dark-selected-color: #2250c6;
@@ -79,7 +67,6 @@ html, body {
 
 .controls h3 {
     margin: 5px;
-    /* margin-left: 10px; */
 }
 
 #character {
@@ -97,10 +84,8 @@ html, body {
 
 /* Overwrite some Bootstrap defaults */
 .btn {
-    /* background-color: var(--selected-color); */
     border: none;
     color: white;
-    /* padding: 5px 10px; */
     text-align: center;
     text-decoration: none;
     display: inline-block;
@@ -108,40 +93,6 @@ html, body {
     margin: 5px;
     border-radius: 4px;
 }
-
-/* .btn:hover {
-    background-color: var(--dark-selected-color);
-} */
-
-/* .btn-primary {
-    background-color: var(--selected-color);
-    border: none;
-    color: white;
-    padding: 5px 10px;
-    text-align: center;
-    text-decoration: none;
-    display: inline-block;
-    font-size: 16px;
-    margin: 5px;
-    border-radius: 4px;
-}
-
-.btn-primary:hover {
-    background-color: var(--dark-selected-color);
-}
-
-.btn-primary:disabled {
-    background-color: var(--disabled-color);
-} */
-
-/* Add modifications for different colors */
-/* .join-button {
-    background-color: var(--selected-color);
-}
-
-.join-button:hover {
-    background-color: var(--dark-selected-color);
-} */
 
 .unjoin-button {
     background-color: var(--dark-selected-color);
@@ -211,13 +162,11 @@ html, body {
     display: flex;
     flex-direction: column;
     gap: 5px;
-    /* max-height: 555px; */
     max-height: 150px;
     min-height: 150px;
     overflow-y: auto;
     border: 1px solid #ddd;
     border-radius: 4px;
-    /* background-color: var(--background-color); */
     background-color: #ffffff;
     padding: 10px;
     margin: 5px;
@@ -245,10 +194,6 @@ html, body {
     border-radius: 4px;
     cursor: pointer;
 }
-
-/* .char-list-item:hover {
-    background-color: var(--accent-color);
-} */
 
 .char-list-item.selected {
     background-color: var(--selected-color);
@@ -315,20 +260,6 @@ select, input[type="checkbox"] {
     margin-top: 5px;
 }
 
-/* #output {
-    width: 100%;
-    height: auto;
-    border: 1px solid black;
-    max-height: 600px;
-} */
-
-/* #output {
-    display: block;
-    width: 800px;
-    height: 800px;
-    border: 1px solid black;
-} */
-
 #output {
     margin-top: 20px;
     margin-bottom: 20px;
@@ -343,8 +274,6 @@ svg {
     max-height: 100%;
     width: 100%; /* Ensures the SVG scales properly */
     height: 100%; /* Ensures the SVG scales properly */
-    /* border-radius: 10px;
-    box-shadow: 0 0 15px rgba(0, 0, 0, 0.1); */
 }
 
 img {
@@ -353,40 +282,6 @@ img {
     border: 1px solid #ccc;
     border-radius: 4px;
 }
-
-/* .multi-column {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 10px;
-    padding: 10px;
-}
-
-.multi-column .dropdown-item {
-    display: flex;
-    align-items: center;
-    white-space: nowrap;
-}
-
-.dropdown-menu {
-    display: none;
-}
-
-.dropdown-menu.show {
-    display: block;
-}
-
-.dropdown-menu.show.multi-column {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 10px;
-    padding: 10px;
-} */
-
-/* .dropdown-menu .dropdown-item {
-    display: flex;
-    align-items: center;
-    white-space: nowrap;
-} */
 
 .dropdown-item {
     display: flex;

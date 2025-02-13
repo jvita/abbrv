@@ -8,9 +8,7 @@
 <form id="text-form" class="d-flex flex-column justify-content-start" style="width: 100%">
     <textarea id="text" name="text" class="form-control mb-3" placeholder="Enter text here..."></textarea>
 
-    <!-- <div class="d-flex justify-content-center align-items-center"> -->
-        <svg class="d-flex" id="output"></svg>
-    <!-- </div> -->
+    <svg class="d-flex" id="output"></svg>
 
     <!-- Dropdown Menu -->
     <div class="d-flex mt-3 flex-row justify-content-between">
@@ -312,7 +310,6 @@
                         }
 
                         const xmax = shiftedPoints.reduce((maxX, point) => Math.max(maxX, point[0]), -Infinity);
-                        // lineXPos = Math.max(lineXPos, shiftedPoints[shiftedPoints.length - 1][0]);
                         lineXPos = Math.max(lineXPos, xmax);
                         rightMostPoint = Math.max(rightMostPoint, shiftedPoints[shiftedPoints.length - 1][0]);
                         leftMostPoint = Math.min(leftMostPoint, shiftedPoints[0][0]);
@@ -327,7 +324,6 @@
                 const lowestPointCurrentLine = Math.min(...splinesToPlot.flat().map(([x, y]) => y));
 
                 currentVerticalOffset -= highestPointCurrentLine;
-                // currentVerticalOffset += lowestPointCurrentLine - lineSpacing;
 
                 highestPoint = Math.max(highestPoint, highestPointCurrentLine + currentVerticalOffset)
                 lowestPoint = Math.min(lowestPoint, lowestPointCurrentLine + currentVerticalOffset)

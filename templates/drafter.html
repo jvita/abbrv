@@ -439,10 +439,6 @@ function handleGlyphSelect(glyph, glyphPoints = null, append = false) {
                 );
         }
 
-        // if (selectedPoints.length === 0) {
-        //     // selecting the first set of points, so re-center
-        //     centerGridView();
-        // }
         selectedPoints = selectedPoints.concat(shiftedAppendPoints)
 
         selectedGlyphs.push(glyph)
@@ -605,16 +601,6 @@ function rebuildModesList() {
 
 saveButton.addEventListener('click', () => {
     if (selectedPoints.length) {
-
-        // const data = {
-        //     name: characterField.value.trim(),
-        //     points: selectedPoints.map(spline =>
-        //         spline.map(([x, y]) => [(x + gridSize / 2) / gridSize, (y + gridSize / 2) / gridSize])
-        //         ),
-        //     as_mode: false,
-        //     as_phrase: false,
-        // };
-
         const newName = characterField.value.trim()
 
         // points have to be rescaled to [0, 1], then shifted by [0.5, 0.5]
