@@ -355,8 +355,6 @@
 
             const svgElement = document.getElementById('output');
 
-            console.log('dots, knots', showDots, showKnots)
-
             if (points.length === 1 && showDots) {
                 const key = `${points[0][0]},${points[0][1]}`;
                 // if ((!plottedPoints.has(key)) && (plottedPoints.size > 0)) {
@@ -390,7 +388,6 @@
             }
 
             if (showKnots) {
-                console.log('drawing knots')
                 points.forEach(([px, py]) => {
                     const knot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
 
@@ -636,10 +633,11 @@
             }
 
             function isValidWordBoundary(start, matchLength) {
-                const before = start > 0 ? word[start - 1] : null;
-                const after = start + matchLength < word.length ? word[start + matchLength] : null;
+                return (start == 0) || (start == word.length - 1)
+                // const before = start > 0 ? word[start - 1] : null;
+                // const after = start + matchLength < word.length ? word[start + matchLength] : null;
 
-                return (!before || /\W/.test(before)) || (!after || /\W/.test(after));
+                // return (!before || /\W/.test(before)) || (!after || /\W/.test(after));
             }
 
             function findBestTokenization(start) {
@@ -652,12 +650,15 @@
                 let bestTokenization = null;
 
                 for (const { pattern, value, isMode } of regexList) {
+                    // TODO: I think this is still broken, since it can match \b patterns
+                    // even if they're not at the beginning of a word (e.g. "with")
                     const match = word.slice(start).match(pattern);
                     if (match && match.index === 0) {
 
                         const matchLength = match[0].length;
                         const remaining = findBestTokenization(start + matchLength);
 
+                        console.log(pattern, start, 'wb:', isValidWordBoundary(start, matchLength))
                         if (pattern.source.includes('\\b') && !isValidWordBoundary(start, matchLength)) {
                             continue;
                         }
