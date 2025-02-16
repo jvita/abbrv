@@ -106,25 +106,25 @@ Using <b>abbrv</b> to design a new shorthand system will typically involve four 
 A glyph is defined using one or more <a href="https://mathworld.wolfram.com/CubicSpline.html" target="_blank">cubic splines</a>.
 Individual splines are created by specifying the positions of the spline knot points, which are then smoothly interpolated between to construct the spline.
 <div style="text-align: center; padding: 20px;">
-    <img src="/static/data/images/abc.svg" alt="Splines for the glyphs of the characters 'a', 'b', and 'c' in Orthic. Knot points for each spline are shown in red." />
+    <img src="/static/data/images/abc.svg" alt="Splines for the glyphs of the characters 'a', 'b', and 'c' in Orthic. Knot points for each spline are shown in red." style="width: 800px; height: auto"/>
     <figcaption style="margin-top: 10px;">Splines for the glyphs of the characters <code>a</code>, <code>b</code>, and <code>c</code> in Orthic. Knot points for each spline are shown in red.</figcaption>
 </div>
 
 Glyphs are allowed to start and end above or below the baseline. If such glyphs occur at the beginning of a word, this could mean that the word will not start at the baseline either.
 <div style="text-align: center; padding: 20px;">
-    <img src="/static/data/images/gwv.svg" alt="Splines for the glyphs of the characters 'g', 'w', and 'v' in Orthic. Since their first knot points are not at (0, 0), these glyphs do not start at the baseline." />
+    <img src="/static/data/images/gwv.svg" alt="Splines for the glyphs of the characters 'g', 'w', and 'v' in Orthic. Since their first knot points are not at (0, 0), these glyphs do not start at the baseline." style="width: 800px; height: auto"/>
     <figcaption style="margin-top: 10px;">Splines for the glyphs of the characters <code>g</code>, <code>w</code>, and <code>v</code> in Orthic. Since their first knot points are not at (0, 0), these glyphs do not start at the baseline.</figcaption>
 </div>
 
 If a glyph uses multiple splines, each spline is drawn separately, which may be useful when defining a glyph with sharp breaks in it.
 <div style="text-align: center; padding: 20px;">
-    <img src="/static/data/images/does.svg" alt="The Orthic glyph for the word 'does', which uses two splines ('d' and 's') that are joined with a sharp break between them." />
+    <img src="/static/data/images/does.svg" alt="The Orthic glyph for the word 'does', which uses two splines ('d' and 's') that are joined with a sharp break between them." style="width: 800px; height: auto"/>
     <figcaption style="margin-top: 10px;">The Orthic glyph for the word <code>does</code>, which uses two splines (<code>d</code> and <code>s</code>) that are joined with a sharp break between them.</figcaption>
 </div>
 
 A glyph may also use multiple splines if it needs to have separated segments.
 <div style="text-align: center; padding: 20px;">
-    <img src="/static/data/images/i_oa.svg" alt="The Orthic glyphs 'i' and 'oa'. Separate splines are used to draw the dot in 'i', and to draw the 'a' above the 'o' in 'oa'." />
+    <img src="/static/data/images/i_oa.svg" alt="The Orthic glyphs 'i' and 'oa'. Separate splines are used to draw the dot in 'i', and to draw the 'a' above the 'o' in 'oa'." style="width: 800px; height: auto"/>
     <figcaption style="margin-top: 10px;">The Orthic glyphs <code>i</code> and <code>oa</code>. Separate splines are used to draw the dot in <code>i</code>, and to draw the <code>a</code> above the <code>o</code> in <code>oa</code>.</figcaption>
 </div>
 
@@ -133,7 +133,7 @@ This means that when defining a multi-spline glyph, you must always <i>start</i>
 This can lead to some confusing behavior when designing a glyph. For example, the <code>i</code> drawn in the figure above is actually composed of three splines: the slanted line, the dot above the slanted line, and a second dot which overlaps with the end of the slanted line to ensure that it joins properly to the next glyph.
 The <code>oa</code> glyph also has a third spline at the end of the longer line for the same reason.
 <div style="text-align: center; padding: 20px;">
-    <img src="/static/data/images/it_oat.svg" alt="The Orthic glyphs for the words 'it' and 'oat'. Note that the 't' spline connects to the top of the 'i' in 'it' and the end of the longer line in 'oa', since this is where the glyphs were designed to end." />
+    <img src="/static/data/images/it_oat.svg" alt="The Orthic glyphs for the words 'it' and 'oat'. Note that the 't' spline connects to the top of the 'i' in 'it' and the end of the longer line in 'oa', since this is where the glyphs were designed to end." style="width: 800px; height: auto"/>
     <figcaption style="margin-top: 10px;">The Orthic glyphs for the words <code>it</code> and <code>oat</code>. Note that the <code>t</code> spline connects to the top of the <code>i</code> in <code>it</code> and the end of the longer line in <code>oat</code>, since this is where the glyphs were designed to end.</figcaption>
 </div>
 
