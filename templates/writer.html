@@ -371,7 +371,7 @@
                     const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
                     circle.setAttribute('cx', points[0][0]);
                     circle.setAttribute('cy', points[0][1]);
-                    circle.setAttribute('r', 0.005 * scalingFactor);
+                    circle.setAttribute('r', 0.01 * scalingFactor);
                     circle.setAttribute('fill', 'black');
                     svgElement.appendChild(circle);
                     plottedPoints.add(key);
@@ -390,7 +390,7 @@
                 const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
                 path.setAttribute('d', pathData);
                 path.setAttribute('stroke', 'black');
-                path.setAttribute('stroke-width', 0.005 * scalingFactor);
+                path.setAttribute('stroke-width', 0.01 * scalingFactor);
                 path.setAttribute('fill', 'none');
                 path.setAttribute('stroke-linecap', 'round');
                 svgElement.appendChild(path);
@@ -402,7 +402,7 @@
 
                     knot.setAttribute('cx', px);
                     knot.setAttribute('cy', py);
-                    knot.setAttribute('r', 0.005 * scalingFactor);
+                    knot.setAttribute('r', 0.01 * scalingFactor);
                     knot.setAttribute('fill', 'red');
                     svgElement.appendChild(knot);
                 });
