@@ -297,3 +297,25 @@ img {
     /* min-width: 400px; */
     width: auto;
 }
+
+.floating-button {
+    position: fixed;
+    bottom: 185px;
+    right: 80px;
+    /* background-color: #007bff; */
+    /* color: white; */
+    border: none;
+    /* padding: 10px 10px; */
+    padding: 6px 6px 0px 6px;
+    font-size: 16px;
+    /* cursor: pointer; */
+    border-radius: 5px;
+    box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.3);
+    /* transition: background-color 0.3s ease; */
+    z-index: 100
+}
+
+.floating-button .material-icons {
+    font-size: 18px; /* Makes the icon as large as possible */
+    line-height: 1; /* Removes extra spacing */
+}
