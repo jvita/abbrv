@@ -98,19 +98,27 @@
         function downloadSVG() {
             const svgElement = document.getElementById('output');
 
-            // Add XML prolog and namespace to the SVG
-            const svgData = `
-                <?xml version="1.0" encoding="UTF-8" standalone="no"?>
+            // Ensure namespace is present
+            if (!svgElement.hasAttribute("xmlns")) {
+                svgElement.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+            }
+            if (!svgElement.hasAttribute("xmlns:xlink")) {
+                svgElement.setAttribute("xmlns:xlink", "http://www.w3.org/1999/xlink");
+            }
+
+            // Get the outerHTML with correct formatting
+            const svgData = `<?xml version="1.0" encoding="UTF-8" standalone="no"?>
                 <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
                 ${svgElement.outerHTML}
             `.trim();
 
-            const blob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+            // Create a Blob and trigger download
+            const blob = new Blob([svgData], { type: "image/svg+xml;charset=utf-8" });
             const url = URL.createObjectURL(blob);
 
-            const a = document.createElement('a');
+            const a = document.createElement("a");
             a.href = url;
-            a.download = 'generated_splines.svg';
+            a.download = "generated_splines.svg";
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
@@ -168,7 +176,7 @@
         // Check if there are any rules
         modes = selectedSystem ? systems[selectedSystem]['modes'] : []
 
-        if (rules.length === 0) {
+        if (modes.length === 0) {
             modesDropdownItems.innerHTML = '<li class="dropdown-item">No additional rules available</li>';
         } else {
             // Create dropdown items dynamically
@@ -199,14 +207,15 @@
 
         let debounceTimeout;
 
-        function processTextAndSendToBackend(text, system, activeModes, multiWordTokens, multiWordMatches) {
+        function processTextAndSendToBackend(text, system, activeModes, activeRules, multiWordTokens) {
             /**
             * Processes a string of text by splitting it into lines, tokenizing each line,
             * merging word splines, and sending the tokenized results to a backend using AJAX.
             */
+            const [processedText, multiWordMatches] = processText(text, activeRules, selectedSystem);
 
             // Split the text into lines
-            const lines = text.split('\n').map(line => line.trim()).filter(line => line !== '');
+            const lines = processedText.split('\n').map(line => line.trim()).filter(line => line !== '');
 
             // Tokenize each line and merge word splines
             const tokenizedResults = lines.map(line => {
@@ -520,13 +529,11 @@
                 const form = document.getElementById('text-form');
                 const formData = new FormData(form);
                 const text = formData.get('text');
-                const rules = formData.getAll('rules');
+                const activeRules = formData.getAll('rules');
                 const activeModes = formData.getAll('modes');
 
                 // Process the text and rules
-                const [processedText, multiWordMatches] = processText(text, rules, selectedSystem);
-
-                processTextAndSendToBackend(processedText, systems[selectedSystem], activeModes, systems[selectedSystem].phrases, multiWordMatches)
+                processTextAndSendToBackend(text, systems[selectedSystem], activeModes, activeRules, systems[selectedSystem].phrases)
             }
         }
 
@@ -598,175 +605,86 @@
             return spacedText.trim();
         }
 
-function tokenizeString(word, system, activeModes) {
-    const regexDict = Object.fromEntries(Object.entries(system.glyphs));
+        function tokenizeString(word, system, activeModes) {
+            const regexDict = Object.fromEntries(Object.entries(system.glyphs));
 
-    const cleanRegexDict = {};
-    for (const key in regexDict) {
-        const cleanPattern = key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        cleanRegexDict[cleanPattern] = regexDict[key];
-    }
-
-    const modeRegexDict = {};
-    Object.entries(system.modes).filter(([key, _]) => activeModes.includes(key)).forEach(([key, value]) => {
-        modeRegexDict[value.pattern] = value.points;
-    });
-
-    const regexList = [
-        ...Object.entries(modeRegexDict).map(([pattern, value]) => ({ pattern: new RegExp(`${pattern}`, 'gu'), value, isMode: true })),
-        ...Object.entries(cleanRegexDict).map(([pattern, value]) => ({ pattern: new RegExp(`${pattern}`, 'gu'), value, isMode: false }))
-    ];
-
-    const memo = {};
-
-    function compareTokenizations(a, b) {
-        if (a.modeCount !== b.modeCount) {
-            return a.modeCount > b.modeCount;
-        }
-        if (a.count !== b.count) {
-            return a.count < b.count;
-        }
-        if (a.longestToken !== b.longestToken) {
-            return a.longestToken > b.longestToken;
-        }
-        return false;
-    }
-
-    function isValidWordBoundary(start, matchLength) {
-        return (start === 0) || (start + matchLength === word.length);
-    }
-
-    function findBestTokenization(start) {
-        if (start === word.length) {
-            return { tokens: [], count: 0, longestToken: 0, regexList: [], modeCount: 0 };
-        }
-
-        if (memo[start]) return memo[start];
-
-        let bestTokenization = null;
-
-        for (const { pattern, value, isMode } of regexList) {
-            pattern.lastIndex = start;
-            const match = pattern.exec(word);
-            if (match && match.index === start) {
-                const matchLength = match[0].length;
-                const remaining = findBestTokenization(start + matchLength);
-
-                if (!remaining) {
-                    continue;
-                }
-
-                const currentTokenization = {
-                    tokens: [value, ...remaining.tokens],
-                    count: 1 + remaining.count,
-                    longestToken: Math.max(matchLength, remaining.longestToken),
-                    regexList: [pattern.source, ...remaining.regexList],
-                    modeCount: (isMode ? 1 : 0) + remaining.modeCount
-                };
-
-                if (!bestTokenization || compareTokenizations(currentTokenization, bestTokenization)) {
-                    bestTokenization = currentTokenization;
-                }
+            const cleanRegexDict = {};
+            for (const key in regexDict) {
+                const cleanPattern = key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                cleanRegexDict[cleanPattern] = regexDict[key];
             }
+
+            const modeRegexDict = {};
+            Object.entries(system.modes).filter(([key, _]) => activeModes.includes(key)).forEach(([key, value]) => {
+                modeRegexDict[value.pattern] = value.points;
+            });
+
+            const regexList = [
+                ...Object.entries(modeRegexDict).map(([pattern, value]) => ({ pattern: new RegExp(`${pattern}`, 'gu'), value, isMode: true })),
+                ...Object.entries(cleanRegexDict).map(([pattern, value]) => ({ pattern: new RegExp(`${pattern}`, 'gu'), value, isMode: false }))
+            ];
+
+            const memo = {};
+
+            function compareTokenizations(a, b) {
+                if (a.modeCount !== b.modeCount) {
+                    return a.modeCount > b.modeCount;
+                }
+                if (a.count !== b.count) {
+                    return a.count < b.count;
+                }
+                if (a.longestToken !== b.longestToken) {
+                    return a.longestToken > b.longestToken;
+                }
+                return false;
+            }
+
+            function isValidWordBoundary(start, matchLength) {
+                return (start === 0) || (start + matchLength === word.length);
+            }
+
+            function findBestTokenization(start) {
+                if (start === word.length) {
+                    return { tokens: [], count: 0, longestToken: 0, regexList: [], modeCount: 0 };
+                }
+
+                if (memo[start]) return memo[start];
+
+                let bestTokenization = null;
+
+                for (const { pattern, value, isMode } of regexList) {
+                    pattern.lastIndex = start;
+                    const match = pattern.exec(word);
+                    if (match && match.index === start) {
+                        const matchLength = match[0].length;
+                        const remaining = findBestTokenization(start + matchLength);
+
+                        if (!remaining) {
+                            continue;
+                        }
+
+                        const currentTokenization = {
+                            tokens: [value, ...remaining.tokens],
+                            count: 1 + remaining.count,
+                            longestToken: Math.max(matchLength, remaining.longestToken),
+                            regexList: [pattern.source, ...remaining.regexList],
+                            modeCount: (isMode ? 1 : 0) + remaining.modeCount
+                        };
+
+                        if (!bestTokenization || compareTokenizations(currentTokenization, bestTokenization)) {
+                            bestTokenization = currentTokenization;
+                        }
+                    }
+                }
+
+                memo[start] = bestTokenization || { tokens: [], count: 0, longestToken: 0, regexList: [], modeCount: 0 };
+                return memo[start];
+            }
+
+            const result = findBestTokenization(0);
+            console.log('Final token regex patterns:', result.regexList);
+            return result.tokens;
         }
-
-        memo[start] = bestTokenization || { tokens: [], count: 0, longestToken: 0, regexList: [], modeCount: 0 };
-        return memo[start];
-    }
-
-    const result = findBestTokenization(0);
-    console.log('Final token regex patterns:', result.regexList);
-    return result.tokens;
-}
-
-
-//         function tokenizeString(word, system, activeModes) {
-//     const regexDict = Object.fromEntries(Object.entries(system.glyphs));
-
-//     const cleanRegexDict = {};
-//     for (const key in regexDict) {
-//         const cleanPattern = key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-//         cleanRegexDict[cleanPattern] = regexDict[key];
-//     }
-
-//     const modeRegexDict = {};
-//     Object.entries(system.modes).filter(([key, _]) => activeModes.includes(key)).forEach(([key, value]) => {
-//         modeRegexDict[value.pattern] = value.points;
-//     });
-
-//     const regexList = [
-//         // ...Object.entries(modeRegexDict).map(([pattern, value]) => ({ pattern: new RegExp(`^(?:${pattern})`, 'u'), value, isMode: true })),
-//         // ...Object.entries(cleanRegexDict).map(([pattern, value]) => ({ pattern: new RegExp(`^(?:${pattern})`, 'u'), value, isMode: false }))
-//         ...Object.entries(modeRegexDict).map(([pattern, value]) => ({ pattern: new RegExp(`${pattern}`, 'u'), value, isMode: true })),
-//         ...Object.entries(cleanRegexDict).map(([pattern, value]) => ({ pattern: new RegExp(`${pattern}`, 'u'), value, isMode: false }))
-//     ];
-
-//     const memo = {};
-
-//     function compareTokenizations(a, b) {
-//         if (a.modeCount !== b.modeCount) {
-//             return a.modeCount > b.modeCount;
-//         }
-//         if (a.count !== b.count) {
-//             return a.count < b.count;
-//         }
-//         if (a.longestToken !== b.longestToken) {
-//             return a.longestToken > b.longestToken;
-//         }
-//         return false;
-//     }
-
-//     function isValidWordBoundary(start, matchLength) {
-//         return (start === 0) || (start + matchLength === word.length);
-//     }
-
-//     function findBestTokenization(start) {
-//         if (start === word.length) {
-//             return { tokens: [], count: 0, longestToken: 0, regexList: [], modeCount: 0 };
-//         }
-
-//         if (memo[start]) return memo[start];
-
-//         let bestTokenization = null;
-
-//         // BUG: if matched before start, 
-//         for (const { pattern, value, isMode } of regexList) {
-//             const match = word.substring(start).match(pattern);
-//             if (match && match.index === 0) {
-//                 const matchLength = match[0].length;
-//                 const remaining = findBestTokenization(start + matchLength);
-
-//                 if (!remaining) {
-//                     continue;
-//                 }
-
-//                 if (pattern.source.includes('(?<!') && start !== 0) {
-//                     continue;
-//                 }
-
-//                 const currentTokenization = {
-//                     tokens: [value, ...remaining.tokens],
-//                     count: 1 + remaining.count,
-//                     longestToken: Math.max(matchLength, remaining.longestToken),
-//                     regexList: [pattern.source, ...remaining.regexList],
-//                     modeCount: (isMode ? 1 : 0) + remaining.modeCount
-//                 };
-
-//                 if (!bestTokenization || compareTokenizations(currentTokenization, bestTokenization)) {
-//                     bestTokenization = currentTokenization;
-//                 }
-//             }
-//         }
-
-//         memo[start] = bestTokenization || { tokens: [], count: 0, longestToken: 0, regexList: [], modeCount: 0 };
-//         return memo[start];
-//     }
-
-//     const result = findBestTokenization(0);
-//     console.log('Final token regex patterns:', result.regexList);
-//     return result.tokens;
-// }
-
 
         function tokenizeWithMultiWords(textWithPlaceholders, system, activeModes, multiWordTokens, multiWordMatches) {
             /**

@@ -57,7 +57,7 @@ Before doing anything, you must first select the system that you want to use:
 <div style="text-align: center; padding: 20px;">
     <img src="/static/data/images/system_selector.png" alt="The system selector dropdown menu." />
     <figcaption style="margin-top: 10px;">
-        The system selector dropdown menu. Choose a system to begin writing in it on the <a href="{{ url_for('write') }}">write page</a> or editing it on the <a href="{{ url_for('draft') }}">draft page</a>. If no system is selected, any edits you make will be for a new system, which you can then export to store locally. The currently-available systems are listed first, followed by the buttons:
+        The system selector dropdown menu. Choose a system to begin writing in it on the <a href="{{ url_for('write') }}">write page</a> or editing it on the <a href="{{ url_for('draft') }}">draft page</a>. If no system is selected, any edits you make will be for a new system, which you can then export to store locally on your computer. The currently available systems are listed first, followed by the buttons:
         <br>
         <b>Download</b>: download an existing system from the server.
         <br>
@@ -76,16 +76,21 @@ The following steps are applied in order:
     <br>
     <li>Any user-defined <a href="#rules">rules</a> are executed to modify the text.</li>
     <br>
-    <li>Any user-defined <a href="#phrases">phrases</a> are mapped to their corresponding glyphs (accounting for the modifications due to the previous step).</li>
+        <li>Any user-defined <a href="#phrases">phrases</a> are mapped to their corresponding glyphs (accounting for the modifications due to the previous step).</li>
     <br>
-    <li>All remaining un-mapped words are parsed from left to right, breaking them up into their longest possible glyphs based on the defined <a href="#glyphs">glyphs</a> and <a href="#modes">modes</a>. For example, the word <code>match</code> could be decomposed into the glyphs <code>m</code>, <code>a</code>, and <code>tch</code> (in Orthic). <code>that</code> could be decomposed into the glyphs <code>th-</code>, <code>a</code>, and <code>t</code>.</li>
+    <li>All remaining un-mapped words are "tokenized" by parsing them from left to right, breaking them up into their possible glyphs based on the defined <a href="#glyphs">glyphs</a> and <a href="#modes">modes</a>. For example, the word <code>match</code> could be decomposed into the glyphs <code>m</code>, <code>a</code>, and <code>tch</code> (in Orthic). <code>that</code> could be decomposed into the glyphs <code>th-</code>, <code>a</code>, and <code>t</code>. When a word has multiple possible tokenizations, the "best" tokenization is chosen in the following way:</li>
+    <ol type="a">
+        <li>The tokenization with the most <a href="#modes">modes</a> used is preferred.</li>
+        <li>If both tokenizations use the same number of modes, the tokenization with the fewest tokens is preferred.</li>
+        <li>If both tokenizations use the same number of modes and tokens, the tokenization with longest individual tokens is preferred.</li>
+    </ol>
     <br>
     <li>All words are drawn in the following manner:</li>
     <ol type="a">
         <li>The first glyph in a word is drawn as-is, using the baseline as the origin.</li>
         <li>Subsequent glyphs in the same word are shifted so that the first knot of the current glyph aligns with the last knot of the previous glyph.</li>
-        <!-- <li>Words are shifted horizontally to ensure a fixed width between the left-most point of the current word and the right-most point of the previous word.</li>
-        <li>Lines are shifted vertically to ensure a fixed width between the highest point of the current line and the lowest point of the previous line.</li> -->
+        <li>A fixed length-space is added between two words based on the right-most point of the first word and the left-most point of the second word.</li>
+        <li>For multi-line text, baselines are shifted vertically to ensure a fixed width between the highest point of the current line and the lowest point of the previous line.</li>
     </ol>
 </ol>
 
@@ -107,11 +112,11 @@ Individual splines are created by specifying the positions of the spline knot po
 
 Glyphs are allowed to start and end above or below the baseline. If such glyphs occur at the beginning of a word, this could mean that the word will not start at the baseline either.
 <div style="text-align: center; padding: 20px;">
-    <img src="/static/data/images/gwv.svg" alt="Splines for the glyphs of the characters 'g', 'w', and 'v' in Orthic. Since their first knot points are not at (0, 0), these glyphs do not start at the baseline. Note: I am aware the 'w' is not usually drawn below the baseline; this is just my personal style." />
-    <figcaption style="margin-top: 10px;">Splines for the glyphs of the characters <code>g</code>, <code>w</code>, and <code>v</code> in Orthic. Since their first knot points are not at (0, 0), these glyphs do not start at the baseline. Note: I am aware the <code>w</code> is not usually drawn below the baseline; this is just my personal style.</figcaption>
+    <img src="/static/data/images/gwv.svg" alt="Splines for the glyphs of the characters 'g', 'w', and 'v' in Orthic. Since their first knot points are not at (0, 0), these glyphs do not start at the baseline." />
+    <figcaption style="margin-top: 10px;">Splines for the glyphs of the characters <code>g</code>, <code>w</code>, and <code>v</code> in Orthic. Since their first knot points are not at (0, 0), these glyphs do not start at the baseline.</figcaption>
 </div>
 
-If a glyph uses multiple splines (e.g. for words and phrases), each spline is drawn separately, which may be useful when defining a glyph with sharp breaks in it.
+If a glyph uses multiple splines, each spline is drawn separately, which may be useful when defining a glyph with sharp breaks in it.
 <div style="text-align: center; padding: 20px;">
     <img src="/static/data/images/does.svg" alt="The Orthic glyph for the word 'does', which uses two splines ('d' and 's') that are joined with a sharp break between them." />
     <figcaption style="margin-top: 10px;">The Orthic glyph for the word <code>does</code>, which uses two splines (<code>d</code> and <code>s</code>) that are joined with a sharp break between them.</figcaption>
@@ -128,8 +133,8 @@ This means that when defining a multi-spline glyph, you must always <i>start</i>
 This can lead to some confusing behavior when designing a glyph. For example, the <code>i</code> drawn in the figure above is actually composed of three splines: the slanted line, the dot above the slanted line, and a second dot which overlaps with the end of the slanted line to ensure that it joins properly to the next glyph.
 The <code>oa</code> glyph also has a third spline at the end of the longer line for the same reason.
 <div style="text-align: center; padding: 20px;">
-    <img src="/static/data/images/it_oat.svg" alt="The Orthic glyphs for the words 'it' and 'oat'. Note that the 't' spline connects to the top of the 'i' and the end of the longer line in 'oa', since this is where the glyphs were designed to end." />
-    <figcaption style="margin-top: 10px;">The Orthic glyphs for the words <code>it</code> and <code>oat</code>. Note that the <code>t</code> spline connects to the top of the <code>i</code> and the end of the longer line in <code>oat</code>, since this is where the glyphs were designed to end.</figcaption>
+    <img src="/static/data/images/it_oat.svg" alt="The Orthic glyphs for the words 'it' and 'oat'. Note that the 't' spline connects to the top of the 'i' in 'it' and the end of the longer line in 'oa', since this is where the glyphs were designed to end." />
+    <figcaption style="margin-top: 10px;">The Orthic glyphs for the words <code>it</code> and <code>oat</code>. Note that the <code>t</code> spline connects to the top of the <code>i</code> in <code>it</code> and the end of the longer line in <code>oat</code>, since this is where the glyphs were designed to end.</figcaption>
 </div>
 
 The <a href="{{ url_for('draft') }}">draft page</a> provides you with all of the functionality necessary to design the glyphs for the individual characters (or phonemes) in your system.
@@ -146,6 +151,8 @@ The grid editor is used to visualize and edit your glyphs:
         <b>Right-click</b>: remove a knot point
         <br>
         <b>Ctrl + left-click</b>: start a new spline
+        <br>
+        <b>Center button</b>: center the view at the origin
     </figcaption>
 </div>
 
@@ -153,13 +160,13 @@ When working with multi-spline glyphs, using <b>ctrl + left-click</b> to start a
 Note that only the knot points for the spline which is currently being edited are shown.
 
 <div style="text-align: center; padding: 20px;">
-    <img src="/static/data/images/grid_oa_o.png" alt="One spline is used for the 'o' in the glyph 'oa'. The beginning of the first spline defines the start of the glyph." style="width: 253px; height: auto"/>
+    <img src="/static/data/images/grid_oa_o.png" alt="One spline is used for the 'o' in the glyph 'oa'. The beginning of the first spline defines the start of the glyph." style="width: 400px; height: auto"/>
     <figcaption style="margin-top: 10px;">One spline is used for the <code>o</code> in the glyph <code>oa</code>. The beginning of the first spline defines the start of the glyph.</figcaption>
     <br>
-    <img src="/static/data/images/grid_oa_a.png" alt="A second spline is used for the 'a'." style="width: 253px; height: auto"/>
+    <img src="/static/data/images/grid_oa_a.png" alt="A second spline is used for the 'a'." style="width: 400px; height: auto"/>
     <figcaption style="margin-top: 10px;">A second spline is used for the <code>a</code>.</figcaption>
     <br>
-    <img src="/static/data/images/grid_oa_end.png" alt="And a third spline is used to specify the end of the glyph when joining to the next glyph in a word." style="width: 253px; height: auto"/>
+    <img src="/static/data/images/grid_oa_end.png" alt="And a third spline is used to specify the end of the glyph when joining to the next glyph in a word." style="width: 400px; height: auto"/>
     <figcaption style="margin-top: 10px;">And a third spline is used to specify the end of the glyph when joining to the next glyph in a word.</figcaption>
 </div>
 
@@ -214,7 +221,8 @@ However, if you save <code>do</code> directly as a glyph (not as a phrase), then
 <br>
 <h3 id="introducing_modes">Introducing modes</h3>
 A "mode" is similar to a phrase and a regular glyph, with the additional flexibility of being able to be used to replace any pattern using a <a href="https://regexone.com/">regular expression</a>.
-I recommend asking an LLM to write a regex for you (e.g. "please write a regex that matches 'a' and 'o' before 'm' or 'n'"), then using the site <a href="https://regex101.com/">regex101</a> to make sure that the matching is working properly.
+If you're not familiar with regexes, I recommend asking an LLM to write a regex for you (e.g. "please write a regex that matches 'a' and 'o' before 'm' or 'n'"), then using the site <a href="https://regex101.com/">regex101</a> to make sure that the matching is working properly.
+Note that <b>abbrv</b> is written in JavaScript, which may affect some of the details of how a regex should be written (see <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_expressions">this documentation</a> for more details).
 
 <div style="text-align: center; padding: 20px;">
     <img src="/static/data/images/mode_popup.png" alt="When saving a glyph as a mode, a popup window will appear to additionally specify the name of the mode and the regular expression pattern used for matching the mode." style="width: 30%; height: auto"/>
@@ -233,10 +241,6 @@ Some examples of rules:
     <ul>
         <li>Note the use of <code>(?![hlr])</code> to only match <code>s</code> if not followed by any of the letters <code>hlr</code>.</li>
     </ul>
-    <!-- <ul>
-        <li>This pattern can be very useful for modifying a single-character glyph based on the preceding character without having to modify every other possible preceding glyph. For example, modifying <code>s</code> after <code>e</code> or <code>i</code> without also modifying <code>ge</code>, <code>ki</code>, <code>ce</code>, ...</li>
-        <li>Note that this can sometimes require more creative uses of regular expressions. In the example here, we have to be careful to specify that it should not match if the <code>s</code> is followed by <code>h</code>, <code>l</code>, or <code>r</code>, since all of these have modified forms when combined with <code>s</code>.</li>
-    </ul> -->
 </ul>
 
 <br>
@@ -249,14 +253,20 @@ The <a href="{{ url_for('rules') }}">rules page</a> can be used for defining new
     <figcaption style="margin-top: 10px;">A rule is created by specifying a name, one regular expression for matching patterns, and a second regular expression for replacing any matched patterns. If the second regex is left blank, any matches will be replaced with empty text (i.e., deleted).</figcaption>
 </div>
 
+<div style="text-align: center; padding: 20px;">
+    <img src="/static/data/images/rules_list.png" alt="The list of defined rules. Rules will be applyed in order from top to bottom. The arrow buttons can be used to rearrange the list. The delete buttons will remove a rule from the list." style="width: 100%; height: auto"/>
+    <figcaption style="margin-top: 10px;">The list of defined rules. Rules will be applyed in order from top to bottom. The arrow buttons can be used to rearrange the list. The delete buttons will remove a rule from the list.</figcaption>
+</div>
+
+
 Some examples of rules:
 
 <ul>
-    <li><b>Name</b>: remove consecutive duplicates; <b>regex</b>: <code>(.)\1+</code>; <b>replacement</b>: <code>\1</code>.</li>
+    <li><b>Name</b>: Remove consecutive duplicates; <b>regex</b>: <code>(.)\1+</code>; <b>replacement</b>: <code>$1</code>.</li>
     <ul>
-        <li>Note the use of <code>\1</code> for the replacement text, which replaces the matched pattern with the text prior to the match.</li>
+        <li>Note the use of <code>$1</code> for the replacement text, which replaces the matched pattern with the text prior to the match (following <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/replace">the JavaScript syntax</a>).</li>
     </ul>
-    <li><b>Name</b>: omit "e" in "-ed"; <b>regex</b>: <code>\b(\w*?ed\b</code>; <b>replacement</b>: <code>\1d</code>.</li>
+    <li><b>Name</b>: Omit "e" in "-ed" for > 5 char words; <b>regex</b>: <code>\b(\w*?ed\b</code>; <b>replacement</b>: <code>$1d</code>.</li>
 </ul>
 
 <h3 id="general_advice">General advice</h3>
@@ -264,11 +274,8 @@ Some examples of rules:
     <li>Start by defining glyphs for your alphabet or phenomes.</li>
     <li>If implementing an existing system (Gregg, Pitman, Teeline, ...), try writing any examples from the system's documentation and adding modes/phrases/rules to your implementation as necessary.</li>
     <li>Define your shorter glyphs first. Take extra care that they are exactly to your liking before moving on. This can help avoid having to repeatedly modify longer glyphs every time you make adjustments to the shorter glyphs that comprise them.</li>
-    <!-- <li>When working with a two-character pattern, use a "mode" if only the first character requires a modified pattern.This can help reduce the total number of glyphs + modes that you have to define.</li>
-    <ul>
-        <li>For example, in Orthic the glyph for <code>f</code> must be modified if followed by <code>e</code> or <code>i</code>, but the following character is left unchanged. By defining this modification as a mode rather than a glyph, you can avoid having to define even more multi-character glyphs that <i>start</i> with <code>e</code> (e.g., if you already defined the glyphs <code>em</code>, <code>ec</code>, and <code>en</code>, you don't also have to define <code>fem</code>, <code>fec</code>, and <code>fin</code>).</li>
-    </ul> -->
-    <!-- <li>Define new glyphs sparingly; use modes when possible. This can help reduce the total number of glyphs + phrases + modes that you have to define.</li> -->
+    <li>Avoid using too many modes. Modes are best used for prefixes, suffixes, and dipthongs.</li>
+    <li>You will go through multiple iterations of development. As you continue, try to increase the number of defined phrases and decrease the number of modes.</li>
 </ul>
 
 <hr>
@@ -282,7 +289,7 @@ The buttons can be used to choose which modifications you would like applied to 
     <figcaption style="margin-top: 10px;">
         The buttons on the write page.
         <br>
-        <b>Options</b>: toggle universal options (show knot points, show baselines, etc.)
+        <b>Options</b>: toggle universal options (use phrases, show knot points, show baselines, etc.)
         <br>
         <b>Modes</b>: toggle user-defined modes
         <br>
@@ -297,22 +304,23 @@ Using <b>abbrv</b>, you can go from a bare-bones alphabet that only has single-c
 Consider, for example, this quote in "fully-written" Orthic (no abbreviations, modes, etc.):
 
 <div style="text-align: center; padding: 20px;">
-    <img src="/static/data/images/quote_raw.svg" alt="The quote 'If you cannot do great things, do small things in a great way' (Napoleon Hill, or M.L.K. Jr.?) in Orthic, using only the simplest single-character glyphs and no additional rules or modes." style="width: 100%; height: auto"/>
-    <figcaption style="margin-top: 10px;">The quote "If you cannot do great things, do small things in a great way" (Napoleon Hill, or M.L.K. Jr.?) in Orthic, using only the simplest single-character glyphs and no additional rules or modes.</figcaption>
+    <img src="/static/data/images/quote_raw.svg" alt="The quote 'If you cannot do great things, do small things in a great way' (Napoleon Hill) in Orthic, using only the simplest single-character glyphs and no additional rules or modes." style="width: 100%; height: auto"/>
+    <figcaption style="margin-top: 10px;">The quote "If you cannot do great things, do small things in a great way" (Napoleon Hill) in Orthic, using only the simplest single-character glyphs and no additional rules or modes.</figcaption>
 </div>
 
 Compared to the same quote written in the "ordinary" style with the following modifications applied:
 
 <ul>
     <br>
-    <li>(mode) write <code>you-</code> as an elevated <code>y</code>.</li>
+    <li>(glyph) define the glyph <code>if</code> to make it smoother than joining <code>i</code> directly to <code>f</code>, and the correct height.</li>
+    <li>(mode) write <code>you-</code> as <code>y</code>.</li>
     <li>(phrase) abbreviate <code>cannot</code> as <code>cnt</code>.</li>
     <li>(phrase) abbreviate <code>do</code> as <code>d</code>.</li>
-    <li>(glyph) define the glyph <code>gr</code> to make it slightly (imperceptibly?) smoother than <code>g</code> joined directly to <code>r</code>.</li>
+    <li>(glyph) define the glyph <code>gr</code> to make it smoother than <code>g</code> joined directly to <code>r</code>.</li>
     <li>(mode) smooth the dipthong <code>ea</code>.</li>
     <li>(mode) omit the prefix <code>th-</code>, and elevate the rest of the word.</li>
     <li>(mode) write the suffix <code>-ings</code> as a long downard curve with a sharp tail.</li>
-    <li>(rule) omit consecutive duplicate letters (the <code>ll</code> in <code>small</code>, though it's unnoticeable in the original version).</li>
+    <li>(rule) omit consecutive duplicate letters (the <code>ll</code> in <code>small</code>, even though you can't see it in the full version).</li>
     <li>(mode) smooth the dipthong <code>ay</code>.</li>
 </ul>
 
