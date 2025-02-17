@@ -18,11 +18,11 @@ SYSTEMS_FOLDER = 'static/data/systems'
 current_system = None
 systems = {}
 
-@app.route('/set_selected_system', methods=['POST'])
-def set_selected_system():
-    system = request.json.get('system')
-    session['selected_system'] = system  # Store the selected system in the session
-    return jsonify(success=True)
+# @app.route('/set_selected_system', methods=['POST'])
+# def set_selected_system():
+#     system = request.json.get('system')
+#     session['selected_system'] = system  # Store the selected system in the session
+#     return jsonify(success=True)
 
 @app.route('/available_systems', methods=['GET'])
 def available_systems():

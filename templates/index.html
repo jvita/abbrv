@@ -349,19 +349,19 @@
             }
         }
 
-        // For handling system selection
-        document.getElementById('navbarDropdown').addEventListener('change', function() {
-            const selectedSystem = this.value; // Get the selected system value
+        // // For handling system selection
+        // document.getElementById('navbarDropdown').addEventListener('change', function() {
+        //     const selectedSystem = this.value; // Get the selected system value
 
-            // Send an AJAX request to update the session
-            axios.post('/set_selected_system', { system: selectedSystem })
-                .then(response => {
-                    console.log('Selected system updated in session.');
-                })
-                .catch(error => {
-                    console.error('Error updating selected system:', error);
-                });
-        });
+        //     // Send an AJAX request to update the session
+        //     axios.post('/set_selected_system', { system: selectedSystem })
+        //         .then(response => {
+        //             console.log('Selected system updated in session.');
+        //         })
+        //         .catch(error => {
+        //             console.error('Error updating selected system:', error);
+        //         });
+        // });
 
         async function loadSystemsAndUpdateDropdown() {
             addSystemsToDropdown();     // Then run addSystemsToDropdown after
