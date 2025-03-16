@@ -122,31 +122,91 @@
             saveSystemToServer(selectedSystem, systems[selectedSystem])
         }
 
-        function saveSystemToServer(systemName, systemData) {
-            fetch(`/save_system/${systemName}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(systemData)
-            })
-            .then(response => {
-                if (!response.ok) {
-                    return response.json().then(errorData => {
-                        throw new Error(errorData.error);
-                    });
+        async function saveSystemToServer(systemName, systemData) {
+            const requiredKeys = ['glyphs', 'modes', 'rules', 'phrases'];
+
+            // Ensure the dictionary has the required keys
+            for (const key of requiredKeys) {
+                if (!(key in systemData)) {
+                    console.error(`Missing key: ${key}`);
+                    return;
                 }
-                return response.json();
-            })
-            .then(data => {
-                console.log('Success:', data.message);
-                // Handle success, e.g., show a message to the user
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                // Handle error, e.g., show an error message to the user
-            });
+            }
+
+            try {
+                // Create a new instance of JSZip
+                const zip = new JSZip();
+
+                // Save each entry as a JSON file
+                for (const key of requiredKeys) {
+                    const jsonString = JSON.stringify(systemData[key], null, 4);
+                    zip.file(`${key}.json`, jsonString);
+                }
+
+                // Generate the ZIP file asynchronously
+                const content = await zip.generateAsync({ type: "blob" });
+
+                // Check if showSaveFilePicker is supported
+                if ('showSaveFilePicker' in window) {
+                    const options = {
+                        suggestedName: `${systemName}.zip`,
+                        types: [{
+                            description: 'ZIP files',
+                            accept: {
+                                'application/zip': ['.zip'],
+                            },
+                        }],
+                    };
+
+                    const fileHandle = await window.showSaveFilePicker(options);
+                    const writableStream = await fileHandle.createWritable();
+                    await writableStream.write(content);
+                    await writableStream.close();
+                } else {
+                    // Fallback method using a temporary anchor element
+                    const link = document.createElement('a');
+                    link.href = URL.createObjectURL(content);
+                    link.download = `${systemName}.zip`;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                }
+
+                console.log(`System saved as ${systemName}.zip`);
+            } catch (err) {
+                if (err.name === 'AbortError') {
+                    console.log('User canceled the save operation');
+                } else {
+                    console.error('Error during save:', err);
+                }
+            }
         }
+
+        // function saveSystemToServer(systemName, systemData) {
+        //     fetch(`/save_system/${systemName}`, {
+        //         method: 'POST',
+        //         headers: {
+        //             'Content-Type': 'application/json'
+        //         },
+        //         body: JSON.stringify(systemData)
+        //     })
+        //     .then(response => {
+        //         if (!response.ok) {
+        //             return response.json().then(errorData => {
+        //                 throw new Error(errorData.error);
+        //             });
+        //         }
+        //         return response.json();
+        //     })
+        //     .then(data => {
+        //         console.log('Success:', data.message);
+        //         // Handle success, e.g., show a message to the user
+        //     })
+        //     .catch(error => {
+        //         console.error('Error:', error);
+        //         // Handle error, e.g., show an error message to the user
+        //     });
+        // }
 
         // Function to handle downloading systems
         function handleDownloadSystems() {
