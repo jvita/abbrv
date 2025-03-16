@@ -18,14 +18,14 @@ SYSTEMS_FOLDER = 'static/data/systems'
 current_system = None
 systems = {}
 
-@app.route('/available_systems', methods=['GET'])
-def available_systems():
-    system_names = []
-    for filename in os.listdir(SYSTEMS_FOLDER):
-        if filename.endswith('.zip'):
-            name = filename.replace('.zip', '')  # Get the system name (without the .zip extension)
-            system_names.append(name)
-    return jsonify(system_names)
+# @app.route('/available_systems', methods=['GET'])
+# def available_systems():
+#     system_names = []
+#     for filename in os.listdir(SYSTEMS_FOLDER):
+#         if filename.endswith('.zip'):
+#             name = filename.replace('.zip', '')  # Get the system name (without the .zip extension)
+#             system_names.append(name)
+#     return jsonify(system_names)
 
 # @app.route('/load_system_data/<system_name>', methods=['GET'])
 # def load_system_data(system_name):
