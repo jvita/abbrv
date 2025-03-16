@@ -15,8 +15,8 @@
     <!-- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"> -->
     <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
 
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
-    <!-- <link rel="shortcut icon" href="{{ url_for('static', filename='data/images/favicon.ico') }}"> -->
+    <link rel="stylesheet" href="./static/css/styles.css">
+    <!-- <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}"> -->
 
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
@@ -36,16 +36,20 @@
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav">
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('write') }}">write</a>
+                    <a class="nav-link" href="./writer.html">write</a>
+                    <!-- <a class="nav-link" href="{{ url_for('write') }}">write</a> -->
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('draft') }}">draft</a>
+                    <a class="nav-link" href="./drafter.html">draft</a>
+                    <!-- <a class="nav-link" href="{{ url_for('draft') }}">draft</a> -->
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('rules') }}">rules</a>
+                    <a class="nav-link" href="./rules.html">rules</a>
+                    <!-- <a class="nav-link" href="{{ url_for('rules') }}">rules</a> -->
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('help') }}">help</a>
+                    <a class="nav-link" href="./help.html">help</a>
+                    <!-- <a class="nav-link" href="{{ url_for('help') }}">help</a> -->
                 </li>
                 <!-- Systems Dropdown -->
                 <li class="nav-item dropdown">
