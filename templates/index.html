@@ -193,23 +193,49 @@
         }
 
         // Function to load the selected system's data
-        function loadSystemData(systemName) {
-            axios.get(`/load_system_data/${systemName}`)
-                .then(response => {
-                    systems[systemName] = response.data; // Assuming the response contains system data
+        async function loadSystemData(systemName) {
+            try {
+                // Fetch the ZIP file from the server
+                const response = await fetch(`/static/data/systems/${systemName}.zip`);
+                const blob = await response.blob();
 
-                    selectedSystem = systemName
-                    localStorage.setItem('selectedSystem', selectedSystem);
+                // Create a new instance of JSZip
+                const zip = await JSZip.loadAsync(blob);
 
-                    const systemsJson = JSON.stringify(systems);
-                    localStorage.setItem('systems', systemsJson);
+                // Initialize an empty object to store the system data
+                const systemData = {};
 
-                    location.reload(); // This will reload the current page
-                    // addSystemsToDropdown();     // Then run addSystemsToDropdown after
-                })
-                .catch(error => {
-                    console.error('Error loading system data:', error);
-                });
+                // Iterate over each file in the ZIP
+                for (const filename of Object.keys(zip.files)) {
+                    const file = zip.files[filename];
+                    const fileContent = await file.async('text');
+                    const parsedData = JSON.parse(fileContent);
+
+                    // Store data based on the filename
+                    if (filename.includes('glyphs')) {
+                        systemData['glyphs'] = parsedData;
+                    } else if (filename.includes('phrases')) {
+                        systemData['phrases'] = parsedData;
+                    } else if (filename.includes('modes')) {
+                        systemData['modes'] = parsedData;
+                    } else if (filename.includes('rules')) {
+                        systemData['rules'] = parsedData;
+                    }
+                }
+
+                // Store the system data
+                systems[systemName] = systemData;
+
+                selectedSystem = systemName;
+                localStorage.setItem('selectedSystem', selectedSystem);
+
+                const systemsJson = JSON.stringify(systems);
+                localStorage.setItem('systems', systemsJson);
+
+                location.reload(); // This will reload the current page
+            } catch (error) {
+                console.error('Error loading system data:', error);
+            }
         }
 
         // Import System

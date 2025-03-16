@@ -18,12 +18,6 @@ SYSTEMS_FOLDER = 'static/data/systems'
 current_system = None
 systems = {}
 
-# @app.route('/set_selected_system', methods=['POST'])
-# def set_selected_system():
-#     system = request.json.get('system')
-#     session['selected_system'] = system  # Store the selected system in the session
-#     return jsonify(success=True)
-
 @app.route('/available_systems', methods=['GET'])
 def available_systems():
     system_names = []
@@ -33,16 +27,16 @@ def available_systems():
             system_names.append(name)
     return jsonify(system_names)
 
-@app.route('/load_system_data/<system_name>', methods=['GET'])
-def load_system_data(system_name):
-    get_data()  # force re-load from zip files
-    # This only sends the data for local download
+# @app.route('/load_system_data/<system_name>', methods=['GET'])
+# def load_system_data(system_name):
+#     get_data()  # force re-load from zip files
+#     # This only sends the data for local download
 
-    global systems
-    if system_name in systems:
-        return jsonify(systems[system_name])  # Return the system data as JSON
-    else:
-        return jsonify({'error': 'System not found'}), 404
+#     global systems
+#     if system_name in systems:
+#         return jsonify(systems[system_name])  # Return the system data as JSON
+#     else:
+#         return jsonify({'error': 'System not found'}), 404
 
 @app.route('/save_system/<system_name>', methods=['POST'])
 def save_system(system_name):
@@ -100,34 +94,34 @@ def load_json_file(filename):
     with open(filename, 'r') as f:
         return json.load(f)
 
-def get_data():
-    global systems
+# def get_data():
+#     global systems
 
-    # Loop through all files in DATA_FOLDER
-    for filename in os.listdir(SYSTEMS_FOLDER):
-        if filename.endswith('.zip'):
-            system_name = filename.replace('.zip', '')  # Get the system name (without the .zip extension)
-            systems[system_name] = {}
+#     # Loop through all files in DATA_FOLDER
+#     for filename in os.listdir(SYSTEMS_FOLDER):
+#         if filename.endswith('.zip'):
+#             system_name = filename.replace('.zip', '')  # Get the system name (without the .zip extension)
+#             systems[system_name] = {}
 
-            # Open the zip file
-            zip_path = os.path.join(SYSTEMS_FOLDER, filename)
-            with zipfile.ZipFile(zip_path, 'r') as zf:
-                # Iterate over each file inside the zip (skip directories)
-                for zip_info in zf.infolist():
-                    if not zip_info.is_dir():  # Only process files, not directories
-                        with zf.open(zip_info) as file:
-                            file_content = file.read().decode('utf-8')  # Assuming the files are in text (JSON)
-                            parsed_data = json.loads(file_content)  # Parse the JSON file
+#             # Open the zip file
+#             zip_path = os.path.join(SYSTEMS_FOLDER, filename)
+#             with zipfile.ZipFile(zip_path, 'r') as zf:
+#                 # Iterate over each file inside the zip (skip directories)
+#                 for zip_info in zf.infolist():
+#                     if not zip_info.is_dir():  # Only process files, not directories
+#                         with zf.open(zip_info) as file:
+#                             file_content = file.read().decode('utf-8')  # Assuming the files are in text (JSON)
+#                             parsed_data = json.loads(file_content)  # Parse the JSON file
 
-                            # Store data based on the filename
-                            if 'glyphs' in zip_info.filename:
-                                systems[system_name]['glyphs'] = parsed_data
-                            elif 'phrases' in zip_info.filename:
-                                systems[system_name]['phrases'] = parsed_data
-                            elif 'modes' in zip_info.filename:
-                                systems[system_name]['modes'] = parsed_data
-                            elif 'rules' in zip_info.filename:
-                                systems[system_name]['rules'] = parsed_data
+#                             # Store data based on the filename
+#                             if 'glyphs' in zip_info.filename:
+#                                 systems[system_name]['glyphs'] = parsed_data
+#                             elif 'phrases' in zip_info.filename:
+#                                 systems[system_name]['phrases'] = parsed_data
+#                             elif 'modes' in zip_info.filename:
+#                                 systems[system_name]['modes'] = parsed_data
+#                             elif 'rules' in zip_info.filename:
+#                                 systems[system_name]['rules'] = parsed_data
 
 @app.route('/')
 @app.route('/write')
@@ -151,5 +145,5 @@ def help():
 
 
 if __name__ == '__main__':
-    get_data()
+    # get_data()
     app.run(debug=True)
