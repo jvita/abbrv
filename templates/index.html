@@ -194,22 +194,87 @@
 
         // Function to load the selected system's data
         function loadSystemData(systemName) {
-            axios.get(`/load_system_data/${systemName}`)
-                .then(response => {
-                    systems[systemName] = response.data; // Assuming the response contains system data
+            const newSystem = {}
 
-                    selectedSystem = systemName
-                    localStorage.setItem('selectedSystem', selectedSystem);
-
-                    const systemsJson = JSON.stringify(systems);
-                    localStorage.setItem('systems', systemsJson);
-
-                    location.reload(); // This will reload the current page
-                    // addSystemsToDropdown();     // Then run addSystemsToDropdown after
+            // Fetch each file
+            let fname = `/static/data/systems/${systemName}/glyphs.json`
+            fetch(fname)
+                .then(response => response.json())
+                .then(data => {
+                    newSystem['glyphs'] = data
                 })
                 .catch(error => {
-                    console.error('Error loading system data:', error);
-                });
+                    console.log('Error fetching', fname, ':', error)
+                })
+
+            fname = `/static/data/systems/${systemName}/modes.json`
+            fetch(fname)
+                .then(response => response.json())
+                .then(data => {
+                    newSystem['modes'] = data
+                })
+                .catch(error => {
+                    console.log('Error fetching', fname, ':', error)
+                })
+
+            fname = `/static/data/systems/${systemName}/phrases.json`
+            fetch(fname)
+                .then(response => response.json())
+                .then(data => {
+                    newSystem['phrases'] = data
+                })
+                .catch(error => {
+                    console.log('Error fetching', fname, ':', error)
+                })
+
+            fname = `/static/data/systems/${systemName}/rules.json`
+            fetch(fname)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! Status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => console.log('Data loaded:', data))
+                .catch(error => console.error('Fetch error:', error));
+
+            // fetch(fname)
+            //     .then(response => response.json())
+            //     .then(data => {
+            //         newSystem['rules'] = data
+            //     })
+            //     .catch(error => {
+            //         console.log('Error fetching', fname, ':', error)
+            //     })
+
+
+            systems[systemName] = newSystem
+
+            selectedSystem = systemName
+            localStorage.setItem('selectedSystem', selectedSystem);
+
+            const systemsJson = JSON.stringify(systems);
+            localStorage.setItem('systems', systemsJson);
+
+            location.reload(); // This will reload the current page
+            // addSystemsToDropdown();     // Then run addSystemsToDropdown after
+
+            // axios.get(`/load_system_data/${systemName}`)
+            //     .then(response => {
+            //         systems[systemName] = response.data; // Assuming the response contains system data
+
+            //         selectedSystem = systemName
+            //         localStorage.setItem('selectedSystem', selectedSystem);
+
+            //         const systemsJson = JSON.stringify(systems);
+            //         localStorage.setItem('systems', systemsJson);
+
+            //         location.reload(); // This will reload the current page
+            //         // addSystemsToDropdown();     // Then run addSystemsToDropdown after
+            //     })
+            //     .catch(error => {
+            //         console.error('Error loading system data:', error);
+            //     });
         }
 
         // Import System
