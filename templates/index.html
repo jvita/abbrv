@@ -91,6 +91,7 @@
     </div>
 
     <script>
+
         const systemsJson = localStorage.getItem('systems');
         let systems = systemsJson ? JSON.parse(systemsJson) : {}
 
@@ -109,7 +110,6 @@
         document.getElementById('downloadSystem').addEventListener('click', handleDownloadSystems);
 
         function saveSystems() {
-            console.log('Saving system...')
             // TODO: this is inefficient; should only update current system
             // TODO: there can be an issue when you make an edit in one page,
             // then make another edit in a second page without refreshing first.
@@ -182,44 +182,23 @@
             }
         }
 
-        // function saveSystemToServer(systemName, systemData) {
-        //     fetch(`/save_system/${systemName}`, {
-        //         method: 'POST',
-        //         headers: {
-        //             'Content-Type': 'application/json'
-        //         },
-        //         body: JSON.stringify(systemData)
-        //     })
-        //     .then(response => {
-        //         if (!response.ok) {
-        //             return response.json().then(errorData => {
-        //                 throw new Error(errorData.error);
-        //             });
-        //         }
-        //         return response.json();
-        //     })
-        //     .then(data => {
-        //         console.log('Success:', data.message);
-        //         // Handle success, e.g., show a message to the user
-        //     })
-        //     .catch(error => {
-        //         console.error('Error:', error);
-        //         // Handle error, e.g., show an error message to the user
-        //     });
-        // }
-
         // Function to handle downloading systems
         function handleDownloadSystems() {
             event.preventDefault(); // Prevent default anchor behavior
 
-            // Fetch the list of systems from the server
-            axios.get('/available_systems')
-                .then(response => {
-                    displayDownloadableSystems(response.data);
-                })
-                .catch(error => {
-                    console.error('Error fetching systems:', error);
-                });
+            // Fetch the JSON file
+            fetch('./static/data/systems/available_systems.json')
+            .then(response => {
+                if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                console.log('response', response)
+                return response.json();
+            })
+            .then(data => {
+                displayDownloadableSystems(data.systems);
+            })
+            .catch(error => console.error('Error loading JSON:', error));
         }
 
         // Function to display the list of downloadable systems in the modal
@@ -421,11 +400,6 @@
                         localStorage.setItem('selectedSystem', selectedSystem);
                         navbarElement.textContent = `system: ${selectedSystem ? selectedSystem : 'select'}`;
 
-                        // // Update the navbar element (e.g., for display purposes)
-                        // const navbarElement = document.getElementById('navbarDropdown');
-                        // navbarElement.setAttribute('data-selected-system', selectedSystem);
-                        // navbarElement.textContent = `system: ${selectedSystem}`;
-
                         // Refresh the page
                         location.reload(); // This will reload the current page
                     });
@@ -434,20 +408,6 @@
                 }
             }
         }
-
-        // // For handling system selection
-        // document.getElementById('navbarDropdown').addEventListener('change', function() {
-        //     const selectedSystem = this.value; // Get the selected system value
-
-        //     // Send an AJAX request to update the session
-        //     axios.post('/set_selected_system', { system: selectedSystem })
-        //         .then(response => {
-        //             console.log('Selected system updated in session.');
-        //         })
-        //         .catch(error => {
-        //             console.error('Error updating selected system:', error);
-        //         });
-        // });
 
         async function loadSystemsAndUpdateDropdown() {
             addSystemsToDropdown();     // Then run addSystemsToDropdown after
