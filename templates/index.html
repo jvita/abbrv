@@ -122,31 +122,91 @@
             saveSystemToServer(selectedSystem, systems[selectedSystem])
         }
 
-        function saveSystemToServer(systemName, systemData) {
-            fetch(`/save_system/${systemName}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(systemData)
-            })
-            .then(response => {
-                if (!response.ok) {
-                    return response.json().then(errorData => {
-                        throw new Error(errorData.error);
-                    });
+        async function saveSystemToServer(systemName, systemData) {
+            const requiredKeys = ['glyphs', 'modes', 'rules', 'phrases'];
+
+            // Ensure the dictionary has the required keys
+            for (const key of requiredKeys) {
+                if (!(key in systemData)) {
+                    console.error(`Missing key: ${key}`);
+                    return;
                 }
-                return response.json();
-            })
-            .then(data => {
-                console.log('Success:', data.message);
-                // Handle success, e.g., show a message to the user
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                // Handle error, e.g., show an error message to the user
-            });
+            }
+
+            try {
+                // Create a new instance of JSZip
+                const zip = new JSZip();
+
+                // Save each entry as a JSON file
+                for (const key of requiredKeys) {
+                    const jsonString = JSON.stringify(systemData[key], null, 4);
+                    zip.file(`${key}.json`, jsonString);
+                }
+
+                // Generate the ZIP file asynchronously
+                const content = await zip.generateAsync({ type: "blob" });
+
+                // Check if showSaveFilePicker is supported
+                if ('showSaveFilePicker' in window) {
+                    const options = {
+                        suggestedName: `${systemName}.zip`,
+                        types: [{
+                            description: 'ZIP files',
+                            accept: {
+                                'application/zip': ['.zip'],
+                            },
+                        }],
+                    };
+
+                    const fileHandle = await window.showSaveFilePicker(options);
+                    const writableStream = await fileHandle.createWritable();
+                    await writableStream.write(content);
+                    await writableStream.close();
+                } else {
+                    // Fallback method using a temporary anchor element
+                    const link = document.createElement('a');
+                    link.href = URL.createObjectURL(content);
+                    link.download = `${systemName}.zip`;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                }
+
+                console.log(`System saved as ${systemName}.zip`);
+            } catch (err) {
+                if (err.name === 'AbortError') {
+                    console.log('User canceled the save operation');
+                } else {
+                    console.error('Error during save:', err);
+                }
+            }
         }
+
+        // function saveSystemToServer(systemName, systemData) {
+        //     fetch(`/save_system/${systemName}`, {
+        //         method: 'POST',
+        //         headers: {
+        //             'Content-Type': 'application/json'
+        //         },
+        //         body: JSON.stringify(systemData)
+        //     })
+        //     .then(response => {
+        //         if (!response.ok) {
+        //             return response.json().then(errorData => {
+        //                 throw new Error(errorData.error);
+        //             });
+        //         }
+        //         return response.json();
+        //     })
+        //     .then(data => {
+        //         console.log('Success:', data.message);
+        //         // Handle success, e.g., show a message to the user
+        //     })
+        //     .catch(error => {
+        //         console.error('Error:', error);
+        //         // Handle error, e.g., show an error message to the user
+        //     });
+        // }
 
         // Function to handle downloading systems
         function handleDownloadSystems() {
@@ -193,88 +253,49 @@
         }
 
         // Function to load the selected system's data
-        function loadSystemData(systemName) {
-            const newSystem = {}
+        async function loadSystemData(systemName) {
+            try {
+                // Fetch the ZIP file from the server
+                const response = await fetch(`/static/data/systems/${systemName}.zip`);
+                const blob = await response.blob();
 
-            // Fetch each file
-            let fname = `/static/data/systems/${systemName}/glyphs.json`
-            fetch(fname)
-                .then(response => response.json())
-                .then(data => {
-                    newSystem['glyphs'] = data
-                })
-                .catch(error => {
-                    console.log('Error fetching', fname, ':', error)
-                })
+                // Create a new instance of JSZip
+                const zip = await JSZip.loadAsync(blob);
 
-            fname = `/static/data/systems/${systemName}/modes.json`
-            fetch(fname)
-                .then(response => response.json())
-                .then(data => {
-                    newSystem['modes'] = data
-                })
-                .catch(error => {
-                    console.log('Error fetching', fname, ':', error)
-                })
+                // Initialize an empty object to store the system data
+                const systemData = {};
 
-            fname = `/static/data/systems/${systemName}/phrases.json`
-            fetch(fname)
-                .then(response => response.json())
-                .then(data => {
-                    newSystem['phrases'] = data
-                })
-                .catch(error => {
-                    console.log('Error fetching', fname, ':', error)
-                })
+                // Iterate over each file in the ZIP
+                for (const filename of Object.keys(zip.files)) {
+                    const file = zip.files[filename];
+                    const fileContent = await file.async('text');
+                    const parsedData = JSON.parse(fileContent);
 
-            fname = `/static/data/systems/${systemName}/rules.json`
-            fetch(fname)
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! Status: ${response.status}`);
+                    // Store data based on the filename
+                    if (filename.includes('glyphs')) {
+                        systemData['glyphs'] = parsedData;
+                    } else if (filename.includes('phrases')) {
+                        systemData['phrases'] = parsedData;
+                    } else if (filename.includes('modes')) {
+                        systemData['modes'] = parsedData;
+                    } else if (filename.includes('rules')) {
+                        systemData['rules'] = parsedData;
                     }
-                    return response.json();
-                })
-                .then(data => console.log('Data loaded:', data))
-                .catch(error => console.error('Fetch error:', error));
+                }
 
-            // fetch(fname)
-            //     .then(response => response.json())
-            //     .then(data => {
-            //         newSystem['rules'] = data
-            //     })
-            //     .catch(error => {
-            //         console.log('Error fetching', fname, ':', error)
-            //     })
+                // Store the system data
+                systems[systemName] = systemData;
 
+                selectedSystem = systemName;
+                localStorage.setItem('selectedSystem', selectedSystem);
 
-            systems[systemName] = newSystem
+                const systemsJson = JSON.stringify(systems);
+                localStorage.setItem('systems', systemsJson);
 
-            selectedSystem = systemName
-            localStorage.setItem('selectedSystem', selectedSystem);
-
-            const systemsJson = JSON.stringify(systems);
-            localStorage.setItem('systems', systemsJson);
-
-            location.reload(); // This will reload the current page
-            // addSystemsToDropdown();     // Then run addSystemsToDropdown after
-
-            // axios.get(`/load_system_data/${systemName}`)
-            //     .then(response => {
-            //         systems[systemName] = response.data; // Assuming the response contains system data
-
-            //         selectedSystem = systemName
-            //         localStorage.setItem('selectedSystem', selectedSystem);
-
-            //         const systemsJson = JSON.stringify(systems);
-            //         localStorage.setItem('systems', systemsJson);
-
-            //         location.reload(); // This will reload the current page
-            //         // addSystemsToDropdown();     // Then run addSystemsToDropdown after
-            //     })
-            //     .catch(error => {
-            //         console.error('Error loading system data:', error);
-            //     });
+                location.reload(); // This will reload the current page
+            } catch (error) {
+                console.error('Error loading system data:', error);
+            }
         }
 
         // Import System
