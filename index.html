@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Abbrv</title>
+    <title>abbrv</title>
 
     <!-- Add Bootstrap for styling the navbar -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -21,11 +21,60 @@
 
     <!-- for zipping files -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
+    <style>
+        /* Animation container */
+        .animation-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 50vh;
+            margin-top: 2rem;
+            overflow: hidden;
+        }
+
+        /* Text styling with Arial */
+        .brand-text {
+            font-family: Arial, sans-serif;
+            font-size: 5rem;
+            font-weight: bold;
+            color: #333;
+            position: relative;
+            display: inline-block;
+        }
+
+        /* Animation for individual letters */
+        .letter {
+            display: inline-block;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.3s ease;
+        }
+
+        /* Period special styling */
+        .period {
+            display: inline-block;
+            opacity: 0;
+            transform: scale(0);
+            transition: all 0.3s ease;
+        }
+
+        /* Horizontal line beneath text that appears with animation */
+        .underline {
+            position: absolute;
+            height: 3px;
+            background-color: #333;
+            bottom: 5px;
+            width: 0;
+            left: 0;
+            transition: width 1.8s ease;
+        }
+    </style>
 </head>
 <body>
     <!-- Navbar -->
     <nav class="navbar navbar-expand-lg navbar-light" style="background-color:var(--background-color);">
-        <a class="navbar-brand" href="#writer">abbrv</a>
+        <a class="navbar-brand" href="index.html">abbrv</a>
         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
@@ -78,14 +127,44 @@
         </div>
     </nav>
 
-
-    <div class="container-fluid mt-3" id="content">
-        <!-- Page-specific content will go here -->
+    <!-- Animation Container -->
+    <div class="animation-container">
+        <div class="brand-text">
+            <span class="letter">a</span>
+            <span class="letter">b</span>
+            <span class="letter">b</span>
+            <span class="letter">r</span>
+            <span class="letter">v</span>
+            <div class="underline"></div>
+        </div>
     </div>
 
-    <script src="static/js/index-scripts.js"></script>
+    <!-- Script for the animation -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(function() {
+                // Animate the underline
+                document.querySelector('.underline').style.width = '100%';
 
-    <!-- Page-specific scripts will load here -->
-    <div id="pageScripts"></div>
+                // Animate each letter with a delay
+                const letters = document.querySelectorAll('.letter');
+                letters.forEach((letter, index) => {
+                    setTimeout(() => {
+                        letter.style.opacity = '1';
+                        letter.style.transform = 'translateY(0)';
+                    }, 200 * (index + 1));
+                });
+
+                // Animate the period with a delay
+                setTimeout(() => {
+                    document.querySelector('.period').style.opacity = '1';
+                    document.querySelector('.period').style.transform = 'scale(1)';
+                }, 200 * (letters.length + 1));
+
+            }, 500); // Start animation after 500ms
+        });
+    </script>
+
+    <script src="static/js/index-scripts.js"></script>
 </body>
 </html>
