@@ -1,334 +1,424 @@
-{% extends "index.html" %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-{% block title %}
-<title>abbrv: help</title>
-{% endblock %}
+    <title>Abbrv</title>
 
-{% block content %}
-<div class="main-content"></div>
-<div id=""toc">
-    <h2>Table of Contents</h2>
-    <ul>
-        <li><a href="#overview">Overview</a></li>
+    <!-- Add Bootstrap for styling the navbar -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.2/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+
+    <link rel="stylesheet" href="./static/css/styles.css">
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
+    <!-- for zipping files -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-light" style="background-color:var(--background-color);">
+        <a class="navbar-brand" href="#writer">abbrv</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a class="nav-link" href="writer.html">write</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="drafter.html">draft</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="rules.html">rules</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="help.html">help</a>
+                </li>
+                <!-- Systems Dropdown -->
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        system: select
+                    </a>
+                    <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                        <div id="systemsList"></div>
+                        <li><hr class="dropdown-divider"></li> <!-- Horizontal delimiter -->
+                        <li><a class="dropdown-item" href="#" id="downloadSystem">Download</a></li>
+                        <li><a class="dropdown-item" href="#" id="importSystem">Import</a></li>
+                        <li><a class="dropdown-item" href="#" id="exportSystem">Export</a></li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+        <!-- Modal for downloading systems -->
+        <div class="modal fade" id="downloadSystemsModal" tabindex="-1" aria-labelledby="downloadSystemsModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="downloadSystemsModalLabel">Available systems</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <ul id="downloadableList" class="list-group">
+                        </ul>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+<div id="help-content" class="main-content"></div>
+    <div id=""toc">
+        <h2>Table of Contents</h2>
         <ul>
-            <li><a href="#terminology">Terminology</a></li>
-            <li><a href="#basics">Basics</a></li>
+            <li><a href="javascript:void(0)" data-scroll-to="overview">Overview</a></li>
+            <ul>
+                <li><a href="javascript:void(0)" data-scroll-to="terminology">Terminology</a></li>
+                <li><a href="javascript:void(0)" data-scroll-to="basics">Basics</a></li>
+            </ul>
+            <li><a href="javascript:void(0)" data-scroll-to="designing_a_system">Designing a system</a></li>
+            <ul>
+                <li><a href="javascript:void(0)" data-scroll-to="drafting_your_glyphs">Drafting your glyphs</a></li>
+                <li><a href="javascript:void(0)" data-scroll-to="abbreviating_common_phrases">Abbreviating common phrases</a></li>
+                <li><a href="javascript:void(0)" data-scroll-to="introducing_modes">Introducing modes</a></li>
+                <li><a href="javascript:void(0)" data-scroll-to="defining_preprocessing_rules">Defining pre-processing rules</a></li>
+                <li><a href="javascript:void(0)" data-scroll-to="general_advice">General advice</a></li>
+            </ul>
+            <li><a href="javascript:void(0)" data-scroll-to="writing">Writing</a></li>
+            <li><a href="javascript:void(0)" data-scroll-to="exporting">Exporting your system</a></li>
+            <li><a href="javascript:void(0)" data-scroll-to="conclusion">Conclusion</a></li>
         </ul>
-        <li><a href="#designing_a_system">Designing a system</a></li>
+    </div>
+    <hr>
+
+    <h2 id="overview">Overview</h2>
+    <br>
+    This page outlines the key functionalities of <b>abbrv</b> and how it can be used to design a shorthand system.
+    Note that this program was built with orthographic systems in mind (Orthic, in particular), and that as a result some of the functions and design choices may be better suited for working with these systems.
+    While it should still be possible to use <b>abbrv</b> to design a phonetic system (e.g., by building glyphs for each phenome), this has yet to be done and may require some additional development to better address the needs specific to phonetic systems.
+
+    <br>
+    <br>
+    <h3 id="terminology">Terminology</h3>
+
+    In <b>abbrv</b>, the following terminology is used:
+    <ol>
+        <br>
+        <li><b>Character</b>: individual characters in an alphabet, punctuation, or digits. Examples would be <code>a</code>, <code>b</code>, and <code>c</code>, as well as <code>.</code>, <code>!</code>, and <code>3</code>.</li>
+        <br>
+        <li><b>Glyph</b>: a representation of one or more characters. For example, <code>a</code>, <code>b</code>, and <code>c</code> may all have their own glyphs, as might <code>th</code>, <code>sh</code>, or <code>oa</code>.</li>
+        <br>
+        <li><b>Phrase</b>: one or more longhand words which may be represented using a single glyph. For example, <code>the</code>, <code>of the</code>, or <code>able to do</code>.</li>
+        <br>
+        <li><b>Mode</b>: a new glyph, or a modified form of an existing glyph, which is used in specific cases depending upon the surrounding text. For example, in Orthic, the practice of omitting <code>th-</code> at the beginning of a word and elevating the subsequent glyphs above the baseline.</li>
+    </ol>
+
+    <h3 id="basics">Basics</h3>
+    <br>
+
+    Before doing anything, you must first select the system that you want to use:
+
+    <div style="text-align: center; padding: 20px;">
+        <img src="/static/data/images/system_selector.png" alt="The system selector dropdown menu." />
+        <figcaption style="margin-top: 10px;">
+            The system selector dropdown menu. Choose a system to begin writing in it on the <a href="#writer">write page</a> or editing it on the <a href="#drafter">draft page</a>. If no system is selected, any edits you make will be for a new system, which you can then export to store locally on your computer. The currently available systems are listed first, followed by the buttons:
+            <br>
+            <b>Download</b>: download an existing system from the server.
+            <br>
+            <b>Import</b>: import an existing system from your local files.
+            <br>
+            <b>Export</b>: export your current system to a local file.
+        </figcaption>
+    </div>
+
+    Once you have selected a system, it will be useful to review the basics of how <b>abbrv</b> processes text, converts words to glyphs, and draws the glyphs.
+    Understanding these rules will be particularly useful when designing your own system and debugging any issues.
+    <br>
+    <br>
+    The following steps are applied in order:
+    <ol>
+            <!-- <li><a href="javascript:void(0)" data-scroll-to="overview">Overview</a></li> -->
+        <br>
+        <li>Any user-defined <a href="javascript:void(0)" data-scroll-to="defining_preprocessing_rules">rules</a> are executed to modify the text.</li>
+        <br>
+            <li>Any user-defined <a href="javascript:void(0)" data-scroll-to="abbreviating_common_phrases">phrases</a> are mapped to their corresponding glyphs (accounting for the modifications due to the previous step).</li>
+        <br>
+        <li>All remaining un-mapped words are "tokenized" by parsing them from left to right, breaking them up into their possible glyphs based on the defined <a href="javascript:void(0)" data-scroll-to="drafting_your_glyphs">glyphs</a> and <a href="javascript:void(0)" data-scroll-to="introducing_modes">modes</a>. For example, the word <code>match</code> could be decomposed into the glyphs <code>m</code>, <code>a</code>, and <code>tch</code> (in Orthic). <code>that</code> could be decomposed into the glyphs <code>th-</code>, <code>a</code>, and <code>t</code>. When a word has multiple possible tokenizations, the "best" tokenization is chosen in the following way:</li>
+        <ol type="a">
+            <li>The tokenization with the most <a href="javascript:void(0)" data-scroll-to="introducing_modes">modes</a> used is preferred.</li>
+            <li>If both tokenizations use the same number of modes, the tokenization with the fewest tokens is preferred.</li>
+            <li>If both tokenizations use the same number of modes and tokens, the tokenization with longest individual tokens is preferred.</li>
+        </ol>
+        <br>
+        <li>All words are drawn in the following manner:</li>
+        <ol type="a">
+            <li>The first glyph in a word is drawn as-is, using the baseline as the origin.</li>
+            <li>Subsequent glyphs in the same word are shifted so that the first knot of the current glyph aligns with the last knot of the previous glyph.</li>
+            <li>A fixed length-space is added between two words based on the right-most point of the first word and the left-most point of the second word.</li>
+            <li>For multi-line text, baselines are shifted vertically to ensure a fixed width between the highest point of the current line and the lowest point of the previous line.</li>
+        </ol>
+    </ol>
+
+    <hr>
+    <h2 id="designing_a_system">Designing a system</h2>
+
+    Using <b>abbrv</b> to design a new shorthand system will typically involve four main steps: 1) drafting your glyphs, 2) abbreviating common phrases, 3) introducing <code>modes</code>, and 4) defining pre-processing rules.
+
+    <br>
+    <br>
+    <h3 id="drafting_your_glyphs">Drafting your glyphs</h3>
+
+    A glyph is defined using one or more <a href="https://mathworld.wolfram.com/CubicSpline.html" target="_blank">cubic splines</a>.
+    Individual splines are created by specifying the positions of the spline knot points, which are then smoothly interpolated between to construct the spline.
+    <div style="text-align: center; padding: 20px;">
+        <img src="/static/data/images/abc.svg" alt="Splines for the glyphs of the characters 'a', 'b', and 'c' in Orthic. Knot points for each spline are shown in red." style="width: 800px; height: auto"/>
+        <figcaption style="margin-top: 10px;">Splines for the glyphs of the characters <code>a</code>, <code>b</code>, and <code>c</code> in Orthic. Knot points for each spline are shown in red.</figcaption>
+    </div>
+
+    Glyphs are allowed to start and end above or below the baseline. If such glyphs occur at the beginning of a word, this could mean that the word will not start at the baseline either.
+    <div style="text-align: center; padding: 20px;">
+        <img src="/static/data/images/gwv.svg" alt="Splines for the glyphs of the characters 'g', 'w', and 'v' in Orthic. Since their first knot points are not at (0, 0), these glyphs do not start at the baseline." style="width: 800px; height: auto"/>
+        <figcaption style="margin-top: 10px;">Splines for the glyphs of the characters <code>g</code>, <code>w</code>, and <code>v</code> in Orthic. Since their first knot points are not at (0, 0), these glyphs do not start at the baseline.</figcaption>
+    </div>
+
+    If a glyph uses multiple splines, each spline is drawn separately, which may be useful when defining a glyph with sharp breaks in it.
+    <div style="text-align: center; padding: 20px;">
+        <img src="/static/data/images/does.svg" alt="The Orthic glyph for the word 'does', which uses two splines ('d' and 's') that are joined with a sharp break between them." style="width: 800px; height: auto"/>
+        <figcaption style="margin-top: 10px;">The Orthic glyph for the word <code>does</code>, which uses two splines (<code>d</code> and <code>s</code>) that are joined with a sharp break between them.</figcaption>
+    </div>
+
+    A glyph may also use multiple splines if it needs to have separated segments.
+    <div style="text-align: center; padding: 20px;">
+        <img src="/static/data/images/i_oa.svg" alt="The Orthic glyphs 'i' and 'oa'. Separate splines are used to draw the dot in 'i', and to draw the 'a' above the 'o' in 'oa'." style="width: 800px; height: auto"/>
+        <figcaption style="margin-top: 10px;">The Orthic glyphs <code>i</code> and <code>oa</code>. Separate splines are used to draw the dot in <code>i</code>, and to draw the <code>a</code> above the <code>o</code> in <code>oa</code>.</figcaption>
+    </div>
+
+    As described above, subsequent glyphs in the same word are shifted so that the first knot of the current glyph aligns with the last knot of the previous glyph.
+    This means that when defining a multi-spline glyph, you must always <i>start</i> the first spline at the point where it should join to the previous glyph, and <i>end</i> the last spline at the point from which the next glyph should continue.
+    This can lead to some confusing behavior when designing a glyph. For example, the <code>i</code> drawn in the figure above is actually composed of three splines: the slanted line, the dot above the slanted line, and a second dot which overlaps with the end of the slanted line to ensure that it joins properly to the next glyph.
+    The <code>oa</code> glyph also has a third spline at the end of the longer line for the same reason.
+    <div style="text-align: center; padding: 20px;">
+        <img src="/static/data/images/it_oat.svg" alt="The Orthic glyphs for the words 'it' and 'oat'. Note that the 't' spline connects to the top of the 'i' in 'it' and the end of the longer line in 'oa', since this is where the glyphs were designed to end." style="width: 800px; height: auto"/>
+        <figcaption style="margin-top: 10px;">The Orthic glyphs for the words <code>it</code> and <code>oat</code>. Note that the <code>t</code> spline connects to the top of the <code>i</code> in <code>it</code> and the end of the longer line in <code>oat</code>, since this is where the glyphs were designed to end.</figcaption>
+    </div>
+
+    The <a href="#drafter">draft page</a> provides you with all of the functionality necessary to design the glyphs for the individual characters (or phonemes) in your system.
+
+    <br>
+    <br>
+    The grid editor is used to visualize and edit your glyphs:
+    <div style="text-align: center; padding: 20px;">
+        <img src="/static/data/images/grid.png" alt="The grid editor panel of the draft page." style="width: 40%; height: auto"/>
+        <figcaption style="margin-top: 10px;">The grid editor panel of the draft page.
+            <br>
+            <b>Left-click</b>: add a knot point
+            <br>
+            <b>Right-click</b>: remove a knot point
+            <br>
+            <b>Ctrl + left-click</b>: start a new spline
+            <br>
+            <b>Center button</b>: center the view at the origin
+        </figcaption>
+    </div>
+
+    When working with multi-spline glyphs, using <b>ctrl + left-click</b> to start a new spline allows you to create separated segments and specify the start/end points of the glyph.
+    Note that only the knot points for the spline which is currently being edited are shown.
+
+    <div style="text-align: center; padding: 20px;">
+        <img src="/static/data/images/grid_oa_o.png" alt="One spline is used for the 'o' in the glyph 'oa'. The beginning of the first spline defines the start of the glyph." style="width: 400px; height: auto"/>
+        <figcaption style="margin-top: 10px;">One spline is used for the <code>o</code> in the glyph <code>oa</code>. The beginning of the first spline defines the start of the glyph.</figcaption>
+        <br>
+        <img src="/static/data/images/grid_oa_a.png" alt="A second spline is used for the 'a'." style="width: 400px; height: auto"/>
+        <figcaption style="margin-top: 10px;">A second spline is used for the <code>a</code>.</figcaption>
+        <br>
+        <img src="/static/data/images/grid_oa_end.png" alt="And a third spline is used to specify the end of the glyph when joining to the next glyph in a word." style="width: 400px; height: auto"/>
+        <figcaption style="margin-top: 10px;">And a third spline is used to specify the end of the glyph when joining to the next glyph in a word.</figcaption>
+    </div>
+
+    The buttons panel can be used for saving, deleting and "freezing" glyphs, and for clearing the currently selected spline.
+
+    <div style="text-align: center; padding: 20px;">
+        <img src="/static/data/images/buttons.png" alt="A second spline is used for the 'a' in the glyph 'oa'." style="width: 30%; height: auto"/>
+        <figcaption style="margin-top: 10px;">
+            The buttons panel and text fieldl of the draft page.
+            <br>
+            <b>Save</b>: save the current splines as a glyph corresponding to the text in the text field
+            <br>
+            <b>Delete</b>: delete the glyph a glyph corresponding to the text in the text field
+            <br>
+            <b>Freeze</b>: paint all the current splines onto the background
+            <br>
+            <b>Clear</b>: clear the currently selected knot points
+            <br>
+        </figcaption>
+    </div>
+
+    <div style="text-align: center; padding: 20px;">
+        <img src="/static/data/images/frozen.png" alt="Frozen splines are painted onto the background, which can be useful when making adjustments to a glyph. If a spline is frozen, the 'Freeze' button will change to 'Unfreeze', which will remove the painted splines." style="width: 10%; height: auto"/>
+        <figcaption style="margin-top: 10px;">Frozen splines are painted onto the background, which can be useful when making adjustments to a glyph. If a spline is frozen, the "Freeze" button will change to "Unfreeze", which will remove the painted splines.</figcaption>
+    </div>
+
+    <div style="text-align: center; padding: 20px;">
+        <img src="/static/data/images/lists.png" alt="The list panels will show the currently saved glyphs, phrases, and modes." style="width: 30%; height: auto"/>
+        <figcaption style="margin-top: 10px;">
+            The list panels will show the currently saved glyphs, phrases, and modes.
+            <br>
+            <b>Left-click</b>: select a glyph and display its splines.
+            <br>
+            <b>Ctrl + left-click</b>: select a new glyph and append its splines to the current glyph.
+        </figcaption>
+    </div>
+
+    <br>
+    <br>
+    <h3 id="abbreviating_common_phrases">Abbreviating common phrases</h3>
+    When saving a glyph, you can choose the "as phrase" option to specify that the glyph corresponds to an entire word or phrase.
+    This is similar to a regular glyph, with the difference that it can only be used to represent an entire word rather than a subset of a word.
+    For example, if you define a glyph for the word <code>do</code>, it will <i>not</i> also be used in the word <code>adore</code>.
+    However, if you save <code>do</code> directly as a glyph (not as a phrase), then it <i>will</i> be applied in <code>adore</code>.
+
+    <div style="text-align: center; padding: 20px;">
+        <img src="/static/data/images/buttons_save.png" alt="The save and delete buttons both have 'mode' and 'phrase' options for saving/deleting the glyph of the word or phrase specified in the text field." style="width: 40%; height: auto"/>
+        <figcaption style="margin-top: 10px;">The save and delete buttons both have "mode" and "phrase" options for saving/deleting the glyph of the word or phrase specified in the text field.</figcaption>
+    </div>
+
+    <br>
+    <br>
+    <h3 id="introducing_modes">Introducing modes</h3>
+    A "mode" is similar to a phrase and a regular glyph, with the additional flexibility of being able to be used to replace any pattern using a <a href="https://regexone.com/">regular expression</a>.
+    If you're not familiar with regexes, I recommend asking an LLM to write a regex for you (e.g. "please write a regex that matches 'a' and 'o' before 'm' or 'n'"), then using the site <a href="https://regex101.com/">regex101</a> to make sure that the matching is working properly.
+    Note that <b>abbrv</b> is written in JavaScript, which may affect some of the details of how a regex should be written (see <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_expressions">this documentation</a> for more details).
+
+    <div style="text-align: center; padding: 20px;">
+        <img src="/static/data/images/mode_popup.png" alt="When saving a glyph as a mode, a popup window will appear to additionally specify the name of the mode and the regular expression pattern used for matching the mode." style="width: 30%; height: auto"/>
+        <figcaption style="margin-top: 10px;">When saving a glyph as a mode, a popup window will appear to additionally specify the name of the mode and the regular expression pattern used for matching the mode.</figcaption>
+    </div>
+
+    Some examples of rules:
+
+    <ul>
+        <li><b>Name</b>: elevate "th-""; <b>regex</b>: <code>\bth</code>.</li>
+        <li><b>Name</b>: "ay" diphthong; <b>regex</b>: <code>(?&lt;![dtjqmnv])(ay|ya)</code>.</li>
         <ul>
-            <li><a href="#drafting_your_glyphs">Drafting your glyphs</a></li>
-            <li><a href="#abbreviating_common_phrases">Abbreviating common phrases</a></li>
-            <li><a href="#introducing_modes">Introducing modes</a></li>
-            <li><a href="#defining_preprocessing_rules">Defining pre-processing rules</li>
-            <li><a href="#general_advice">General advice</li>
+            <li>Note the use of <code>(?&lt;![dtjqmnv])</code> to only match <code>(ay|ya)</code> if not preceded by any of the letters <code>dtjqmnv</code>.</li>
         </ul>
-        <li><a href="#writing">Writing</a></li>
+        <li><b>Name</b>: "s" after "e/i"; <b>regex</b>: <code>(?&lt;=[ei])s(?![hlr])</code>.</li>
+        <ul>
+            <li>Note the use of <code>(?![hlr])</code> to only match <code>s</code> if not followed by any of the letters <code>hlr</code>.</li>
+        </ul>
     </ul>
-</div>
-<hr>
 
-<h2 id="overview">Overview</h2>
-<br>
-This page outlines the key functionalities of <b>abbrv</b> and how it can be used to design a shorthand system.
-Note that this program was built with orthographic systems in mind (Orthic, in particular), and that as a result some of the functions and design choices may be better suited for working with these systems.
-While it should still be possible to use <b>abbrv</b> to design a phonetic system (e.g., by building glyphs for each phenome), this has yet to be done and may require some additional development to better address the needs specific to phonetic systems.
-
-<br>
-<br>
-<h3 id="terminology">Terminology</h3>
-
-In <b>abbrv</b>, the following terminology is used:
-<ol>
     <br>
-    <li><b>Character</b>: individual characters in an alphabet, punctuation, or digits. Examples would be <code>a</code>, <code>b</code>, and <code>c</code>, as well as <code>.</code>, <code>!</code>, and <code>3</code>.</li>
-    <br>
-    <li><b>Glyph</b>: a representation of one or more characters. For example, <code>a</code>, <code>b</code>, and <code>c</code> may all have their own glyphs, as might <code>th</code>, <code>sh</code>, or <code>oa</code>.</li>
-    <br>
-    <li><b>Phrase</b>: one or more longhand words which may be represented using a single glyph. For example, <code>the</code>, <code>of the</code>, or <code>able to do</code>.</li>
-    <br>
-    <li><b>Mode</b>: a new glyph, or a modified form of an existing glyph, which is used in specific cases depending upon the surrounding text. For example, in Orthic, the practice of omitting <code>th-</code> at the beginning of a word and elevating the subsequent glyphs above the baseline.</li>
-</ol>
+    <h3 id="defining_preprocessing_rules">Defining pre-processing rules</h3>
+    A rule is a way of specifying find-and-replace operations that can be used to modify the text before mapping to glyphs.
+    The <a href="javascript:void(0)" data-scroll-to="defining_preprocessing_rules">rules page</a> can be used for defining new rules.
 
-<h3 id="basics">Basics</h3>
-<br>
+    <div style="text-align: center; padding: 20px;">
+        <img src="/static/data/images/rules.png" alt="A rule is created by specifying a name, one regular expression for matching patterns, and a second regular expression for replacing any matched patterns. If the second regex is left blank, any matches will be replaced with empty text (i.e., deleted)." style="width: 100%; height: auto"/>
+        <figcaption style="margin-top: 10px;">A rule is created by specifying a name, one regular expression for matching patterns, and a second regular expression for replacing any matched patterns. If the second regex is left blank, any matches will be replaced with empty text (i.e., deleted).</figcaption>
+    </div>
 
-Before doing anything, you must first select the system that you want to use:
+    <div style="text-align: center; padding: 20px;">
+        <img src="/static/data/images/rules_list.png" alt="The list of defined rules. Rules will be applyed in order from top to bottom. The arrow buttons can be used to rearrange the list. The delete buttons will remove a rule from the list." style="width: 100%; height: auto"/>
+        <figcaption style="margin-top: 10px;">The list of defined rules. Rules will be applyed in order from top to bottom. The arrow buttons can be used to rearrange the list. The delete buttons will remove a rule from the list.</figcaption>
+    </div>
 
-<div style="text-align: center; padding: 20px;">
-    <img src="/static/data/images/system_selector.png" alt="The system selector dropdown menu." />
-    <figcaption style="margin-top: 10px;">
-        The system selector dropdown menu. Choose a system to begin writing in it on the <a href="{{ url_for('write') }}">write page</a> or editing it on the <a href="{{ url_for('draft') }}">draft page</a>. If no system is selected, any edits you make will be for a new system, which you can then export to store locally on your computer. The currently available systems are listed first, followed by the buttons:
-        <br>
-        <b>Download</b>: download an existing system from the server.
-        <br>
-        <b>Import</b>: import an existing system from your local files.
-        <br>
-        <b>Export</b>: export your current system to a local file.
-    </figcaption>
-</div>
 
-Once you have selected a system, it will be useful to review the basics of how <b>abbrv</b> processes text, converts words to glyphs, and draws the glyphs.
-Understanding these rules will be particularly useful when designing your own system and debugging any issues.
-<br>
-<br>
-The following steps are applied in order:
-<ol>
-    <br>
-    <li>Any user-defined <a href="#rules">rules</a> are executed to modify the text.</li>
-    <br>
-        <li>Any user-defined <a href="#phrases">phrases</a> are mapped to their corresponding glyphs (accounting for the modifications due to the previous step).</li>
-    <br>
-    <li>All remaining un-mapped words are "tokenized" by parsing them from left to right, breaking them up into their possible glyphs based on the defined <a href="#glyphs">glyphs</a> and <a href="#modes">modes</a>. For example, the word <code>match</code> could be decomposed into the glyphs <code>m</code>, <code>a</code>, and <code>tch</code> (in Orthic). <code>that</code> could be decomposed into the glyphs <code>th-</code>, <code>a</code>, and <code>t</code>. When a word has multiple possible tokenizations, the "best" tokenization is chosen in the following way:</li>
-    <ol type="a">
-        <li>The tokenization with the most <a href="#modes">modes</a> used is preferred.</li>
-        <li>If both tokenizations use the same number of modes, the tokenization with the fewest tokens is preferred.</li>
-        <li>If both tokenizations use the same number of modes and tokens, the tokenization with longest individual tokens is preferred.</li>
-    </ol>
-    <br>
-    <li>All words are drawn in the following manner:</li>
-    <ol type="a">
-        <li>The first glyph in a word is drawn as-is, using the baseline as the origin.</li>
-        <li>Subsequent glyphs in the same word are shifted so that the first knot of the current glyph aligns with the last knot of the previous glyph.</li>
-        <li>A fixed length-space is added between two words based on the right-most point of the first word and the left-most point of the second word.</li>
-        <li>For multi-line text, baselines are shifted vertically to ensure a fixed width between the highest point of the current line and the lowest point of the previous line.</li>
-    </ol>
-</ol>
+    Some examples of rules:
 
-<hr>
-<h2 id="designing_a_system">Designing a system</h2>
-
-Using <b>abbrv</b> to design a new shorthand system will typically involve four main steps: 1) drafting your glyphs, 2) abbreviating common phrases, 3) introducing <code>modes</code>, and 4) defining pre-processing rules.
-
-<br>
-<br>
-<h3 id="drafting_your_glyphs">Drafting your glyphs</h3>
-
-A glyph is defined using one or more <a href="https://mathworld.wolfram.com/CubicSpline.html" target="_blank">cubic splines</a>.
-Individual splines are created by specifying the positions of the spline knot points, which are then smoothly interpolated between to construct the spline.
-<div style="text-align: center; padding: 20px;">
-    <img src="/static/data/images/abc.svg" alt="Splines for the glyphs of the characters 'a', 'b', and 'c' in Orthic. Knot points for each spline are shown in red." style="width: 800px; height: auto"/>
-    <figcaption style="margin-top: 10px;">Splines for the glyphs of the characters <code>a</code>, <code>b</code>, and <code>c</code> in Orthic. Knot points for each spline are shown in red.</figcaption>
-</div>
-
-Glyphs are allowed to start and end above or below the baseline. If such glyphs occur at the beginning of a word, this could mean that the word will not start at the baseline either.
-<div style="text-align: center; padding: 20px;">
-    <img src="/static/data/images/gwv.svg" alt="Splines for the glyphs of the characters 'g', 'w', and 'v' in Orthic. Since their first knot points are not at (0, 0), these glyphs do not start at the baseline." style="width: 800px; height: auto"/>
-    <figcaption style="margin-top: 10px;">Splines for the glyphs of the characters <code>g</code>, <code>w</code>, and <code>v</code> in Orthic. Since their first knot points are not at (0, 0), these glyphs do not start at the baseline.</figcaption>
-</div>
-
-If a glyph uses multiple splines, each spline is drawn separately, which may be useful when defining a glyph with sharp breaks in it.
-<div style="text-align: center; padding: 20px;">
-    <img src="/static/data/images/does.svg" alt="The Orthic glyph for the word 'does', which uses two splines ('d' and 's') that are joined with a sharp break between them." style="width: 800px; height: auto"/>
-    <figcaption style="margin-top: 10px;">The Orthic glyph for the word <code>does</code>, which uses two splines (<code>d</code> and <code>s</code>) that are joined with a sharp break between them.</figcaption>
-</div>
-
-A glyph may also use multiple splines if it needs to have separated segments.
-<div style="text-align: center; padding: 20px;">
-    <img src="/static/data/images/i_oa.svg" alt="The Orthic glyphs 'i' and 'oa'. Separate splines are used to draw the dot in 'i', and to draw the 'a' above the 'o' in 'oa'." style="width: 800px; height: auto"/>
-    <figcaption style="margin-top: 10px;">The Orthic glyphs <code>i</code> and <code>oa</code>. Separate splines are used to draw the dot in <code>i</code>, and to draw the <code>a</code> above the <code>o</code> in <code>oa</code>.</figcaption>
-</div>
-
-As described above, subsequent glyphs in the same word are shifted so that the first knot of the current glyph aligns with the last knot of the previous glyph.
-This means that when defining a multi-spline glyph, you must always <i>start</i> the first spline at the point where it should join to the previous glyph, and <i>end</i> the last spline at the point from which the next glyph should continue.
-This can lead to some confusing behavior when designing a glyph. For example, the <code>i</code> drawn in the figure above is actually composed of three splines: the slanted line, the dot above the slanted line, and a second dot which overlaps with the end of the slanted line to ensure that it joins properly to the next glyph.
-The <code>oa</code> glyph also has a third spline at the end of the longer line for the same reason.
-<div style="text-align: center; padding: 20px;">
-    <img src="/static/data/images/it_oat.svg" alt="The Orthic glyphs for the words 'it' and 'oat'. Note that the 't' spline connects to the top of the 'i' in 'it' and the end of the longer line in 'oa', since this is where the glyphs were designed to end." style="width: 800px; height: auto"/>
-    <figcaption style="margin-top: 10px;">The Orthic glyphs for the words <code>it</code> and <code>oat</code>. Note that the <code>t</code> spline connects to the top of the <code>i</code> in <code>it</code> and the end of the longer line in <code>oat</code>, since this is where the glyphs were designed to end.</figcaption>
-</div>
-
-The <a href="{{ url_for('draft') }}">draft page</a> provides you with all of the functionality necessary to design the glyphs for the individual characters (or phonemes) in your system.
-
-<br>
-<br>
-The grid editor is used to visualize and edit your glyphs:
-<div style="text-align: center; padding: 20px;">
-    <img src="/static/data/images/grid.png" alt="The grid editor panel of the draft page." style="width: 40%; height: auto"/>
-    <figcaption style="margin-top: 10px;">The grid editor panel of the draft page.
-        <br>
-        <b>Left-click</b>: add a knot point
-        <br>
-        <b>Right-click</b>: remove a knot point
-        <br>
-        <b>Ctrl + left-click</b>: start a new spline
-        <br>
-        <b>Center button</b>: center the view at the origin
-    </figcaption>
-</div>
-
-When working with multi-spline glyphs, using <b>ctrl + left-click</b> to start a new spline allows you to create separated segments and specify the start/end points of the glyph.
-Note that only the knot points for the spline which is currently being edited are shown.
-
-<div style="text-align: center; padding: 20px;">
-    <img src="/static/data/images/grid_oa_o.png" alt="One spline is used for the 'o' in the glyph 'oa'. The beginning of the first spline defines the start of the glyph." style="width: 400px; height: auto"/>
-    <figcaption style="margin-top: 10px;">One spline is used for the <code>o</code> in the glyph <code>oa</code>. The beginning of the first spline defines the start of the glyph.</figcaption>
-    <br>
-    <img src="/static/data/images/grid_oa_a.png" alt="A second spline is used for the 'a'." style="width: 400px; height: auto"/>
-    <figcaption style="margin-top: 10px;">A second spline is used for the <code>a</code>.</figcaption>
-    <br>
-    <img src="/static/data/images/grid_oa_end.png" alt="And a third spline is used to specify the end of the glyph when joining to the next glyph in a word." style="width: 400px; height: auto"/>
-    <figcaption style="margin-top: 10px;">And a third spline is used to specify the end of the glyph when joining to the next glyph in a word.</figcaption>
-</div>
-
-The buttons panel can be used for saving, deleting and "freezing" glyphs, and for clearing the currently selected spline.
-
-<div style="text-align: center; padding: 20px;">
-    <img src="/static/data/images/buttons.png" alt="A second spline is used for the 'a' in the glyph 'oa'." style="width: 30%; height: auto"/>
-    <figcaption style="margin-top: 10px;">
-        The buttons panel and text fieldl of the draft page.
-        <br>
-        <b>Save</b>: save the current splines as a glyph corresponding to the text in the text field
-        <br>
-        <b>Delete</b>: delete the glyph a glyph corresponding to the text in the text field
-        <br>
-        <b>Freeze</b>: paint all the current splines onto the background
-        <br>
-        <b>Clear</b>: clear the currently selected knot points
-        <br>
-    </figcaption>
-</div>
-
-<div style="text-align: center; padding: 20px;">
-    <img src="/static/data/images/frozen.png" alt="Frozen splines are painted onto the background, which can be useful when making adjustments to a glyph. If a spline is frozen, the 'Freeze' button will change to 'Unfreeze', which will remove the painted splines." style="width: 10%; height: auto"/>
-    <figcaption style="margin-top: 10px;">Frozen splines are painted onto the background, which can be useful when making adjustments to a glyph. If a spline is frozen, the "Freeze" button will change to "Unfreeze", which will remove the painted splines.</figcaption>
-</div>
-
-<div style="text-align: center; padding: 20px;">
-    <img src="/static/data/images/lists.png" alt="The list panels will show the currently saved glyphs, phrases, and modes." style="width: 30%; height: auto"/>
-    <figcaption style="margin-top: 10px;">
-        The list panels will show the currently saved glyphs, phrases, and modes.
-        <br>
-        <b>Left-click</b>: select a glyph and display its splines.
-        <br>
-        <b>Ctrl + left-click</b>: select a new glyph and append its splines to the current glyph.
-    </figcaption>
-</div>
-
-<br>
-<br>
-<h3 id="abbreviating_common_phrases">Abbreviating common phrases</h3>
-When saving a glyph, you can choose the "as phrase" option to specify that the glyph corresponds to an entire word or phrase.
-This is similar to a regular glyph, with the difference that it can only be used to represent an entire word rather than a subset of a word.
-For example, if you define a glyph for the word <code>do</code>, it will <i>not</i> also be used in the word <code>adore</code>.
-However, if you save <code>do</code> directly as a glyph (not as a phrase), then it <i>will</i> be applied in <code>adore</code>.
-
-<div style="text-align: center; padding: 20px;">
-    <img src="/static/data/images/buttons_save.png" alt="The save and delete buttons both have 'mode' and 'phrase' options for saving/deleting the glyph of the word or phrase specified in the text field." style="width: 40%; height: auto"/>
-    <figcaption style="margin-top: 10px;">The save and delete buttons both have "mode" and "phrase" options for saving/deleting the glyph of the word or phrase specified in the text field.</figcaption>
-</div>
-
-<br>
-<br>
-<h3 id="introducing_modes">Introducing modes</h3>
-A "mode" is similar to a phrase and a regular glyph, with the additional flexibility of being able to be used to replace any pattern using a <a href="https://regexone.com/">regular expression</a>.
-If you're not familiar with regexes, I recommend asking an LLM to write a regex for you (e.g. "please write a regex that matches 'a' and 'o' before 'm' or 'n'"), then using the site <a href="https://regex101.com/">regex101</a> to make sure that the matching is working properly.
-Note that <b>abbrv</b> is written in JavaScript, which may affect some of the details of how a regex should be written (see <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_expressions">this documentation</a> for more details).
-
-<div style="text-align: center; padding: 20px;">
-    <img src="/static/data/images/mode_popup.png" alt="When saving a glyph as a mode, a popup window will appear to additionally specify the name of the mode and the regular expression pattern used for matching the mode." style="width: 30%; height: auto"/>
-    <figcaption style="margin-top: 10px;">When saving a glyph as a mode, a popup window will appear to additionally specify the name of the mode and the regular expression pattern used for matching the mode.</figcaption>
-</div>
-
-Some examples of rules:
-
-<ul>
-    <li><b>Name</b>: elevate "th-""; <b>regex</b>: <code>\bth</code>.</li>
-    <li><b>Name</b>: "ay" diphthong; <b>regex</b>: <code>(?&lt;![dtjqmnv])(ay|ya)</code>.</li>
     <ul>
-        <li>Note the use of <code>(?&lt;![dtjqmnv])</code> to only match <code>(ay|ya)</code> if not preceded by any of the letters <code>dtjqmnv</code>.</li>
+        <li><b>Name</b>: Remove consecutive duplicates; <b>regex</b>: <code>(.)\1+</code>; <b>replacement</b>: <code>$1</code>.</li>
+        <ul>
+            <li>Note the use of <code>$1</code> for the replacement text, which replaces the matched pattern with the text prior to the match (following <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/replace">the JavaScript syntax</a>).</li>
+        </ul>
+        <li><b>Name</b>: Omit "e" in "-ed" for > 5 char words; <b>regex</b>: <code>\b(\w*?ed\b</code>; <b>replacement</b>: <code>$1d</code>.</li>
     </ul>
-    <li><b>Name</b>: "s" after "e/i"; <b>regex</b>: <code>(?&lt;=[ei])s(?![hlr])</code>.</li>
+
+    <h3 id="general_advice">General advice</h3>
     <ul>
-        <li>Note the use of <code>(?![hlr])</code> to only match <code>s</code> if not followed by any of the letters <code>hlr</code>.</li>
+        <li>Start by defining glyphs for your alphabet or phenomes.</li>
+        <li>If implementing an existing system (Gregg, Pitman, Teeline, ...), try writing any examples from the system's documentation and adding modes/phrases/rules to your implementation as necessary.</li>
+        <li>Define your shorter glyphs first. Take extra care that they are exactly to your liking before moving on. This can help avoid having to repeatedly modify longer glyphs every time you make adjustments to the shorter glyphs that comprise them.</li>
+        <li>Avoid using too many modes. Modes are best used for prefixes, suffixes, and dipthongs.</li>
+        <li>You will go through multiple iterations of development. As you continue, try to increase the number of defined phrases and decrease the number of modes.</li>
     </ul>
-</ul>
 
-<br>
-<h3 id="defining_preprocessing_rules">Defining pre-processing rules</h3>
-A rule is a way of specifying find-and-replace operations that can be used to modify the text before mapping to glyphs.
-The <a href="{{ url_for('rules') }}">rules page</a> can be used for defining new rules.
+    <hr>
+    <h2 id="writing">Writing</h2>
+    The <a href="#writer">write page</a> can be used for testing out your newly-created shorthand system.
+    This can be useful while drafting your glyphs to confirm that they are being drawn and joined as you expect them to be.
+    The buttons can be used to choose which modifications you would like applied to your text:
+    <div style="text-align: center; padding: 20px;">
+        <img src="/static/data/images/write_buttons_all.png" alt="The options, modes, rules, and download buttons." style="width: 30%; height: auto"/>
+        <figcaption style="margin-top: 10px;">
+            The buttons on the write page.
+            <br>
+            <b>Options</b>: toggle universal options (use phrases, show knot points, show baselines, etc.)
+            <br>
+            <b>Modes</b>: toggle user-defined modes
+            <br>
+            <b>Rules</b>: toggle user-defined rules
+            <br>
+            <b>Download</b>: save the current image as an SVG
+        </figcaption>
+    </div>
 
-<div style="text-align: center; padding: 20px;">
-    <img src="/static/data/images/rules.png" alt="A rule is created by specifying a name, one regular expression for matching patterns, and a second regular expression for replacing any matched patterns. If the second regex is left blank, any matches will be replaced with empty text (i.e., deleted)." style="width: 100%; height: auto"/>
-    <figcaption style="margin-top: 10px;">A rule is created by specifying a name, one regular expression for matching patterns, and a second regular expression for replacing any matched patterns. If the second regex is left blank, any matches will be replaced with empty text (i.e., deleted).</figcaption>
-</div>
+    <h2 id="exporting">Exporting your system</h2>
+    By default, <b>abbrv</b> will only save your changes to the local storage of your browser. This means that if you clear your cache you may lose your progress. While this won't be a problem most of the time (unless you happen to clear your cache regularly), when you want to save your results or prepare them for submission to the public repository you can use the Export button.
 
-<div style="text-align: center; padding: 20px;">
-    <img src="/static/data/images/rules_list.png" alt="The list of defined rules. Rules will be applyed in order from top to bottom. The arrow buttons can be used to rearrange the list. The delete buttons will remove a rule from the list." style="width: 100%; height: auto"/>
-    <figcaption style="margin-top: 10px;">The list of defined rules. Rules will be applyed in order from top to bottom. The arrow buttons can be used to rearrange the list. The delete buttons will remove a rule from the list.</figcaption>
-</div>
-
-
-Some examples of rules:
-
-<ul>
-    <li><b>Name</b>: Remove consecutive duplicates; <b>regex</b>: <code>(.)\1+</code>; <b>replacement</b>: <code>$1</code>.</li>
-    <ul>
-        <li>Note the use of <code>$1</code> for the replacement text, which replaces the matched pattern with the text prior to the match (following <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/replace">the JavaScript syntax</a>).</li>
-    </ul>
-    <li><b>Name</b>: Omit "e" in "-ed" for > 5 char words; <b>regex</b>: <code>\b(\w*?ed\b</code>; <b>replacement</b>: <code>$1d</code>.</li>
-</ul>
-
-<h3 id="general_advice">General advice</h3>
-<ul>
-    <li>Start by defining glyphs for your alphabet or phenomes.</li>
-    <li>If implementing an existing system (Gregg, Pitman, Teeline, ...), try writing any examples from the system's documentation and adding modes/phrases/rules to your implementation as necessary.</li>
-    <li>Define your shorter glyphs first. Take extra care that they are exactly to your liking before moving on. This can help avoid having to repeatedly modify longer glyphs every time you make adjustments to the shorter glyphs that comprise them.</li>
-    <li>Avoid using too many modes. Modes are best used for prefixes, suffixes, and dipthongs.</li>
-    <li>You will go through multiple iterations of development. As you continue, try to increase the number of defined phrases and decrease the number of modes.</li>
-</ul>
-
-<hr>
-<h2 id="writing">Writing</h2>
-The <a href="{{ url_for('write') }}">write page</a> can be used for testing out your newly-created shorthand system.
-This can be useful while drafting your glyphs to confirm that they are being drawn and joined as you expect them to be.
-The buttons can be used to choose which modifications you would like applied to your text:
-<div style="text-align: center; padding: 20px;">
-    <img src="/static/data/images/write_buttons_all.png" alt="The options, modes, rules, and download buttons." style="width: 30%; height: auto"/>
-    <figcaption style="margin-top: 10px;">
-        The buttons on the write page.
-        <br>
-        <b>Options</b>: toggle universal options (use phrases, show knot points, show baselines, etc.)
-        <br>
-        <b>Modes</b>: toggle user-defined modes
-        <br>
-        <b>Rules</b>: toggle user-defined rules
-        <br>
-        <b>Download</b>: save the current image as an SVG
+    <div style="text-align: center; padding: 20px;">
+    <img src="/static/data/images/export.png" alt="The Export button will allow you to download your system as a ZIP folder, which can then be published to the public repository." style="width: 15%; height: auto" />
+    <figcaption>
+    The Export button will allow you to download your system as a ZIP folder, which can then be published to the public repository.
     </figcaption>
-</div>
+    </div>
 
-<br>
-Using <b>abbrv</b>, you can go from a bare-bones alphabet that only has single-character (or single-phenome) glyphs, to a fully-fledged system with complex abbreviations, modes, and rules.
-Consider, for example, this quote in "fully-written" Orthic (no abbreviations, modes, etc.):
-
-<div style="text-align: center; padding: 20px;">
-    <img src="/static/data/images/quote_raw.svg" alt="The quote 'If you cannot do great things, do small things in a great way.' (Napoleon Hill) in Orthic, using only the simplest single-character glyphs and no additional rules or modes." style="width: 100%; height: auto"/>
-    <figcaption style="margin-top: 10px;">The quote "If you cannot do great things, do small things in a great way." (Napoleon Hill) in Orthic, using only the simplest single-character glyphs and no additional rules or modes.</figcaption>
-</div>
-
-Compared to the same quote written in the "ordinary" style with the following modifications applied:
-
-<ul>
+    <h2 id="conclusion">Conclusion</h2>
     <br>
-    <li>(glyph) define the glyph <code>if</code> to make it smoother than joining <code>i</code> directly to <code>f</code>, and the correct height.</li>
-    <li>(mode) write <code>you-</code> as <code>y</code>.</li>
-    <li>(phrase) abbreviate <code>cannot</code> as <code>cnt</code>.</li>
-    <li>(phrase) abbreviate <code>do</code> as <code>d</code>.</li>
-    <li>(glyph) define the glyph <code>gr</code> to make it smoother than <code>g</code> joined directly to <code>r</code>.</li>
-    <li>(mode) smooth the dipthong <code>ea</code>.</li>
-    <li>(mode) omit the prefix <code>th-</code>, and elevate the rest of the word.</li>
-    <li>(mode) write the suffix <code>-ings</code> as a long downard curve with a sharp tail.</li>
-    <li>(rule) omit consecutive duplicate letters (the <code>ll</code> in <code>small</code>, even though you can't see it in the full version).</li>
-    <li>(mode) smooth the dipthong <code>ay</code>.</li>
-</ul>
+    Using <b>abbrv</b>, you can go from a bare-bones alphabet that only has single-character (or single-phenome) glyphs, to a fully-fledged system with complex abbreviations, modes, and rules.
+    Consider, for example, this quote in "fully-written" Orthic (no abbreviations, modes, etc.):
 
-<div style="text-align: center; padding: 20px;">
-    <img src="/static/data/images/quote_modified.svg" alt="The same quote as above, but with multiple abbreviations, modes, and rules applied." style="width: 100%; height: auto"/>
-    <figcaption style="margin-top: 10px;">The same quote as above, but with multiple abbreviations, modes, and rules applied.</figcaption>
+    <div style="text-align: center; padding: 20px;">
+        <img src="/static/data/images/quote_raw.svg" alt="The quote 'If you cannot do great things, do small things in a great way.' (Napoleon Hill) in Orthic, using only the simplest single-character glyphs and no additional rules or modes." style="width: 100%; height: auto"/>
+        <figcaption style="margin-top: 10px;">The quote "If you cannot do great things, do small things in a great way." (Napoleon Hill) in Orthic, using only the simplest single-character glyphs and no additional rules or modes.</figcaption>
+    </div>
+
+    Compared to the same quote written in the "ordinary" style with the following modifications applied:
+
+    <ul>
+        <br>
+        <li>(glyph) define the glyph <code>if</code> to make it smoother than joining <code>i</code> directly to <code>f</code>, and the correct height.</li>
+        <li>(mode) write <code>you-</code> as <code>y</code>.</li>
+        <li>(phrase) abbreviate <code>cannot</code> as <code>cnt</code>.</li>
+        <li>(phrase) abbreviate <code>do</code> as <code>d</code>.</li>
+        <li>(glyph) define the glyph <code>gr</code> to make it smoother than <code>g</code> joined directly to <code>r</code>.</li>
+        <li>(mode) smooth the dipthong <code>ea</code>.</li>
+        <li>(mode) omit the prefix <code>th-</code>, and elevate the rest of the word.</li>
+        <li>(mode) write the suffix <code>-ings</code> as a long downard curve with a sharp tail.</li>
+        <li>(rule) omit consecutive duplicate letters (the <code>ll</code> in <code>small</code>, even though you can't see it in the full version).</li>
+        <li>(mode) smooth the dipthong <code>ay</code>.</li>
+    </ul>
+
+    <div style="text-align: center; padding: 20px;">
+        <img src="/static/data/images/quote_modified.svg" alt="The same quote as above, but with multiple abbreviations, modes, and rules applied." style="width: 100%; height: auto"/>
+        <figcaption style="margin-top: 10px;">The same quote as above, but with multiple abbreviations, modes, and rules applied.</figcaption>
+    </div>
+
+    <div style="text-align: center; padding: 20px;"> Have fun, and make something beautiful!  </div>
+
 </div>
+<script src="static/js/index-scripts.js"></script>
+<script src="static/js/help-scripts.js"></script>
 
-<div style="text-align: center; padding: 20px;"> Have fun, and make something beautiful!  </div>
-
-</div>
-{% endblock %}
+</body>
+</html>

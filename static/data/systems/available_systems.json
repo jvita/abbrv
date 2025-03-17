@@ -1,6 +1,5 @@
 {
   "systems": [
-    "orthic",
-    "orthic_bad"
+    "orthic"
   ]
 }

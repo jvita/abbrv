@@ -1,11 +1,83 @@
-{% extends "index.html" %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-{% block title %}
-<title>abbrv: rules</title>
-{% endblock %}
+    <title>Abbrv</title>
 
-{% block content %}
-<div class="main-content"></div>
+    <!-- Add Bootstrap for styling the navbar -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.2/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+
+    <link rel="stylesheet" href="./static/css/styles.css">
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
+    <!-- for zipping files -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-light" style="background-color:var(--background-color);">
+        <a class="navbar-brand" href="#writer">abbrv</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a class="nav-link" href="writer.html">write</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="drafter.html">draft</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="rules.html">rules</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="help.html">help</a>
+                </li>
+                <!-- Systems Dropdown -->
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        system: select
+                    </a>
+                    <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                        <div id="systemsList"></div>
+                        <li><hr class="dropdown-divider"></li> <!-- Horizontal delimiter -->
+                        <li><a class="dropdown-item" href="#" id="downloadSystem">Download</a></li>
+                        <li><a class="dropdown-item" href="#" id="importSystem">Import</a></li>
+                        <li><a class="dropdown-item" href="#" id="exportSystem">Export</a></li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+        <!-- Modal for downloading systems -->
+        <div class="modal fade" id="downloadSystemsModal" tabindex="-1" aria-labelledby="downloadSystemsModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="downloadSystemsModalLabel">Available systems</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <ul id="downloadableList" class="list-group">
+                        </ul>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
     <!-- Add New Rule -->
     <h3>Rules</h3>
     <div>Rules can be used to modify text prior to translation into shorthand glyphs. They are applied using find-and-replace operations with <a href="https://regexone.com/" target="_blank">regular expressions</a>. If you don't want to learn how to write regular expressions (which can be a bit of a pain), try asking your friendly neighborhood LLM to write them for you! The site <a href="https://regex101.com/">regex101</a> can be useful for making sure that your regex is working properly.</div>
@@ -47,129 +119,9 @@
             <!-- Rules will be dynamically added here -->
         </ul>
     </div>
-</div>
-{% endblock %}
-{% block scripts %}
-<script>
-let rules = selectedSystem ? systems[selectedSystem]['rules'] : []
 
-// Function to fetch and render rules
-function renderRules() {
-    const rulesList = document.getElementById('rulesList');
-    rulesList.innerHTML = ''; // Clear the existing list
+<script src="static/js/index-scripts.js"></script>
+<script src="static/js/rules-scripts.js"></script>
 
-    // Render each rule
-    rules.forEach((rule, index) => {
-        const ruleItem = document.createElement('li');
-        ruleItem.className = 'list-group-item d-flex justify-content-between align-items-center';
-
-        // Create a div for the rule content (left side)
-        const ruleContent = document.createElement('div');
-        ruleContent.innerHTML = `
-            <strong>Name:</strong> ${rule.name} <br>
-        `;
-
-        // Create a span for the regex, ensuring it's safe
-        const regexSpan = document.createElement('span');
-        regexSpan.innerHTML = `<strong>Pattern:</strong> `;
-        const regexContent = document.createElement('span');
-        regexContent.textContent = rule.regex; // Ensure raw text for regex
-
-        // Append the regex content to the regex span
-        regexSpan.appendChild(regexContent);
-
-        // Append the regex span to the ruleContent div
-        ruleContent.appendChild(regexSpan);
-
-        // Add a line break and the Replacement field
-        const replacementSpan = document.createElement('div');
-        replacementSpan.innerHTML = `<strong>Replacement:</strong> ${rule.replacement}`;
-        ruleContent.appendChild(replacementSpan);
-
-        // Create the move up button
-        const moveUpButton = document.createElement('button');
-        moveUpButton.className = 'btn btn-primary btn-sm me-2';
-        moveUpButton.innerHTML = '<i class="bi bi-arrow-up"></i>';
-        moveUpButton.onclick = () => moveRuleUp(index);
-
-        // Create the move down button
-        const moveDownButton = document.createElement('button');
-        moveDownButton.className = 'btn btn-primary btn-sm me-2';
-        moveDownButton.innerHTML = '<i class="bi bi-arrow-down"></i>';
-        moveDownButton.onclick = () => moveRuleDown(index);
-
-        // Create the delete button (right side)
-        const deleteButton = document.createElement('button');
-        deleteButton.className = 'btn btn-danger btn-sm';
-        deleteButton.textContent = 'Delete';
-        deleteButton.onclick = () => deleteRule(index); // Attach delete function
-
-        // Append the content and buttons to the rule item
-        const buttonContainer = document.createElement('div');
-        buttonContainer.appendChild(moveUpButton);
-        buttonContainer.appendChild(moveDownButton);
-        buttonContainer.appendChild(deleteButton);
-
-        ruleItem.appendChild(ruleContent);
-        ruleItem.appendChild(buttonContainer);
-
-        // Append the rule item to the list
-        rulesList.appendChild(ruleItem);
-    });
-}
-
-// Function to add a new rule
-document.getElementById('addRuleForm').addEventListener('submit', function(e) {
-    e.preventDefault(); // Prevent form submission
-
-    // Get input values
-    const regexInput = document.getElementById('regexInput').value;
-    const replacementText = document.getElementById('replacementText').value;
-    const ruleName = document.getElementById('ruleName').value;
-
-    // Create a new rule object and add it to the list
-    const newRule = { regex: regexInput, replacement: replacementText, name: ruleName };
-    rules.push(newRule);
-
-    // Clear the form
-    document.getElementById('addRuleForm').reset();
-    saveSystems();
-    renderRules(); // Ensure the updated list is displayed
-});
-
-// Function to delete a rule
-function deleteRule(index) {
-    rules.splice(index, 1); // Remove the rule from the array
-    saveSystems();
-    renderRules(); // Ensure the updated list is displayed after deletion
-}
-
-// Function to move a rule up
-function moveRuleUp(index) {
-    if (index > 0) {
-        const temp = rules[index];
-        rules[index] = rules[index - 1];
-        rules[index - 1] = temp;
-        saveSystems();
-        renderRules();
-    }
-}
-
-// Function to move a rule down
-function moveRuleDown(index) {
-    if (index < rules.length - 1) {
-        const temp = rules[index];
-        rules[index] = rules[index + 1];
-        rules[index + 1] = temp;
-        saveSystems();
-        renderRules();
-    }
-}
-
-// On page load, load existing rules
-window.onload = function() {
-    renderRules();
-};
-
-</script>
-{% endblock %}
+</body>
+</html>
