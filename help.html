@@ -129,7 +129,7 @@
     Before doing anything, you must first select the system that you want to use:
 
     <div style="text-align: center; padding: 20px;">
-        <img src="/static/data/images/system_selector.png" alt="The system selector dropdown menu." />
+        <img src="static/data/images/system_selector.png" alt="The system selector dropdown menu." />
         <figcaption style="margin-top: 10px;">
             The system selector dropdown menu. Choose a system to begin writing in it on the <a href="#writer">write page</a> or editing it on the <a href="#drafter">draft page</a>. If no system is selected, any edits you make will be for a new system, which you can then export to store locally on your computer. The currently available systems are listed first, followed by the buttons:
             <br>
@@ -181,25 +181,25 @@
     A glyph is defined using one or more <a href="https://mathworld.wolfram.com/CubicSpline.html" target="_blank">cubic splines</a>.
     Individual splines are created by specifying the positions of the spline knot points, which are then smoothly interpolated between to construct the spline.
     <div style="text-align: center; padding: 20px;">
-        <img src="/static/data/images/abc.svg" alt="Splines for the glyphs of the characters 'a', 'b', and 'c' in Orthic. Knot points for each spline are shown in red." style="width: 800px; height: auto"/>
+        <img src="static/data/images/abc.svg" alt="Splines for the glyphs of the characters 'a', 'b', and 'c' in Orthic. Knot points for each spline are shown in red." style="width: 800px; height: auto"/>
         <figcaption style="margin-top: 10px;">Splines for the glyphs of the characters <code>a</code>, <code>b</code>, and <code>c</code> in Orthic. Knot points for each spline are shown in red.</figcaption>
     </div>
 
     Glyphs are allowed to start and end above or below the baseline. If such glyphs occur at the beginning of a word, this could mean that the word will not start at the baseline either.
     <div style="text-align: center; padding: 20px;">
-        <img src="/static/data/images/gwv.svg" alt="Splines for the glyphs of the characters 'g', 'w', and 'v' in Orthic. Since their first knot points are not at (0, 0), these glyphs do not start at the baseline." style="width: 800px; height: auto"/>
+        <img src="static/data/images/gwv.svg" alt="Splines for the glyphs of the characters 'g', 'w', and 'v' in Orthic. Since their first knot points are not at (0, 0), these glyphs do not start at the baseline." style="width: 800px; height: auto"/>
         <figcaption style="margin-top: 10px;">Splines for the glyphs of the characters <code>g</code>, <code>w</code>, and <code>v</code> in Orthic. Since their first knot points are not at (0, 0), these glyphs do not start at the baseline.</figcaption>
     </div>
 
     If a glyph uses multiple splines, each spline is drawn separately, which may be useful when defining a glyph with sharp breaks in it.
     <div style="text-align: center; padding: 20px;">
-        <img src="/static/data/images/does.svg" alt="The Orthic glyph for the word 'does', which uses two splines ('d' and 's') that are joined with a sharp break between them." style="width: 800px; height: auto"/>
+        <img src="static/data/images/does.svg" alt="The Orthic glyph for the word 'does', which uses two splines ('d' and 's') that are joined with a sharp break between them." style="width: 800px; height: auto"/>
         <figcaption style="margin-top: 10px;">The Orthic glyph for the word <code>does</code>, which uses two splines (<code>d</code> and <code>s</code>) that are joined with a sharp break between them.</figcaption>
     </div>
 
     A glyph may also use multiple splines if it needs to have separated segments.
     <div style="text-align: center; padding: 20px;">
-        <img src="/static/data/images/i_oa.svg" alt="The Orthic glyphs 'i' and 'oa'. Separate splines are used to draw the dot in 'i', and to draw the 'a' above the 'o' in 'oa'." style="width: 800px; height: auto"/>
+        <img src="static/data/images/i_oa.svg" alt="The Orthic glyphs 'i' and 'oa'. Separate splines are used to draw the dot in 'i', and to draw the 'a' above the 'o' in 'oa'." style="width: 800px; height: auto"/>
         <figcaption style="margin-top: 10px;">The Orthic glyphs <code>i</code> and <code>oa</code>. Separate splines are used to draw the dot in <code>i</code>, and to draw the <code>a</code> above the <code>o</code> in <code>oa</code>.</figcaption>
     </div>
 
@@ -208,7 +208,7 @@
     This can lead to some confusing behavior when designing a glyph. For example, the <code>i</code> drawn in the figure above is actually composed of three splines: the slanted line, the dot above the slanted line, and a second dot which overlaps with the end of the slanted line to ensure that it joins properly to the next glyph.
     The <code>oa</code> glyph also has a third spline at the end of the longer line for the same reason.
     <div style="text-align: center; padding: 20px;">
-        <img src="/static/data/images/it_oat.svg" alt="The Orthic glyphs for the words 'it' and 'oat'. Note that the 't' spline connects to the top of the 'i' in 'it' and the end of the longer line in 'oa', since this is where the glyphs were designed to end." style="width: 800px; height: auto"/>
+        <img src="static/data/images/it_oat.svg" alt="The Orthic glyphs for the words 'it' and 'oat'. Note that the 't' spline connects to the top of the 'i' in 'it' and the end of the longer line in 'oa', since this is where the glyphs were designed to end." style="width: 800px; height: auto"/>
         <figcaption style="margin-top: 10px;">The Orthic glyphs for the words <code>it</code> and <code>oat</code>. Note that the <code>t</code> spline connects to the top of the <code>i</code> in <code>it</code> and the end of the longer line in <code>oat</code>, since this is where the glyphs were designed to end.</figcaption>
     </div>
 
@@ -218,7 +218,7 @@
     <br>
     The grid editor is used to visualize and edit your glyphs:
     <div style="text-align: center; padding: 20px;">
-        <img src="/static/data/images/grid.png" alt="The grid editor panel of the draft page." style="width: 40%; height: auto"/>
+        <img src="static/data/images/grid.png" alt="The grid editor panel of the draft page." style="width: 40%; height: auto"/>
         <figcaption style="margin-top: 10px;">The grid editor panel of the draft page.
             <br>
             <b>Left-click</b>: add a knot point
@@ -235,20 +235,20 @@
     Note that only the knot points for the spline which is currently being edited are shown.
 
     <div style="text-align: center; padding: 20px;">
-        <img src="/static/data/images/grid_oa_o.png" alt="One spline is used for the 'o' in the glyph 'oa'. The beginning of the first spline defines the start of the glyph." style="width: 400px; height: auto"/>
+        <img src="static/data/images/grid_oa_o.png" alt="One spline is used for the 'o' in the glyph 'oa'. The beginning of the first spline defines the start of the glyph." style="width: 400px; height: auto"/>
         <figcaption style="margin-top: 10px;">One spline is used for the <code>o</code> in the glyph <code>oa</code>. The beginning of the first spline defines the start of the glyph.</figcaption>
         <br>
-        <img src="/static/data/images/grid_oa_a.png" alt="A second spline is used for the 'a'." style="width: 400px; height: auto"/>
+        <img src="static/data/images/grid_oa_a.png" alt="A second spline is used for the 'a'." style="width: 400px; height: auto"/>
         <figcaption style="margin-top: 10px;">A second spline is used for the <code>a</code>.</figcaption>
         <br>
-        <img src="/static/data/images/grid_oa_end.png" alt="And a third spline is used to specify the end of the glyph when joining to the next glyph in a word." style="width: 400px; height: auto"/>
+        <img src="static/data/images/grid_oa_end.png" alt="And a third spline is used to specify the end of the glyph when joining to the next glyph in a word." style="width: 400px; height: auto"/>
         <figcaption style="margin-top: 10px;">And a third spline is used to specify the end of the glyph when joining to the next glyph in a word.</figcaption>
     </div>
 
     The buttons panel can be used for saving, deleting and "freezing" glyphs, and for clearing the currently selected spline.
 
     <div style="text-align: center; padding: 20px;">
-        <img src="/static/data/images/buttons.png" alt="A second spline is used for the 'a' in the glyph 'oa'." style="width: 30%; height: auto"/>
+        <img src="static/data/images/buttons.png" alt="A second spline is used for the 'a' in the glyph 'oa'." style="width: 30%; height: auto"/>
         <figcaption style="margin-top: 10px;">
             The buttons panel and text fieldl of the draft page.
             <br>
@@ -264,12 +264,12 @@
     </div>
 
     <div style="text-align: center; padding: 20px;">
-        <img src="/static/data/images/frozen.png" alt="Frozen splines are painted onto the background, which can be useful when making adjustments to a glyph. If a spline is frozen, the 'Freeze' button will change to 'Unfreeze', which will remove the painted splines." style="width: 10%; height: auto"/>
+        <img src="static/data/images/frozen.png" alt="Frozen splines are painted onto the background, which can be useful when making adjustments to a glyph. If a spline is frozen, the 'Freeze' button will change to 'Unfreeze', which will remove the painted splines." style="width: 10%; height: auto"/>
         <figcaption style="margin-top: 10px;">Frozen splines are painted onto the background, which can be useful when making adjustments to a glyph. If a spline is frozen, the "Freeze" button will change to "Unfreeze", which will remove the painted splines.</figcaption>
     </div>
 
     <div style="text-align: center; padding: 20px;">
-        <img src="/static/data/images/lists.png" alt="The list panels will show the currently saved glyphs, phrases, and modes." style="width: 30%; height: auto"/>
+        <img src="static/data/images/lists.png" alt="The list panels will show the currently saved glyphs, phrases, and modes." style="width: 30%; height: auto"/>
         <figcaption style="margin-top: 10px;">
             The list panels will show the currently saved glyphs, phrases, and modes.
             <br>
@@ -288,7 +288,7 @@
     However, if you save <code>do</code> directly as a glyph (not as a phrase), then it <i>will</i> be applied in <code>adore</code>.
 
     <div style="text-align: center; padding: 20px;">
-        <img src="/static/data/images/buttons_save.png" alt="The save and delete buttons both have 'mode' and 'phrase' options for saving/deleting the glyph of the word or phrase specified in the text field." style="width: 40%; height: auto"/>
+        <img src="static/data/images/buttons_save.png" alt="The save and delete buttons both have 'mode' and 'phrase' options for saving/deleting the glyph of the word or phrase specified in the text field." style="width: 40%; height: auto"/>
         <figcaption style="margin-top: 10px;">The save and delete buttons both have "mode" and "phrase" options for saving/deleting the glyph of the word or phrase specified in the text field.</figcaption>
     </div>
 
@@ -300,7 +300,7 @@
     Note that <b>abbrv</b> is written in JavaScript, which may affect some of the details of how a regex should be written (see <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_expressions">this documentation</a> for more details).
 
     <div style="text-align: center; padding: 20px;">
-        <img src="/static/data/images/mode_popup.png" alt="When saving a glyph as a mode, a popup window will appear to additionally specify the name of the mode and the regular expression pattern used for matching the mode." style="width: 30%; height: auto"/>
+        <img src="static/data/images/mode_popup.png" alt="When saving a glyph as a mode, a popup window will appear to additionally specify the name of the mode and the regular expression pattern used for matching the mode." style="width: 30%; height: auto"/>
         <figcaption style="margin-top: 10px;">When saving a glyph as a mode, a popup window will appear to additionally specify the name of the mode and the regular expression pattern used for matching the mode.</figcaption>
     </div>
 
@@ -324,12 +324,12 @@
     The <a href="javascript:void(0)" data-scroll-to="defining_preprocessing_rules">rules page</a> can be used for defining new rules.
 
     <div style="text-align: center; padding: 20px;">
-        <img src="/static/data/images/rules.png" alt="A rule is created by specifying a name, one regular expression for matching patterns, and a second regular expression for replacing any matched patterns. If the second regex is left blank, any matches will be replaced with empty text (i.e., deleted)." style="width: 100%; height: auto"/>
+        <img src="static/data/images/rules.png" alt="A rule is created by specifying a name, one regular expression for matching patterns, and a second regular expression for replacing any matched patterns. If the second regex is left blank, any matches will be replaced with empty text (i.e., deleted)." style="width: 100%; height: auto"/>
         <figcaption style="margin-top: 10px;">A rule is created by specifying a name, one regular expression for matching patterns, and a second regular expression for replacing any matched patterns. If the second regex is left blank, any matches will be replaced with empty text (i.e., deleted).</figcaption>
     </div>
 
     <div style="text-align: center; padding: 20px;">
-        <img src="/static/data/images/rules_list.png" alt="The list of defined rules. Rules will be applyed in order from top to bottom. The arrow buttons can be used to rearrange the list. The delete buttons will remove a rule from the list." style="width: 100%; height: auto"/>
+        <img src="static/data/images/rules_list.png" alt="The list of defined rules. Rules will be applyed in order from top to bottom. The arrow buttons can be used to rearrange the list. The delete buttons will remove a rule from the list." style="width: 100%; height: auto"/>
         <figcaption style="margin-top: 10px;">The list of defined rules. Rules will be applyed in order from top to bottom. The arrow buttons can be used to rearrange the list. The delete buttons will remove a rule from the list.</figcaption>
     </div>
 
@@ -359,7 +359,7 @@
     This can be useful while drafting your glyphs to confirm that they are being drawn and joined as you expect them to be.
     The buttons can be used to choose which modifications you would like applied to your text:
     <div style="text-align: center; padding: 20px;">
-        <img src="/static/data/images/write_buttons_all.png" alt="The options, modes, rules, and download buttons." style="width: 30%; height: auto"/>
+        <img src="static/data/images/write_buttons_all.png" alt="The options, modes, rules, and download buttons." style="width: 30%; height: auto"/>
         <figcaption style="margin-top: 10px;">
             The buttons on the write page.
             <br>
@@ -377,7 +377,7 @@
     By default, <b>abbrv</b> will only save your changes to the local storage of your browser. This means that if you clear your cache you may lose your progress. While this won't be a problem most of the time (unless you happen to clear your cache regularly), when you want to save your results or prepare them for submission to the public repository you can use the Export button.
 
     <div style="text-align: center; padding: 20px;">
-    <img src="/static/data/images/export.png" alt="The Export button will allow you to download your system as a ZIP folder, which can then be published to the public repository." style="width: 15%; height: auto" />
+    <img src="static/data/images/system_selector.png" alt="The Export button will allow you to download your system as a ZIP folder, which can then be published to the public repository." style="width: 15%; height: auto" />
     <figcaption>
     The Export button will allow you to download your system as a ZIP folder, which can then be published to the public repository.
     </figcaption>
@@ -389,7 +389,7 @@
     Consider, for example, this quote in "fully-written" Orthic (no abbreviations, modes, etc.):
 
     <div style="text-align: center; padding: 20px;">
-        <img src="/static/data/images/quote_raw.svg" alt="The quote 'If you cannot do great things, do small things in a great way.' (Napoleon Hill) in Orthic, using only the simplest single-character glyphs and no additional rules or modes." style="width: 100%; height: auto"/>
+        <img src="static/data/images/quote_raw.svg" alt="The quote 'If you cannot do great things, do small things in a great way.' (Napoleon Hill) in Orthic, using only the simplest single-character glyphs and no additional rules or modes." style="width: 100%; height: auto"/>
         <figcaption style="margin-top: 10px;">The quote "If you cannot do great things, do small things in a great way." (Napoleon Hill) in Orthic, using only the simplest single-character glyphs and no additional rules or modes.</figcaption>
     </div>
 
@@ -410,7 +410,7 @@
     </ul>
 
     <div style="text-align: center; padding: 20px;">
-        <img src="/static/data/images/quote_modified.svg" alt="The same quote as above, but with multiple abbreviations, modes, and rules applied." style="width: 100%; height: auto"/>
+        <img src="static/data/images/quote_modified.svg" alt="The same quote as above, but with multiple abbreviations, modes, and rules applied." style="width: 100%; height: auto"/>
         <figcaption style="margin-top: 10px;">The same quote as above, but with multiple abbreviations, modes, and rules applied.</figcaption>
     </div>
 
