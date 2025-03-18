@@ -31,6 +31,7 @@
             height: 50vh;
             margin-top: 2rem;
             overflow: hidden;
+            flex-direction: column
         }
 
         /* Text styling with Arial */
@@ -51,14 +52,6 @@
             transition: all 0.3s ease;
         }
 
-        /* Period special styling */
-        .period {
-            display: inline-block;
-            opacity: 0;
-            transform: scale(0);
-            transition: all 0.3s ease;
-        }
-
         /* Horizontal line beneath text that appears with animation */
         .underline {
             position: absolute;
@@ -67,7 +60,20 @@
             bottom: 5px;
             width: 0;
             left: 0;
-            transition: width 1.8s ease;
+            transition: width 2.0s ease;
+        }
+
+        /* New Text Block Styling */
+        .text-block {
+            font-family: Arial, sans-serif;
+            font-size: 1.5rem;
+            font-weight: normal;
+            color: #333;
+            text-align: center;
+            margin-top: 2rem;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 1.0s ease;
         }
     </style>
 </head>
@@ -137,7 +143,11 @@
             <span class="letter">v</span>
             <div class="underline"></div>
         </div>
+        <div class="text-block" id="welcomeText">
+            a tool for designing and using shorthand fonts
+        </div>
     </div>
+
 
     <!-- Script for the animation -->
     <script>
@@ -155,11 +165,11 @@
                     }, 200 * (index + 1));
                 });
 
-                // Animate the period with a delay
+                // Animate the welcome text with a longer delay
                 setTimeout(() => {
-                    document.querySelector('.period').style.opacity = '1';
-                    document.querySelector('.period').style.transform = 'scale(1)';
-                }, 200 * (letters.length + 1));
+                    document.getElementById('welcomeText').style.opacity = '1';
+                    document.getElementById('welcomeText').style.transform = 'translateY(0)';
+                }, 200 * (letters.length + 5)); // Increased delay
 
             }, 500); // Start animation after 500ms
         });
