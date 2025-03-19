@@ -1,5 +1,19 @@
-### Please upload your system file here:
-- **Your Name**: [Enter your name]
-- **System Name**: [Enter system name]
-- **System Description**: [Enter system description]
-- **System Files**: [Attach your exported .json files]
+name: Upload new system
+description: Upload a system that was exported by abbrv
+title: "[SYSTEM-UPLOAD]: "
+labels: ["system-upload"]
+projects: ["octo-org/1", "octo-org/44"]
+assignees:
+  - octocat
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this bug report!
+  - type: input
+    id: name
+    attributes:
+      label: Your Name
+  - type: textarea
+    id: description
+      label: System description
