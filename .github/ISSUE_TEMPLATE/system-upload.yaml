@@ -1,0 +1,63 @@
+name: "Upload JSON Files"
+description: "Upload a set of JSON files for processing."
+title: "[Upload] - <Brief Description>"
+labels: ["upload", "json"]
+assignees:
+  - ""
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Instructions
+        Please upload your JSON files below and provide any additional details needed for processing.
+
+  - type: input
+    id: description
+    attributes:
+      label: "Description"
+      description: "Provide a brief description of the JSON files and their purpose."
+      placeholder: "E.g., Dataset for material science analysis."
+    validations:
+      required: true
+
+  - type: textarea
+    id: notes
+    attributes:
+      label: "Additional Notes"
+      description: "Any specific requirements or context for these files?"
+      placeholder: "E.g., Formatting guidelines, expected outputs."
+
+  - type: markdown
+    attributes:
+      value: "### Upload JSON Files"
+
+  - type: input
+    id: file_1
+    attributes:
+      label: "File 1"
+      description: "Drag and drop or attach the first JSON file."
+    validations:
+      required: true
+
+  - type: input
+    id: file_2
+    attributes:
+      label: "File 2 (Optional)"
+      description: "Attach an additional JSON file, if applicable."
+
+  - type: input
+    id: file_3
+    attributes:
+      label: "File 3 (Optional)"
+      description: "Attach another JSON file, if applicable."
+
+  - type: checkboxes
+    id: confirmation
+    attributes:
+      label: "Confirmation"
+      description: "Please confirm the following before submitting."
+      options:
+        - label: "I have reviewed the JSON files for correctness."
+          required: true
+        - label: "The files do not contain sensitive or confidential information."
+          required: true
