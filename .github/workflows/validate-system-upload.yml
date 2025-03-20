@@ -59,10 +59,8 @@ jobs:
         run: |
           ls -l json_files/
 
-          if [ ! -f ".github/scripts/validate_json.py" ]; then
-            echo "❌ validate_json.py not found!"
-            exit 1
-          fi
+          head json_files/*.json
+
           python3 .github/scripts/validate_json.py json_files/*.json
 
       - name: Clean up
