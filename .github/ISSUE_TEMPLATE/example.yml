@@ -1,4 +1,4 @@
-name: "Upload new system"
+name: "Upload JSON Files"
 description: "Upload a set of JSON files for processing."
 title: "[Upload] - <Brief Description>"
 labels: ["upload", "json"]
