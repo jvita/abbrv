@@ -17,99 +17,55 @@ jobs:
 
       - name: Fetch issue body content
         run: |
-          # Fetch the issue body content
           ISSUE_BODY="${{ github.event.issue.body }}"
-          
-          # Print the raw issue body for debugging
-          echo "Raw issue body content:"
-          echo "$ISSUE_BODY"
-
-          # Save the issue body to a file for persistence across steps
           echo "$ISSUE_BODY" > issue_body.txt
 
       - name: Extract File URLs or Base64 Data from Issue Body
         run: |
-          # Read the issue body from the file
           ISSUE_BODY=$(cat issue_body.txt)
-          
-          # Print the issue body content for further debugging
-          echo "Issue body for extraction:"
-          echo "$ISSUE_BODY"
-
-          # Extract file URLs from the issue body (if present)
           FILE_URLS=$(echo "$ISSUE_BODY" | grep -Eo 'https://github\.com/.+/files/[a-zA-Z0-9_.-]+')
-          
-          # If no file URLs were found, check for base64-encoded data
           if [[ -z "$FILE_URLS" ]]; then
-            echo "No file URLs found, checking for base64 files..."
-
             BASE64_FILES=$(echo "$ISSUE_BODY" | grep -Eo 'data:application/json;base64,[A-Za-z0-9+/=]+')
-            
             if [[ -z "$BASE64_FILES" ]]; then
               echo "❌ No file URLs or base64-encoded files found in the issue body."
-              echo "No file URLs or base64-encoded files found in the issue body." >> result.txt
               exit 1
             fi
           fi
-
-          echo "File URLs or base64-encoded files found:"
-          echo "$FILE_URLS"
-          echo "$BASE64_FILES"
-          
-          # Save the extracted data to files for further use
           echo "$FILE_URLS" > file_urls.txt
           echo "$BASE64_FILES" > base64_files.txt
 
-      - name: Download and Validate JSON Files
+      - name: Create json_files directory
         run: |
-          # Ensure that validate_json.py exists in the repository
+          mkdir -p json_files
+
+      - name: Download JSON Files
+        run: |
+          for FILE_URL in $(cat file_urls.txt); do
+            FILE_NAME=$(basename "$FILE_URL")
+            echo "Downloading $FILE_URL"
+            curl -o "json_files/$FILE_NAME" "$FILE_URL"
+          done
+
+      - name: Validate JSON Files
+        run: |
+          ls -l json_files/
+
           if [ ! -f ".github/scripts/validate_json.py" ]; then
             echo "❌ validate_json.py not found!"
-            echo "❌ validate_json.py not found!" >> result.txt
             exit 1
           fi
-
-          # If URLs were found, download them
-          if [[ -s file_urls.txt ]]; then
-            for FILE_URL in $(cat file_urls.txt); do
-              echo "Downloading $FILE_URL"
-              curl -O "$FILE_URL"
-            done
-          fi
-
-          # If base64-encoded files were found, decode them
-          if [[ -s base64_files.txt ]]; then
-            for BASE64_FILE in $(cat base64_files.txt); do
-              FILE_NAME="decoded_file.json"
-              echo "$BASE64_FILE" | cut -d ',' -f 2 | base64 --decode > "$FILE_NAME"
-              echo "Decoded base64 file to $FILE_NAME"
-            done
-          fi
-
-          # Now validate the JSON files (assuming you have the `validate_json.py` script set up)
-          echo "Validating JSON files..."
-          python3 .github/scripts/validate_json.py *.json
-          
-          # Capture validation result
-          echo "Validation complete." >> result.txt
+          python3 .github/scripts/validate_json.py json_files/*.json
 
       - name: Clean up
         run: |
-          # Clean up downloaded and decoded files after validation
-          rm -f *.json
+          rm -f json_files/*.json
 
       - name: Post result to issue comment
         run: |
-          # Get the issue number and repo
           ISSUE_NUMBER="${{ github.event.issue.number }}"
           REPO="${{ github.repository }}"
-
-          # Read the result from the previous step
           RESULT=$(cat result.txt)
-          
-          # Post a comment with the result
           COMMENT_BODY="### Validation Results\n\n$RESULT"
-          
           curl -X POST -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
             -d "{\"body\": \"$COMMENT_BODY\"}" \
             "https://api.github.com/repos/$REPO/issues/$ISSUE_NUMBER/comments"
