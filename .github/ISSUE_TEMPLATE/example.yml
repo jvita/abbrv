@@ -9,7 +9,7 @@ body:
     attributes:
       value: |
         ## Instructions
-        Please upload your JSON files below and provide any additional details needed for processing.
+        Please fill out all fields below and upload your system files.
 
   - type: input
     id: your-name
