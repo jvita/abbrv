@@ -1,0 +1,33 @@
+name: "Upload new system"
+description: "Upload a system that was exported by abbrv"
+title: "[SYSTEM-UPLOAD] - <system name>"
+labels: ["system-upload"]
+assignees:
+  - ""
+body:
+  - type: input
+    id: your-name
+    attributes:
+      label: "Your name"
+    validations:
+      required: true
+
+  - type: system-name
+    id: description
+    attributes:
+      label: "System name"
+    validations:
+      required: true
+
+  - type: textarea
+    id: system-description
+    attributes:
+      label: "System description"
+
+  - type: input
+    id: files
+    attributes:
+      label: "JSON Files"
+      description: "Drag and drop [glyphs, modes, rules, phrases].json files."
+    validations:
+      required: true
