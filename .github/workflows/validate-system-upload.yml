@@ -60,12 +60,16 @@ jobs:
             fi
           fi
 
-          # Download the files
+          # Download the files and check content after downloading
           for FILE_URL in $FILE_URLS; do
             echo "Downloading $FILE_URL"
             FILE_NAME=$(basename "$FILE_URL")
             echo "Saving file as json_files/$FILE_NAME"
             curl -L -o "json_files/$FILE_NAME" "$FILE_URL"
+
+            # Check the downloaded file contents
+            echo "Contents of json_files/$FILE_NAME:"
+            cat "json_files/$FILE_NAME"  # Print file contents for debugging
           done
 
           # List downloaded files for debugging
