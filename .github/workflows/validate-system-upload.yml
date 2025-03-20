@@ -23,7 +23,8 @@ jobs:
       - name: Extract File URLs or Base64 Data from Issue Body
         run: |
           ISSUE_BODY=$(cat issue_body.txt)
-          FILE_URLS=$(echo "$ISSUE_BODY" | grep -Eo 'https://github\.com/.+/files/[a-zA-Z0-9_.-]+')
+          FILE_URLS=$(echo "$ISSUE_BODY" | grep -oP 'https://github\.com/.+/files/.+\.[a-zA-Z0-9]+')
+
           if [[ -z "$FILE_URLS" ]]; then
             BASE64_FILES=$(echo "$ISSUE_BODY" | grep -Eo 'data:application/json;base64,[A-Za-z0-9+/=]+')
             if [[ -z "$BASE64_FILES" ]]; then
@@ -31,6 +32,7 @@ jobs:
               exit 1
             fi
           fi
+          echo $FILE_URLS
           echo "$FILE_URLS" > file_urls.txt
           echo "$BASE64_FILES" > base64_files.txt
 
