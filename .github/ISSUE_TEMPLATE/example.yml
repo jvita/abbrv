@@ -33,3 +33,11 @@ body:
       label: "System description"
     validations:
       required: true
+
+  - type: textarea
+    id: files
+    attributes:
+      label: "System files"
+      description: "Use the 'add file' option to add [glyphs, rules, modes, phrases].json files."
+    validations:
+      required: true

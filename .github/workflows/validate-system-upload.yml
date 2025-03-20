@@ -1,60 +1,71 @@
 name: Validate System Upload
 
 on:
-  issue_comment:
-    types: [created]
+  issues:
+    types: [opened]
 
 jobs:
   validate-upload:
     runs-on: ubuntu-latest
     if: |
-      contains(github.event.issue.labels.*.name, 'system upload') &&
-      startsWith(github.event.comment.body, 'https://github.com/')
+      github.event.issue.labels.*.name | contains('system upload') &&
+      (contains(github.event.issue.body, 'http') || contains(github.event.issue.body, 'base64'))
     
     steps:
       - name: Checkout the repository
         uses: actions/checkout@v2
 
-      - name: Fetch issue comment content
+      - name: Fetch issue body content
         run: |
-          # Fetch the comment content and save it into a file
-          COMMENT_BODY="${{ github.event.comment.body }}"
+          # Fetch the issue body content
+          ISSUE_BODY="${{ github.event.issue.body }}"
           
-          # Print the raw content of the comment for debugging
-          echo "Raw issue comment content:"
-          echo "$COMMENT_BODY"
+          # Print the raw issue body for debugging
+          echo "Raw issue body content:"
+          echo "$ISSUE_BODY"
+
+      - name: Extract File URLs or Base64 Data from Issue Body
+        run: |
+          # Check if the issue body contains file URLs (assuming they start with http or base64-encoded data)
+          FILE_URLS=$(echo "$ISSUE_BODY" | grep -Eo 'https://github\.com/.+/files/[a-zA-Z0-9_.-]+' || echo "No URL found")
           
-          # Check if the comment contains any file URLs
-          FILE_URLS=$(echo "$COMMENT_BODY" | grep -Eo 'https://github.com/.+/files/[a-zA-Z0-9_.-]+')
-          
-          # Show the extracted file URLs
-          echo "Extracted file URLs:"
-          echo "$FILE_URLS"
-          
-          # Check if no files were found
-          if [[ -z "$FILE_URLS" ]]; then
-            echo "❌ No JSON files found in the comment."
-            exit 1
+          # If no file URLs were found, check for base64-encoded data
+          if [[ "$FILE_URLS" == "No URL found" ]]; then
+            BASE64_FILES=$(echo "$ISSUE_BODY" | grep -Eo 'data:application/json;base64,[A-Za-z0-9+/=]+')
+            
+            if [[ -z "$BASE64_FILES" ]]; then
+              echo "❌ No file URLs or base64-encoded files found in the issue body."
+              exit 1
+            fi
           fi
 
-          # Save the extracted URLs to a file for further use
-          echo "$FILE_URLS" > json_files.txt
+          echo "File URLs or base64-encoded files found:"
+          echo "$FILE_URLS"
+          echo "$BASE64_FILES"
+
+          # Save the extracted data to files for further use
+          echo "$FILE_URLS" > file_urls.txt
+          echo "$BASE64_FILES" > base64_files.txt
 
       - name: Download and Validate JSON Files
         run: |
-          # Loop through the file URLs and download each file
-          for FILE_URL in $(cat json_files.txt); do
+          # If URLs were found, download them
+          for FILE_URL in $(cat file_urls.txt); do
             echo "Downloading $FILE_URL"
             curl -O "$FILE_URL"
           done
 
-          # Now validate the JSON files (you can use any validation script here)
+          # If base64-encoded files were found, decode them
+          for BASE64_FILE in $(cat base64_files.txt); do
+            FILE_NAME=$(echo "$BASE64_FILE" | cut -d ',' -f 2 | base64 --decode > decoded_file.json)
+            echo "Decoded base64 file to decoded_file.json"
+          done
+
+          # Now validate the JSON files (assuming you have the `validate_json.py` script set up)
           echo "Validating JSON files..."
-          
-          # Assuming you have the `validate_json.py` script set up, run it to check the downloaded files
           python3 validate_json.py *.json
 
       - name: Clean up
         run: |
-          # Clean up downloaded files after validation
+          # Clean up downloaded and decoded files after validation
           rm -f *.json
