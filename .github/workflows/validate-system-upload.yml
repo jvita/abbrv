@@ -33,6 +33,7 @@ jobs:
       - name: Extract File URLs or Base64 Data from Issue Body
         run: |
           # Print the issue body content for further debugging
+          ISSUE_BODY="${{ github.event.issue.body }}"
           echo "Issue body for extraction:"
           echo "$ISSUE_BODY"
 
