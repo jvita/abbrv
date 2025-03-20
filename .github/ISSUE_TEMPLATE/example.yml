@@ -1,7 +1,7 @@
 name: "Upload new system"
-description: "Upload a set of JSON files for processing."
-title: "[Upload] - <Brief Description>"
-labels: ["upload", "json"]
+description: "Upload a system exported by abbrv."
+title: "[SYSTEM-UPLOAD] - <system name>"
+labels: ["system-upload"]
 assignees:
   - ""
 body:
