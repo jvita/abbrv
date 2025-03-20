@@ -14,7 +14,7 @@ jobs:
       - name: Checkout the repository
         uses: actions/checkout@v2
 
-      - name: Debug: Fetch issue comment content
+      - name: Fetch issue comment content
         run: |
           # Set the COMMENT_URL to the specific issue and comment
           COMMENT_URL="https://github.com/jvita/abbrv/issues/25#issuecomment-2740500576"
