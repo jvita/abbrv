@@ -1,63 +1,33 @@
-name: "Upload JSON Files"
-description: "Upload a set of JSON files for processing."
-title: "[Upload] - <Brief Description>"
-labels: ["upload", "json"]
+name: "Upload new system"
+description: "Upload a system that was exported by abbrv"
+title: "[SYSTEM-UPLOAD] - <system name>"
+labels: ["system-upload"]
 assignees:
   - ""
 body:
-  - type: markdown
-    attributes:
-      value: |
-        ## Instructions
-        Please upload your JSON files below and provide any additional details needed for processing.
-
   - type: input
+    id: your-name
+    attributes:
+      label: "Your name"
+    validations:
+      required: true
+
+  - type: system-name
     id: description
     attributes:
-      label: "Description"
-      description: "Provide a brief description of the JSON files and their purpose."
-      placeholder: "E.g., Dataset for material science analysis."
+      label: "System name"
     validations:
       required: true
 
   - type: textarea
-    id: notes
+    id: system-description
     attributes:
-      label: "Additional Notes"
-      description: "Any specific requirements or context for these files?"
-      placeholder: "E.g., Formatting guidelines, expected outputs."
-
-  - type: markdown
-    attributes:
-      value: "### Upload JSON Files"
+      label: "System description"
 
   - type: input
-    id: file_1
+    id: files
     attributes:
-      label: "File 1"
-      description: "Drag and drop or attach the first JSON file."
+      label: "JSON Files"
+      description: "Drag and drop [glyphs, modes, rules, phrases].json files."
     validations:
       required: true
-
-  - type: input
-    id: file_2
-    attributes:
-      label: "File 2 (Optional)"
-      description: "Attach an additional JSON file, if applicable."
-
-  - type: input
-    id: file_3
-    attributes:
-      label: "File 3 (Optional)"
-      description: "Attach another JSON file, if applicable."
-
-  - type: checkboxes
-    id: confirmation
-    attributes:
-      label: "Confirmation"
-      description: "Please confirm the following before submitting."
-      options:
-        - label: "I have reviewed the JSON files for correctness."
-          required: true
-        - label: "The files do not contain sensitive or confidential information."
-          required: true
