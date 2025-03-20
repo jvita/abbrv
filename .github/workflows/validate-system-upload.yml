@@ -81,7 +81,7 @@ jobs:
 
           # Now validate the JSON files (assuming you have the `validate_json.py` script set up)
           echo "Validating JSON files..."
-          python3 validate_json.py *.json
+          python3 .github/scripts/validate_json.py *.json
 
       - name: Clean up
         run: |
