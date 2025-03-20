@@ -23,8 +23,6 @@ function saveSystems() {
     const systemsJson = JSON.stringify(systems);
     localStorage.setItem('systems', systemsJson);
 
-    const systemsJson2 = localStorage.getItem('systems');
-
     // saveSystemToServer(selectedSystem, systems[selectedSystem])
 }
 
@@ -198,85 +196,9 @@ document.getElementById('importSystem').addEventListener('click', function() {
     fileInput.click();
 });
 
-// Save As Function
-async function saveAs(data) {
-    // Create a new instance of JSZip
-    const zip = new JSZip();
-
-    // Convert the JavaScript object to a JSON string
-    const jsonString = JSON.stringify(data, null, 2); // Pretty-print JSON
-
-    // Add the JSON string to the zip file
-    zip.file('data.json', jsonString);
-
-    // Generate the zip file asynchronously
-    const content = await zip.generateAsync({ type: "blob" });
-
-    // Check if showSaveFilePicker is supported
-    if ('showSaveFilePicker' in window) {
-        try {
-            // Use the File System Access API
-            const options = {
-                suggestedName: (selectedSystem ? selectedSystem : 'system') + '.zip', // Default name for the file
-                types: [{
-                    description: 'ZIP files',
-                    accept: {
-                        'application/zip': ['.zip'],
-                    },
-                }],
-            };
-
-            // Show the save file dialog
-            const fileHandle = await window.showSaveFilePicker(options);
-
-            // Create a writable stream
-            const writableStream = await fileHandle.createWritable();
-
-            // Write the blob data to the file
-            await writableStream.write(content);
-
-            // Close the writable stream
-            await writableStream.close();
-        } catch (err) {
-            if (err.name === 'AbortError') {
-                console.log('User canceled the save operation')
-            } else {
-                console.error('Error during save:', err)
-            }
-        }
-    } else {
-
-        let filename = prompt("Enter the name of the new system:", "new_system_name");
-
-        // If the user clicks "Cancel" or provides an empty input, exit the function
-        if (!filename) {
-            return; // Exit without downloading
-        }
-
-        // Fallback method using a temporary anchor element
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(content);
-        link.download = filename + '.zip'; // Specify the file name with .zip extension
-
-        // Append to the body
-        document.body.appendChild(link);
-        link.click(); // Trigger the download
-        document.body.removeChild(link); // Clean up the DOM
-    }
-}
-
 // Example usage in the export button event listener
 document.getElementById('exportSystem').addEventListener('click', async function() {
-    // Example JavaScript object to be exported
-    const myObject = {
-        glyphs: {},
-        phrases: {},
-        modes: {},
-        rules: {},
-    };
-
-    // Call the saveAs function with the object and filename
-    await saveAs(myObject);
+    await saveSystemToServer(selectedSystem, systems[selectedSystem])
 });
 
 function addSystemsToDropdown() {
@@ -320,8 +242,6 @@ async function loadSystemsAndUpdateDropdown() {
     addSystemsToDropdown();     // Then run addSystemsToDropdown after
 
     const divider = document.getElementById("systemsDivider");
-
-    console.log(Object.keys(systems).length)
 
     if (Object.keys(systems).length > 0) {
         divider.style.display = "block"; // Show divider if systems exist
