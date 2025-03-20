@@ -1,42 +1,65 @@
-name: Validate JSON from Issue Comments
+name: Validate System Upload
 
 on:
-  issue_comment:
-    types: [created]
+  pull_request:
+    types: [opened, edited, synchronize]
+    paths:
+      - 'issues/**'
 
 jobs:
-  validate-json:
-    if: contains(github.event.comment.body, 'upload')
+  validate-upload:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
+      - name: Checkout the repository
+        uses: actions/checkout@v2
 
-      - name: Extract Files from Issue Comment
+      - name: Debug: Fetch issue comment content
         run: |
-          COMMENT_URL="${{ github.event.comment.html_url }}"
-          echo "Comment URL: $COMMENT_URL"
+          # Set the COMMENT_URL to the specific issue and comment
+          COMMENT_URL="https://github.com/jvita/abbrv/issues/25#issuecomment-2740500576"
+          
+          # Fetch the comment content and save it into a file
+          echo "Fetching issue comment content..."
+          curl -s "${COMMENT_URL}" > comment_content.txt
+          
+          # Print the raw content of the comment for debugging
+          echo "Raw issue comment content:"
+          cat comment_content.txt
 
-          # Extract JSON file URLs
-          FILE_URLS=$(curl -s "${COMMENT_URL}" | grep -Eo 'https://github\.com/.+/files/[a-zA-Z0-9]+\.json')
-
+      - name: Debug: Extract JSON file URLs
+        run: |
+          # Extract file URLs from the comment content
+          FILE_URLS=$(cat comment_content.txt | grep -Eo 'https://github.com/.+/files/[a-zA-Z0-9_.-]+')
+          
+          # Show the extracted file URLs
+          echo "Extracted file URLs:"
+          echo "$FILE_URLS"
+          
+          # Check if no files were found
           if [[ -z "$FILE_URLS" ]]; then
             echo "❌ No JSON files found in the comment."
             exit 1
           fi
 
-          echo "Found files:"
-          echo "$FILE_URLS"
+          # Save the extracted URLs to a file for further use
           echo "$FILE_URLS" > json_files.txt
 
-      - name: Download JSON Files
+      - name: Download and Validate JSON Files
         run: |
-          mkdir json_files
-          while read url; do
-            filename=$(basename "$url")
-            curl -L "$url" -o "json_files/$filename"
-          done < json_files.txt
+          # Loop through the file URLs and download each file
+          for FILE_URL in $(cat json_files.txt); do
+            echo "Downloading $FILE_URL"
+            curl -O "$FILE_URL"
+          done
 
-      - name: Run JSON Validation
-        run: python .github/scripts/validate_json.py
+          # Now validate the JSON files (you can use any validation script here)
+          echo "Validating JSON files..."
+          
+          # Assuming you have the `validate_json.py` script set up, run it to check the downloaded files
+          python3 validate_json.py *.json
+
+      - name: Clean up
+        run: |
+          # Clean up downloaded files after validation
+          rm -f *.json
