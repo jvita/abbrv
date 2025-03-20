@@ -27,25 +27,12 @@ body:
       description: "Any specific requirements or context for these files?"
       placeholder: "E.g., Formatting guidelines, expected outputs."
 
-  - type: markdown
-    attributes:
-      value: "### Upload JSON Files"
-
-  - type: input
+  - type: file-upload
     id: files
     attributes:
       label: "JSON Files"
-      description: "Drag and drop or attach up to four JSON files."
+      description: "Drag and drop or select up to four JSON files."
+      multiple: true
+      filetypes: ["json"]
     validations:
       required: true
-
-  - type: checkboxes
-    id: confirmation
-    attributes:
-      label: "Confirmation"
-      description: "Please confirm the following before submitting."
-      options:
-        - label: "I have reviewed the JSON files for correctness."
-          required: true
-        - label: "The files do not contain sensitive or confidential information."
-          required: true
