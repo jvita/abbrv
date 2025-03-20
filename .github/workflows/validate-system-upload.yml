@@ -23,17 +23,16 @@ jobs:
           # Print the raw issue body for debugging
           echo "Raw issue body content:"
           echo "$ISSUE_BODY"
-          
-          # Check if the issue body is empty
-          if [ -z "$ISSUE_BODY" ]; then
-            echo "❌ The issue body is empty."
-            exit 1
-          fi
+
+          # Save the issue body to a file for persistence across steps
+          echo "$ISSUE_BODY" > issue_body.txt
 
       - name: Extract File URLs or Base64 Data from Issue Body
         run: |
+          # Read the issue body from the file
+          ISSUE_BODY=$(cat issue_body.txt)
+          
           # Print the issue body content for further debugging
-          ISSUE_BODY="${{ github.event.issue.body }}"
           echo "Issue body for extraction:"
           echo "$ISSUE_BODY"
 
@@ -48,6 +47,7 @@ jobs:
             
             if [[ -z "$BASE64_FILES" ]]; then
               echo "❌ No file URLs or base64-encoded files found in the issue body."
+              echo "No file URLs or base64-encoded files found in the issue body." >> result.txt
               exit 1
             fi
           fi
@@ -62,6 +62,13 @@ jobs:
 
       - name: Download and Validate JSON Files
         run: |
+          # Ensure that validate_json.py exists in the repository
+          if [ ! -f ".github/scripts/validate_json.py" ]; then
+            echo "❌ validate_json.py not found!"
+            echo "❌ validate_json.py not found!" >> result.txt
+            exit 1
+          fi
+
           # If URLs were found, download them
           if [[ -s file_urls.txt ]]; then
             for FILE_URL in $(cat file_urls.txt); do
@@ -82,8 +89,27 @@ jobs:
           # Now validate the JSON files (assuming you have the `validate_json.py` script set up)
           echo "Validating JSON files..."
           python3 .github/scripts/validate_json.py *.json
+          
+          # Capture validation result
+          echo "Validation complete." >> result.txt
 
       - name: Clean up
         run: |
           # Clean up downloaded and decoded files after validation
           rm -f *.json
+
+      - name: Post result to issue comment
+        run: |
+          # Get the issue number and repo
+          ISSUE_NUMBER="${{ github.event.issue.number }}"
+          REPO="${{ github.repository }}"
+
+          # Read the result from the previous step
+          RESULT=$(cat result.txt)
+          
+          # Post a comment with the result
+          COMMENT_BODY="### Validation Results\n\n$RESULT"
+          
+          curl -X POST -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            -d "{\"body\": \"$COMMENT_BODY\"}" \
+            "https://api.github.com/repos/$REPO/issues/$ISSUE_NUMBER/comments"

@@ -1,4 +1,5 @@
 import json
+import glob
 import sys
 import os
 
@@ -24,21 +25,21 @@ def validate_json(filename, data):
                 raise ValueError(f"rules.json contains an invalid rule: {rule}")
 
 # Validate uploaded files
-uploaded_files = os.listdir("json_files")
+uploaded_files = list(glob.glob('*.json'))
 missing_files = set(REQUIRED_FILES) - set(uploaded_files)
 
 if missing_files:
     print(f"❌ Missing required files: {missing_files}")
     sys.exit(1)
 
-for file in REQUIRED_FILES:
-    with open(f"json_files/{file}", "r", encoding="utf-8") as f:
+for file_name in REQUIRED_FILES:
+    with open(file_name, "r", encoding="utf-8") as f:
         try:
             data = json.load(f)
-            validate_json(file, data)
-            print(f"✅ {file} is valid.")
+            validate_json(file_name, data)
+            print(f"✅ {file_name} is valid.")
         except Exception as e:
-            print(f"❌ {file} validation failed: {e}")
+            print(f"❌ {file_name} validation failed: {e}")
             sys.exit(1)
 
 print("🎉 All JSON files are valid!")
