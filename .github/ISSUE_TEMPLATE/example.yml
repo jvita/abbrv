@@ -1,7 +1,7 @@
-name: "Upload JSON Files"
-description: "Upload a set of JSON files for processing."
-title: "[Upload] - <Brief Description>"
-labels: ["upload", "json"]
+name: "Upload new system"
+description: "Upload a system that was exported by abbrv."
+title: "[SYSTEM-UPLOAD] - <system name>"
+labels: ["system-upload"]
 assignees:
   - ""
 body:
@@ -38,14 +38,3 @@ body:
       description: "Drag and drop or attach up to four JSON files."
     validations:
       required: true
-
-  - type: checkboxes
-    id: confirmation
-    attributes:
-      label: "Confirmation"
-      description: "Please confirm the following before submitting."
-      options:
-        - label: "I have reviewed the JSON files for correctness."
-          required: true
-        - label: "The files do not contain sensitive or confidential information."
-          required: true
