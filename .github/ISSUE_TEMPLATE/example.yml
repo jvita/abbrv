@@ -27,12 +27,22 @@ body:
       description: "Any specific requirements or context for these files?"
       placeholder: "E.g., Formatting guidelines, expected outputs."
 
-  - type: file-upload
+  - type: markdown
+    attributes:
+      value: "### Upload JSON Files"
+
+  - type: input
     id: files
     attributes:
       label: "JSON Files"
-      description: "Drag and drop or select up to four JSON files."
-      multiple: true
-      filetypes: ["json"]
+      description: "Drag and drop or attach up to four JSON files."
+    validations:
+      required: true
+
+  - type: textarea
+    id: files2
+    attributes:
+      label: "JSON Files"
+      description: "Drag and drop or attach up to four JSON files."
     validations:
       required: true
