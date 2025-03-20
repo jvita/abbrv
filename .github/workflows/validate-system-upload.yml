@@ -1,36 +1,31 @@
 name: Validate System Upload
 
 on:
-  pull_request:
-    types: [opened, edited, synchronize]
-    paths:
-      - 'issues/**'
+  issue_comment:
+    types: [created]
 
 jobs:
   validate-upload:
     runs-on: ubuntu-latest
-
+    if: |
+      github.event.issue.labels.*.name | contains('system upload') &&
+      startsWith(github.event.comment.body, 'https://github.com/')
+    
     steps:
       - name: Checkout the repository
         uses: actions/checkout@v2
 
       - name: Fetch issue comment content
         run: |
-          # Set the COMMENT_URL to the specific issue and comment
-          COMMENT_URL="https://github.com/jvita/abbrv/issues/25#issuecomment-2740500576"
-          
           # Fetch the comment content and save it into a file
-          echo "Fetching issue comment content..."
-          curl -s "${COMMENT_URL}" > comment_content.txt
+          COMMENT_BODY="${{ github.event.comment.body }}"
           
           # Print the raw content of the comment for debugging
           echo "Raw issue comment content:"
-          cat comment_content.txt
-
-      - name: Extract JSON file URLs
-        run: |
-          # Extract file URLs from the comment content
-          FILE_URLS=$(cat comment_content.txt | grep -Eo 'https://github.com/.+/files/[a-zA-Z0-9_.-]+')
+          echo "$COMMENT_BODY"
+          
+          # Check if the comment contains any file URLs
+          FILE_URLS=$(echo "$COMMENT_BODY" | grep -Eo 'https://github.com/.+/files/[a-zA-Z0-9_.-]+')
           
           # Show the extracted file URLs
           echo "Extracted file URLs:"
