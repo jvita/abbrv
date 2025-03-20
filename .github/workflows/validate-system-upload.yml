@@ -26,11 +26,17 @@ jobs:
 
       - name: Extract File URLs or Base64 Data from Issue Body
         run: |
+          # Print the issue body content for further debugging
+          echo "Issue body for extraction:"
+          echo "$ISSUE_BODY"
+
           # Extract file URLs from the issue body (if present)
           FILE_URLS=$(echo "$ISSUE_BODY" | grep -Eo 'https://github\.com/.+/files/[a-zA-Z0-9_.-]+')
           
           # If no file URLs were found, check for base64-encoded data
           if [[ -z "$FILE_URLS" ]]; then
+            echo "No file URLs found, checking for base64 files..."
+
             BASE64_FILES=$(echo "$ISSUE_BODY" | grep -Eo 'data:application/json;base64,[A-Za-z0-9+/=]+')
             
             if [[ -z "$BASE64_FILES" ]]; then
