@@ -27,7 +27,7 @@ jobs:
           echo "Raw issue comment content:"
           cat comment_content.txt
 
-      - name: Debug: Extract JSON file URLs
+      - name: Extract JSON file URLs
         run: |
           # Extract file URLs from the comment content
           FILE_URLS=$(cat comment_content.txt | grep -Eo 'https://github.com/.+/files/[a-zA-Z0-9_.-]+')
