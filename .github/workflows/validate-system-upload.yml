@@ -40,9 +40,16 @@ jobs:
 
       - name: Download JSON Files
         run: |
+          # Create the json_files directory
+          mkdir -p json_files
+
+          # Loop through the file URLs and download the files with the correct names
           for FILE_URL in $(cat file_urls.txt); do
+            # Extract the filename from the URL (e.g., 'phrases.json' from the URL)
             FILE_NAME=$(basename "$FILE_URL")
-            echo "Downloading $FILE_URL"
+            
+            # Ensure we save the file with the correct name
+            echo "Downloading $FILE_URL as $FILE_NAME"
             curl -o "json_files/$FILE_NAME" "$FILE_URL"
           done
 
