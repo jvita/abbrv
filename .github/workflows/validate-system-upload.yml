@@ -1,0 +1,42 @@
+name: Validate JSON from Issue Comments
+
+on:
+  issue_comment:
+    types: [created]
+
+jobs:
+  validate-json:
+    if: contains(github.event.comment.body, 'upload')
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Extract Files from Issue Comment
+        run: |
+          COMMENT_URL="${{ github.event.comment.html_url }}"
+          echo "Comment URL: $COMMENT_URL"
+
+          # Extract JSON file URLs
+          FILE_URLS=$(curl -s "${COMMENT_URL}" | grep -Eo 'https://github\.com/.+/files/[a-zA-Z0-9]+\.json')
+
+          if [[ -z "$FILE_URLS" ]]; then
+            echo "❌ No JSON files found in the comment."
+            exit 1
+          fi
+
+          echo "Found files:"
+          echo "$FILE_URLS"
+          echo "$FILE_URLS" > json_files.txt
+
+      - name: Download JSON Files
+        run: |
+          mkdir json_files
+          while read url; do
+            filename=$(basename "$url")
+            curl -L "$url" -o "json_files/$filename"
+          done < json_files.txt
+
+      - name: Run JSON Validation
+        run: python .github/scripts/validate_json.py

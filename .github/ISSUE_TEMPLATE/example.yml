@@ -9,7 +9,9 @@ body:
     attributes:
       value: |
         ## Instructions
-        Please fill out all fields below and upload your system files.
+        1. Submit this issue first.
+        2. Once the issue is created, **add a comment** with four JSON files attached.
+        3. Include the word **upload** in the comment so that the validation process starts.
 
   - type: input
     id: your-name
