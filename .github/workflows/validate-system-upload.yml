@@ -23,6 +23,12 @@ jobs:
           # Print the raw issue body for debugging
           echo "Raw issue body content:"
           echo "$ISSUE_BODY"
+          
+          # Check if the issue body is empty
+          if [ -z "$ISSUE_BODY" ]; then
+            echo "❌ The issue body is empty."
+            exit 1
+          fi
 
       - name: Extract File URLs or Base64 Data from Issue Body
         run: |
