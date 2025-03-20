@@ -12,37 +12,30 @@ body:
         Please upload your JSON files below and provide any additional details needed for processing.
 
   - type: input
-    id: description
+    id: your-name
     attributes:
-      label: "Description"
-      description: "Provide a brief description of the JSON files and their purpose."
-      placeholder: "E.g., Dataset for material science analysis."
+      label: "Your name"
     validations:
       required: true
-
-  - type: textarea
-    id: notes
-    attributes:
-      label: "Additional Notes"
-      description: "Any specific requirements or context for these files?"
-      placeholder: "E.g., Formatting guidelines, expected outputs."
-
-  - type: markdown
-    attributes:
-      value: "### Upload JSON Files"
 
   - type: input
-    id: files
+    id: system-name
     attributes:
-      label: "JSON Files"
-      description: "Drag and drop or attach up to four JSON files."
+      label: "System name"
+    validations:
+      required: true
+
+  - type: input
+    id: system-description
+    attributes:
+      label: "System description"
     validations:
       required: true
 
   - type: textarea
-    id: files2
+    id: files
     attributes:
-      label: "JSON Files"
-      description: "Drag and drop or attach up to four JSON files."
+      label: "System files"
+      description: "Use the 'add file' option to add [glyphs, rules, modes, phrases].json files."
     validations:
       required: true
