@@ -98,7 +98,6 @@ function handleDownloadSystems() {
         if (!response.ok) {
         throw new Error(`HTTP error! Status: ${response.status}`);
         }
-        console.log('response', response)
         return response.json();
     })
     .then(data => {
@@ -319,6 +318,17 @@ function addSystemsToDropdown() {
 
 async function loadSystemsAndUpdateDropdown() {
     addSystemsToDropdown();     // Then run addSystemsToDropdown after
+
+    const divider = document.getElementById("systemsDivider");
+
+    console.log(Object.keys(systems).length)
+
+    if (Object.keys(systems).length > 0) {
+        divider.style.display = "block"; // Show divider if systems exist
+    } else {
+        divider.style.display = "none"; // Hide divider if no systems
+    }
+
 }
 
 // Call the fetch function on page load
@@ -330,4 +340,5 @@ $(document).ready(function() {
     $('.navbar-toggler').click(function() {
         $('#navbarNav').toggleClass('show');
     });
+
 });

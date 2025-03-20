@@ -105,13 +105,33 @@
                     </a>
                     <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
                         <div id="systemsList"></div>
-                        <li><hr class="dropdown-divider"></li> <!-- Horizontal delimiter -->
+                        <li><hr class="dropdown-divider" id="systemsDivider"></li>
                         <li><a class="dropdown-item" href="#" id="downloadSystem">Download</a></li>
                         <li><a class="dropdown-item" href="#" id="importSystem">Import</a></li>
                         <li><a class="dropdown-item" href="#" id="exportSystem">Export</a></li>
+                        <li><a class="dropdown-item" href="#" id="openUploadModal" data-bs-toggle="modal" data-bs-target="#uploadModal">Upload</a></li>
                     </ul>
                 </li>
             </ul>
+        </div>
+        <!-- Modal for Uploading Files -->
+        <div class="modal fade" id="uploadModal" tabindex="-1" aria-labelledby="uploadModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="uploadModalLabel">Upload your system</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p>System upload is currently only supported through Github. If you do not have a Github account, contact <a href="https://www.reddit.com/user/jerrshv/">u/jerrshv</a> on Reddit for assistance.</p>
+                        <!-- Link to open new GitHub issue -->
+                        <a href="https://github.com/jvita/abbrv/issues/new?template=example.yml" target="_blank" class="btn btn-primary">Open GitHub Issue</a>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
         </div>
         <!-- Modal for downloading systems -->
         <div class="modal fade" id="downloadSystemsModal" tabindex="-1" aria-labelledby="downloadSystemsModalLabel" aria-hidden="true">

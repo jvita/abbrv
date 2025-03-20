@@ -31,7 +31,7 @@
         </button>
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav">
-               <li class="nav-item">
+                <li class="nav-item">
                     <a class="nav-link" href="writer.html">write</a>
                 </li>
                 <li class="nav-item">
@@ -50,10 +50,11 @@
                     </a>
                     <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
                         <div id="systemsList"></div>
-                        <li><hr class="dropdown-divider"></li> <!-- Horizontal delimiter -->
+                        <li><hr class="dropdown-divider" id="systemsDivider" style="display: none;"></li> <!-- Divider -->
                         <li><a class="dropdown-item" href="#" id="downloadSystem">Download</a></li>
                         <li><a class="dropdown-item" href="#" id="importSystem">Import</a></li>
                         <li><a class="dropdown-item" href="#" id="exportSystem">Export</a></li>
+                        <li><a class="dropdown-item" href="https://forms.gle/YOUR_GOOGLE_FORM_LINK" target="_blank">Upload</a></li>
                     </ul>
                 </li>
             </ul>
@@ -77,6 +78,8 @@
             </div>
         </div>
     </nav>
+
+
     <div id='drafter-content' class="main-content">
         <div class="controls d-flex flex-column justify-content-between">
             <h3 class="mt-2 d-flex align-items-center" id="modesTitle">

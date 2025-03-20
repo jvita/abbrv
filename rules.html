@@ -50,10 +50,11 @@
                     </a>
                     <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
                         <div id="systemsList"></div>
-                        <li><hr class="dropdown-divider"></li> <!-- Horizontal delimiter -->
+                        <li><hr class="dropdown-divider" id="systemsDivider" style="display: none;"></li> <!-- Divider -->
                         <li><a class="dropdown-item" href="#" id="downloadSystem">Download</a></li>
                         <li><a class="dropdown-item" href="#" id="importSystem">Import</a></li>
                         <li><a class="dropdown-item" href="#" id="exportSystem">Export</a></li>
+                        <li><a class="dropdown-item" href="#" id="openUploadModal" data-bs-toggle="modal" data-bs-target="#uploadModal">Upload</a></li>
                     </ul>
                 </li>
             </ul>
@@ -77,6 +78,7 @@
             </div>
         </div>
     </nav>
+
 
     <!-- Add New Rule -->
     <h3>Rules</h3>
