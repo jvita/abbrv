@@ -26,11 +26,11 @@ jobs:
 
       - name: Extract File URLs or Base64 Data from Issue Body
         run: |
-          # Check if the issue body contains file URLs (assuming they start with http or base64-encoded data)
-          FILE_URLS=$(echo "$ISSUE_BODY" | grep -Eo 'https://github\.com/.+/files/[a-zA-Z0-9_.-]+' || echo "No URL found")
+          # Extract file URLs from the issue body (if present)
+          FILE_URLS=$(echo "$ISSUE_BODY" | grep -Eo 'https://github\.com/.+/files/[a-zA-Z0-9_.-]+')
           
           # If no file URLs were found, check for base64-encoded data
-          if [[ "$FILE_URLS" == "No URL found" ]]; then
+          if [[ -z "$FILE_URLS" ]]; then
             BASE64_FILES=$(echo "$ISSUE_BODY" | grep -Eo 'data:application/json;base64,[A-Za-z0-9+/=]+')
             
             if [[ -z "$BASE64_FILES" ]]; then
@@ -42,7 +42,7 @@ jobs:
           echo "File URLs or base64-encoded files found:"
           echo "$FILE_URLS"
           echo "$BASE64_FILES"
-
+          
           # Save the extracted data to files for further use
           echo "$FILE_URLS" > file_urls.txt
           echo "$BASE64_FILES" > base64_files.txt
@@ -50,16 +50,21 @@ jobs:
       - name: Download and Validate JSON Files
         run: |
           # If URLs were found, download them
-          for FILE_URL in $(cat file_urls.txt); do
-            echo "Downloading $FILE_URL"
-            curl -O "$FILE_URL"
-          done
+          if [[ -s file_urls.txt ]]; then
+            for FILE_URL in $(cat file_urls.txt); do
+              echo "Downloading $FILE_URL"
+              curl -O "$FILE_URL"
+            done
+          fi
 
           # If base64-encoded files were found, decode them
-          for BASE64_FILE in $(cat base64_files.txt); do
-            FILE_NAME=$(echo "$BASE64_FILE" | cut -d ',' -f 2 | base64 --decode > decoded_file.json)
-            echo "Decoded base64 file to decoded_file.json"
-          done
+          if [[ -s base64_files.txt ]]; then
+            for BASE64_FILE in $(cat base64_files.txt); do
+              FILE_NAME="decoded_file.json"
+              echo "$BASE64_FILE" | cut -d ',' -f 2 | base64 --decode > "$FILE_NAME"
+              echo "Decoded base64 file to $FILE_NAME"
+            done
+          fi
 
           # Now validate the JSON files (assuming you have the `validate_json.py` script set up)
           echo "Validating JSON files..."
