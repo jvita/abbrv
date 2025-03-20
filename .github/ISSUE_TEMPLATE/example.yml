@@ -38,3 +38,14 @@ body:
       description: "Drag and drop or attach up to four JSON files."
     validations:
       required: true
+
+  - type: checkboxes
+    id: confirmation
+    attributes:
+      label: "Confirmation"
+      description: "Please confirm the following before submitting."
+      options:
+        - label: "I have reviewed the JSON files for correctness."
+          required: true
+        - label: "The files do not contain sensitive or confidential information."
+          required: true
