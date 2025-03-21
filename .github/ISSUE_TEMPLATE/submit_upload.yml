@@ -2,6 +2,8 @@ name: "Upload new system"
 description: "Upload a system exported by abbrv."
 title: "[SYSTEM-UPLOAD] - <system name>"
 labels: ["system upload"]
+assignees:
+  - ""
 body:
   - type: input
     id: your-name
@@ -26,30 +28,3 @@ body:
       description: "A brief description of the shorthand system you are uploading."
     validations:
       required: true
-
-  - type: markdown
-    id: instructions-header
-    attributes:
-      value: |
-        ## 🧾 Instructions (included in final issue)
-
-  - type: textarea
-    id: instructions-body
-    attributes:
-      label: "Usage Instructions"
-      value: |
-        To submit your system to the repository, add a new comment with the command `/submit <url_of_your_gist>` where `<url_of_your_gist>` is a link to the Gist containing your system files.
-
-        The Gist should contain the following files:
-
-        - `glyphs.json`
-        - `modes.json`
-        - `rules.json`
-        - `phrases.json`
-
-        This will run a validation check on the system files and, if successful, open a PR to submit the system for review.
-
-        You can re-submit the system by re-running the `/submit <url_of_your_gist>` command either with the original Gist link if you've updated the files there, or a new Gist link.
-    render: markdown
-    validations:
-      required: false
