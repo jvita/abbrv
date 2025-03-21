@@ -36,6 +36,7 @@ jobs:
         with:
           script: |
             const body = context.payload.comment.body;
+            console.log("Comment body:", body);
             const regex = /https:\/\/user-images\.githubusercontent\.com\/[^\s)"]+/g;
             const urls = body.match(regex) || [];
             console.log("Found URLs:", urls);
