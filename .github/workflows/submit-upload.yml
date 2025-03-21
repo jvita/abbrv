@@ -134,10 +134,7 @@ jobs:
             const output = fs.readFileSync('validation_output.txt', 'utf8');
             const issue_number = context.payload.issue.number;
             const statusEmoji = "${{ steps.validate.outputs.exit_code }}" === "0" ? "✅" : "❌";
-            const comment = `### ${statusEmoji} Validation Results\n\n\
-\
-\
-\`\`\`
+            const comment = `### ${statusEmoji} Validation Results\n\n\`\`\`
 ${output}
 \`\`\``;
 
