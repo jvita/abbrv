@@ -1,5 +1,5 @@
 # abbrv
-a framework for designing and using shorthand fonts.
+A framework for designing and using shorthand fonts.
 
 # Getting started
 The website is hosted at https://jvita.github.io/abbrv
