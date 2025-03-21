@@ -5,18 +5,11 @@ labels: ["system upload"]
 assignees:
   - ""
 body:
-  - type: markdown
-    attributes:
-      value: |
-        ## Instructions
-        1. Submit this issue first.
-        2. Once the issue is created, **add a comment** with four JSON files attached.
-        3. Include the word **upload** in the comment so that the validation process starts.
-
   - type: input
     id: your-name
     attributes:
       label: "Your name"
+      description: "Your name as you would like it to appear in abbrv when crediting your contributions."
     validations:
       required: true
 
@@ -24,6 +17,7 @@ body:
     id: system-name
     attributes:
       label: "System name"
+      description: "The name of the shorthand system you are uploading."
     validations:
       required: true
 
@@ -31,6 +25,7 @@ body:
     id: system-description
     attributes:
       label: "System description"
+      description: "A brief description of the shorthand system you are uploading."
     validations:
       required: true
 
@@ -41,12 +36,3 @@ body:
       description: "Create a Gist with the four JSON files and paste the link here."
     validations:
       required: true
-
-
-  # - type: textarea
-  #   id: files
-  #   attributes:
-  #     label: "System files"
-  #     description: "Use the 'add file' option to add [glyphs, rules, modes, phrases].json files."
-  #   validations:
-  #     required: true

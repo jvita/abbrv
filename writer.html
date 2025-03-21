@@ -68,9 +68,23 @@
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
-                        <p>System upload is currently only supported through Github. If you do not have a Github account, contact <a href="https://www.reddit.com/user/jerrshv/">u/jerrshv</a> on Reddit for assistance.</p>
-                        <!-- Link to open new GitHub issue -->
-                        <a href="https://gist.github.com/" target="_blank" class="btn btn-primary">Create new Gist</a>
+                        <p>
+                            For the sake of security, system upload is currently only supported through Github Gists.
+                            This is to allow us to run automated validation checks to ensure that your uploaded files are safe and correctly formatted.
+                        </p>
+
+
+                        <p>To upload a new system, please follow these steps: </p>
+                        <ul>
+                            <li><a href="https://gist.github.com/" target="_blank">Create a new GitHub Gist</a></li>
+                            <li>Drag-and-drop your <code>[glyphs, modes, rules, phrases].json</code> files. Make sure they're uploaded as four separate files.</li>
+                            <li><a href="https://github.com/jvita/abbrv/issues/new?template=example.yml" target="_blank">Open a new issue</a> on the <b>abbrv</b> repo</ul>li>
+                            <li>Fill out all fields, including the link to your newly-created Gist.</li>
+                            <li>GitHub will automatically run validation checks to make sure your files appear correct.</li>
+                        </ul>
+
+                        <p>If you do not have a Github account, contact <a href="https://www.reddit.com/user/jerrshv/">u/jerrshv</a> on Reddit for assistance.</p>
+                        
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>

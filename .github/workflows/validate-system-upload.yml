@@ -1,92 +1,83 @@
-name: Validate System Upload (ZIP)
+name: Validate System Upload from Gist
 
 on:
-  issue_comment:
-    types: [created]
+  issues:
+    types: [opened]
 
 jobs:
-  validate-zip:
+  validate-gist:
     runs-on: ubuntu-latest
-    if: github.event.issue.pull_request == null
+    if: contains(github.event.issue.labels.*.name, 'system upload')
     steps:
-      - name: Print comment body
+      - name: Print issue body
         run: |
-          echo "Comment body:"
-          echo "${{ github.event.comment.body }}"
+          echo "Issue body:"
+          echo "${{ github.event.issue.body }}"
 
-      - name: Check for 'system upload' label
-        id: label_check
+      - name: Extract Gist link
+        id: extract_gist
         uses: actions/github-script@v7
         with:
           script: |
-            const labels = context.payload.issue.labels.map(label => label.name);
-            console.log("Issue labels:", labels);
-            core.setOutput('has_label', labels.includes('system upload'));
-
-      - name: Exit if label not found
-        if: steps.label_check.outputs.has_label != 'true'
-        run: |
-          echo "No 'system upload' label. Skipping."
-          exit 0
-
-      - name: Extract .zip attachment link from comment
-        id: extract_zip
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const body = context.payload.comment.body;
-            const regex = /\[([^\]]+\.zip)\]\((https:\/\/github\.com\/user-attachments\/[^\s)]+)\)/g;
+            const body = context.payload.issue.body;
+            const regex = /(https:\/\/gist\.github\.com\/[^\s)]+)/g;
             const match = regex.exec(body);
 
             if (!match) {
-              core.setFailed("❌ No .zip file link found in comment.");
+              core.setFailed("❌ No GitHub Gist link found in issue body.");
             } else {
-              const filename = match[1];
-              const url = match[2];
-              console.log(`Found zip: ${filename} -> ${url}`);
-              core.setOutput("filename", filename);
-              core.setOutput("url", url);
+              const url = match[1];
+              console.log(`Found Gist URL: ${url}`);
+              core.setOutput("gist_url", url);
             }
 
-      - name: Install Python dependencies
+      - name: Install Python requests
         run: pip install requests
 
-      - name: Download and unzip attachment
+      - name: Download JSON files from Gist
         run: |
-          echo "Downloading zip file: ${{ steps.extract_zip.outputs.filename }}"
-          cat << 'EOF' > download_zip.py
+          echo "Downloading files from Gist..."
+          cat << 'EOF' > download_from_gist.py
           import os
           import requests
 
-          url = os.environ["ZIP_URL"]
-          filename = os.environ["ZIP_FILENAME"]
+          gist_url = os.environ["GIST_URL"]
+          if gist_url.endswith("/"):
+              gist_url = gist_url[:-1]
+          gist_id = gist_url.split("/")[-1]
 
-          print(f"Fetching redirect for {url}")
-          head = requests.get(url, allow_redirects=False)
-          redirect_url = head.headers.get("Location")
+          api_url = f"https://api.github.com/gists/{gist_id}"
+          print(f"Fetching Gist metadata from {api_url}...")
 
-          if not redirect_url:
-              raise Exception("❌ Could not resolve redirect URL.")
+          r = requests.get(api_url)
+          if r.status_code != 200:
+              raise Exception(f"Failed to fetch Gist metadata: {r.status_code} {r.text}")
 
-          print(f"Redirected to: {redirect_url}")
-          r = requests.get(redirect_url)
-          if r.ok:
-              with open(filename, "wb") as f:
-                  f.write(r.content)
-              print(f"✅ Downloaded {filename}")
-          else:
-              raise Exception(f"❌ Failed to download: {r.status_code}")
+          data = r.json()
+          files = data.get("files", {})
+
+          required = ["glyphs.json", "modes.json", "rules.json", "phrases.json"]
+          missing = [name for name in required if name not in files]
+          if missing:
+              raise Exception(f"Missing required files in Gist: {missing}")
+
+          for name in required:
+              raw_url = files[name]["raw_url"]
+              print(f"Downloading {name} from {raw_url}")
+              file_resp = requests.get(raw_url)
+              if not file_resp.ok:
+                  raise Exception(f"Failed to download {name}: {file_resp.status_code}")
+              with open(name, "w", encoding="utf-8") as f:
+                  f.write(file_resp.text)
+              print(f"✅ Saved {name}")
           EOF
 
-          python download_zip.py
-          unzip -o "${{ steps.extract_zip.outputs.filename }}"
-
+          python download_from_gist.py
         env:
-          ZIP_URL: ${{ steps.extract_zip.outputs.url }}
-          ZIP_FILENAME: ${{ steps.extract_zip.outputs.filename }}
+          GIST_URL: ${{ steps.extract_gist.outputs.gist_url }}
 
-      - name: List extracted files
-        run: ls -lh *.json || echo "⚠️ No .json files found!"
+      - name: List downloaded files
+        run: ls -lh *.json
 
       - name: Checkout repo
         uses: actions/checkout@v4
@@ -97,6 +88,4 @@ jobs:
           python-version: '3.x'
 
       - name: Run validation script
-        run: |
-          echo "Running validation script..."
-          python .github/scripts/validate_json.py glyphs.json modes.json rules.json phrases.json
+        run: python .github/scripts/validate_json.py glyphs.json modes.json rules.json phrases.json
