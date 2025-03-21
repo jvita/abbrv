@@ -3,28 +3,37 @@ name: Validate System Upload from Gist
 on:
   issues:
     types: [opened]
+  issue_comment:
+    types: [created]
 
 jobs:
   validate-gist:
     runs-on: ubuntu-latest
-    if: contains(github.event.issue.labels.*.name, 'system upload')
+    if: |
+      (github.event_name == 'issues' && contains(github.event.issue.labels.*.name, 'system upload')) ||
+      (github.event_name == 'issue_comment' && contains(github.event.issue.labels.*.name, 'system upload'))
     steps:
-      - name: Print issue body
+      - name: Print context info
         run: |
+          echo "Event: ${{ github.event_name }}"
+          echo "Issue title: ${{ github.event.issue.title }}"
           echo "Issue body:"
           echo "${{ github.event.issue.body }}"
+          echo "Comment body:"
+          echo "${{ github.event.comment.body }}"
 
-      - name: Extract Gist link
+      - name: Extract Gist link from issue or comment
         id: extract_gist
         uses: actions/github-script@v7
         with:
           script: |
-            const body = context.payload.issue.body;
+            const isComment = context.eventName === 'issue_comment';
+            const body = isComment ? context.payload.comment.body : context.payload.issue.body;
             const regex = /(https:\/\/gist\.github\.com\/[^\s)]+)/g;
             const match = regex.exec(body);
 
             if (!match) {
-              core.setFailed("❌ No GitHub Gist link found in issue body.");
+              core.setFailed("❌ No GitHub Gist link found.");
             } else {
               const url = match[1];
               console.log(`Found Gist URL: ${url}`);
@@ -88,4 +97,4 @@ jobs:
           python-version: '3.x'
 
       - name: Run validation script
-        run: python .github/scripts/validate_json.py glyphs.json modes.json rules.json phrases.json
+        run: python .github/scripts/validate_json.py .
