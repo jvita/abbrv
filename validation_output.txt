@@ -1,0 +1,5 @@
+✅ glyphs.json is valid.
+✅ modes.json is valid.
+✅ phrases.json is valid.
+✅ rules.json is valid.
+🎉 All JSON files are valid!
