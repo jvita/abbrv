@@ -10,7 +10,7 @@ jobs:
     if: |
       contains(github.event.issue.labels.*.name, 'system upload') &&
       (contains(github.event.issue.body, 'http') || contains(github.event.issue.body, 'base64'))
-    
+
     steps:
       - name: Checkout the repository
         uses: actions/checkout@v2
@@ -53,7 +53,7 @@ jobs:
           # If no file URLs were found, check for base64-encoded data
           if [[ -z "$FILE_URLS" ]]; then
             BASE64_FILES=$(echo "$ISSUE_BODY" | grep -Eo 'data:application/json;base64,[A-Za-z0-9+/=]+')
-            
+
             if [[ -z "$BASE64_FILES" ]]; then
               echo "❌ No file URLs or base64-encoded files found in the issue body."
               exit 1
@@ -65,7 +65,7 @@ jobs:
             echo "Downloading $FILE_URL"
             FILE_NAME=$(basename "$FILE_URL")
             echo "Saving file as json_files/$FILE_NAME"
-            curl -L -o "json_files/$FILE_NAME" "$FILE_URL"
+            curl -L -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" -o "json_files/$FILE_NAME" "$FILE_URL"
 
             # Check the downloaded file contents
             echo "Contents of json_files/$FILE_NAME:"
