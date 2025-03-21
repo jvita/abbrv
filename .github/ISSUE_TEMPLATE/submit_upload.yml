@@ -1,239 +1,48 @@
-name: Validate and Submit Upload
+name: "Upload new system"
+description: "Upload a system exported by abbrv."
+title: "[SYSTEM-UPLOAD] - <system name>"
+labels: ["system upload"]
+assignees:
+  - ""
+body:
+  - type: input
+    id: your-name
+    attributes:
+      label: "Your name"
+      description: "Your name as you would like it to appear in abbrv when crediting your contributions."
+    validations:
+      required: true
 
-on:
-  issue_comment:
-    types: [created, edited]
+  - type: input
+    id: system-name
+    attributes:
+      label: "System name"
+      description: "The name of the shorthand system you are uploading."
+    validations:
+      required: true
 
-jobs:
-  validate-and-submit:
-    if: |
-      github.event.issue.pull_request == null &&
-      contains(github.event.comment.body, '/submit')
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+  - type: input
+    id: system-description
+    attributes:
+      label: "System description"
+      description: "A brief description of the shorthand system you are uploading."
+    validations:
+      required: true
 
-      - name: Extract Gist link and metadata
-        id: extract_info
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const body = context.payload.comment.body;
-            const regex = /(https://gist\.github\.com\/[^\s)]+)/g;
-            const match = regex.exec(body);
+  - type: markdown
+    id: instructions
+    attributes:
+      value: |
+        ## Usage
 
-            if (!match) {
-              core.setFailed("❌ No GitHub Gist link found in the comment.");
-            } else {
-              core.setOutput("gist_url", match[1]);
-            }
+        To submit your system to the repository, add a new comment with the command `/submit <url_of_your_gist>` where `<url_of_your_gist>` is a link to the Gist containing your system files. The Gist should contain the following files:
 
-            const issue = context.payload.issue;
-            const text = JSON.stringify(issue);
+        - `glyphs.json`
+        - `modes.json`
+        - `rules.json`
+        - `phrases.json`
 
-            function extract(id) {
-              const re = new RegExp(`"${id}"\\s*:\\s*\\"([^\\"]+)\\"`);
-              const match = text.match(re);
-              if (!match) throw new Error(`❌ Field '${id}' not found in issue.`);
-              return match[1].trim();
-            }
+        This will run a validation check on the system files and, if successful, open a PR to submit the system for review.
 
-            const systemName = extract("system-name").toLowerCase().replace(/[^a-z0-9-_]/g, '-');
-            const yourName = extract("your-name");
-            const systemDescription = extract("system-description");
+        You can re-submit the system by re-running the `/submit <url_of_your_gist>` command either with the original Gist link if you've updated the files there, or a new Gist link.
 
-            core.setOutput("system_name", systemName);
-            core.setOutput("your_name", yourName);
-            core.setOutput("system_description", systemDescription);
-
-      - name: Install Python requests
-        run: pip install requests
-
-      - name: Download JSON files and create README/metadata
-        run: |
-          echo "Downloading files from Gist..."
-          mkdir -p static/data/systems/${{ steps.extract_info.outputs.system_name }}
-          cat << 'EOF' > download_from_gist.py
-          import os
-          import json
-          import requests
-          from datetime import datetime
-
-          gist_url = os.environ["GIST_URL"]
-          target_dir = os.environ["TARGET_DIR"]
-          your_name = os.environ["YOUR_NAME"]
-          system_description = os.environ["SYSTEM_DESCRIPTION"]
-
-          if gist_url.endswith("/"):
-              gist_url = gist_url[:-1]
-          gist_id = gist_url.split("/")[-1]
-
-          api_url = f"https://api.github.com/gists/{gist_id}"
-          print(f"Fetching Gist metadata from {api_url}...")
-
-          r = requests.get(api_url)
-          if r.status_code != 200:
-              raise Exception(f"Failed to fetch Gist metadata: {r.status_code} {r.text}")
-
-          data = r.json()
-          files = data.get("files", {})
-
-          required = ["glyphs.json", "modes.json", "rules.json", "phrases.json"]
-          missing = [name for name in required if name not in files]
-          if missing:
-              raise Exception(f"Missing required files in Gist: {missing}")
-
-          os.makedirs(target_dir, exist_ok=True)
-
-          for name in required:
-              raw_url = files[name]["raw_url"]
-              print(f"Downloading {name} from {raw_url}")
-              file_resp = requests.get(raw_url)
-              if not file_resp.ok:
-                  raise Exception(f"Failed to download {name}: {file_resp.status_code}")
-              with open(os.path.join(target_dir, name), "w", encoding="utf-8") as f:
-                  f.write(file_resp.text)
-              print(f"✅ Saved {name} to {target_dir}")
-
-          # Create README.md
-          with open(os.path.join(target_dir, "README.md"), "w", encoding="utf-8") as f:
-              f.write(f"""# {os.path.basename(target_dir).replace('-', ' ').title()}
-
-**Uploaded by:** {your_name}
-
-**Description:** {system_description}
-""")
-              print(f"✅ Created README.md in {target_dir}")
-
-          # Create meta.json
-          metadata = {
-              "uploader": your_name,
-              "description": system_description,
-              "source_gist": gist_url,
-              "gist_id": gist_id,
-              "upload_date": datetime.utcnow().isoformat() + "Z"
-          }
-          with open(os.path.join(target_dir, "meta.json"), "w", encoding="utf-8") as meta_file:
-              json.dump(metadata, meta_file, indent=2)
-              print(f"✅ Created meta.json in {target_dir}")
-          EOF
-
-          python download_from_gist.py
-        env:
-          GIST_URL: ${{ steps.extract_info.outputs.gist_url }}
-          TARGET_DIR: static/data/systems/${{ steps.extract_info.outputs.system_name }}
-          YOUR_NAME: ${{ steps.extract_info.outputs.your_name }}
-          SYSTEM_DESCRIPTION: ${{ steps.extract_info.outputs.system_description }}
-
-      - name: List downloaded files
-        run: ls -lh static/data/systems/${{ steps.extract_info.outputs.system_name }}
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.x'
-
-      - name: Run validation script
-        id: validate
-        continue-on-error: true
-        run: |
-          python .github/scripts/validate_json.py static/data/systems/${{ steps.extract_info.outputs.system_name }} > validation_output.txt
-          echo "Validation finished with exit code $?"
-
-      - name: Comment on issue with validation result
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const fs = require('fs');
-            const output = fs.readFileSync('validation_output.txt', 'utf8');
-            const issue_number = context.payload.issue.number;
-            const comment = `### ✅ Validation Results
-
-\`\`\`
-${output}
-\`\`\``;
-
-            github.rest.issues.createComment({
-              issue_number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: comment
-            });
-
-      - name: Skip PR if validation failed
-        if: steps.validate.outcome != 'success'
-        run: echo "❌ Validation failed. Skipping pull request creation."
-
-      - name: Check for existing PR from this issue
-        id: check_pr
-        if: steps.validate.outcome == 'success'
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const { data: pulls } = await github.rest.pulls.list({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              state: 'open',
-              per_page: 100
-            });
-
-            const issueNumber = context.payload.issue.number;
-            const match = `add-files-from-issue-${issueNumber}`;
-            const existing = pulls.find(pr => pr.head.ref.includes(match));
-
-            if (existing) {
-              core.setOutput('exists', 'true');
-              core.setOutput('branch', existing.head.ref);
-              core.setOutput('url', existing.html_url);
-              console.log(`PR already exists: ${existing.html_url}`);
-            } else {
-              const branchName = match + '-' + process.env.GITHUB_RUN_ID;
-              core.setOutput('exists', 'false');
-              core.setOutput('branch', branchName);
-            }
-
-      - name: Configure Git
-        run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
-
-      - name: Commit files to existing or new branch
-        run: |
-          git checkout -B ${{ steps.check_pr.outputs.branch }}
-          git add static/data/systems/${{ steps.extract_info.outputs.system_name }}
-          git commit -m "Update validated files for '${{ steps.extract_info.outputs.system_name }}' from issue #${{ github.event.issue.number }}" || echo "No changes to commit"
-          git push --set-upstream origin ${{ steps.check_pr.outputs.branch }}
-
-      - name: Create Pull Request (if not exists)
-        id: create_pr
-        if: steps.check_pr.outputs.exists == 'false'
-        uses: peter-evans/create-pull-request@v6
-        with:
-          commit-message: "Add validated files from issue #${{ github.event.issue.number }}"
-          title: "Add files from issue #${{ github.event.issue.number }}"
-          body: |
-            This PR was automatically generated from files submitted in issue #${{ github.event.issue.number }}.
-          branch: ${{ steps.check_pr.outputs.branch }}
-          base: master
-
-      - name: Comment with PR link
-        if: steps.validate.outcome == 'success'
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const issue_number = context.payload.issue.number;
-            const url = steps.check_pr.outputs.exists === 'true'
-              ? steps.check_pr.outputs.url
-              : steps.create_pr.outputs.pull-request-url;
-
-            const message = steps.check_pr.outputs.exists === 'true'
-              ? `🔄 Updated existing pull request: ${url}`
-              : `✅ Created new pull request: ${url}`;
-
-            github.rest.issues.createComment({
-              issue_number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: message
-            });

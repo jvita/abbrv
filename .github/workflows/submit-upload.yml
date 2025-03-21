@@ -14,34 +14,57 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Extract Gist link from comment
-        id: extract_gist
+      - name: Extract Gist link and metadata
+        id: extract_info
         uses: actions/github-script@v7
         with:
           script: |
             const body = context.payload.comment.body;
-            const regex = /(https:\/\/gist\.github\.com\/[^\s)]+)/g;
+            const regex = /(https://gist\.github\.com\/[^\s)]+)/g;
             const match = regex.exec(body);
 
             if (!match) {
               core.setFailed("❌ No GitHub Gist link found in the comment.");
             } else {
-              const url = match[1];
-              console.log(`Found Gist URL: ${url}`);
-              core.setOutput("gist_url", url);
+              core.setOutput("gist_url", match[1]);
             }
+
+            const issue = context.payload.issue;
+            const text = JSON.stringify(issue);
+
+            function extract(id) {
+              const re = new RegExp(`"${id}"\\s*:\\s*\\"([^\\"]+)\\"`);
+              const match = text.match(re);
+              if (!match) throw new Error(`❌ Field '${id}' not found in issue.`);
+              return match[1].trim();
+            }
+
+            const systemName = extract("system-name").toLowerCase().replace(/[^a-z0-9-_]/g, '-');
+            const yourName = extract("your-name");
+            const systemDescription = extract("system-description");
+
+            core.setOutput("system_name", systemName);
+            core.setOutput("your_name", yourName);
+            core.setOutput("system_description", systemDescription);
 
       - name: Install Python requests
         run: pip install requests
 
-      - name: Download JSON files from Gist
+      - name: Download JSON files and create README/metadata
         run: |
           echo "Downloading files from Gist..."
+          mkdir -p static/data/systems/${{ steps.extract_info.outputs.system_name }}
           cat << 'EOF' > download_from_gist.py
           import os
+          import json
           import requests
+          from datetime import datetime
 
           gist_url = os.environ["GIST_URL"]
+          target_dir = os.environ["TARGET_DIR"]
+          your_name = os.environ["YOUR_NAME"]
+          system_description = os.environ["SYSTEM_DESCRIPTION"]
+
           if gist_url.endswith("/"):
               gist_url = gist_url[:-1]
           gist_id = gist_url.split("/")[-1]
@@ -61,23 +84,50 @@ jobs:
           if missing:
               raise Exception(f"Missing required files in Gist: {missing}")
 
+          os.makedirs(target_dir, exist_ok=True)
+
           for name in required:
               raw_url = files[name]["raw_url"]
               print(f"Downloading {name} from {raw_url}")
               file_resp = requests.get(raw_url)
               if not file_resp.ok:
                   raise Exception(f"Failed to download {name}: {file_resp.status_code}")
-              with open(name, "w", encoding="utf-8") as f:
+              with open(os.path.join(target_dir, name), "w", encoding="utf-8") as f:
                   f.write(file_resp.text)
-              print(f"✅ Saved {name}")
+              print(f"✅ Saved {name} to {target_dir}")
+
+          # Create README.md
+          with open(os.path.join(target_dir, "README.md"), "w", encoding="utf-8") as f:
+              f.write(f"""# {os.path.basename(target_dir).replace('-', ' ').title()}
+
+**Uploaded by:** {your_name}
+
+**Description:** {system_description}
+""")
+              print(f"✅ Created README.md in {target_dir}")
+
+          # Create meta.json
+          metadata = {
+              "uploader": your_name,
+              "description": system_description,
+              "source_gist": gist_url,
+              "gist_id": gist_id,
+              "upload_date": datetime.utcnow().isoformat() + "Z"
+          }
+          with open(os.path.join(target_dir, "meta.json"), "w", encoding="utf-8") as meta_file:
+              json.dump(metadata, meta_file, indent=2)
+              print(f"✅ Created meta.json in {target_dir}")
           EOF
 
           python download_from_gist.py
         env:
-          GIST_URL: ${{ steps.extract_gist.outputs.gist_url }}
+          GIST_URL: ${{ steps.extract_info.outputs.gist_url }}
+          TARGET_DIR: static/data/systems/${{ steps.extract_info.outputs.system_name }}
+          YOUR_NAME: ${{ steps.extract_info.outputs.your_name }}
+          SYSTEM_DESCRIPTION: ${{ steps.extract_info.outputs.system_description }}
 
       - name: List downloaded files
-        run: ls -lh *.json
+        run: ls -lh static/data/systems/${{ steps.extract_info.outputs.system_name }}
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -88,7 +138,7 @@ jobs:
         id: validate
         continue-on-error: true
         run: |
-          python .github/scripts/validate_json.py . > validation_output.txt
+          python .github/scripts/validate_json.py static/data/systems/${{ steps.extract_info.outputs.system_name }} > validation_output.txt
           echo "Validation finished with exit code $?"
 
       - name: Comment on issue with validation result
@@ -98,7 +148,11 @@ jobs:
             const fs = require('fs');
             const output = fs.readFileSync('validation_output.txt', 'utf8');
             const issue_number = context.payload.issue.number;
-            const comment = `### ✅ Validation Results\n\n\`\`\`\n${output}\n\`\`\``;
+            const comment = `### ✅ Validation Results
+
+\`\`\`
+${output}
+\`\`\``;
 
             github.rest.issues.createComment({
               issue_number,
@@ -147,8 +201,8 @@ jobs:
       - name: Commit files to existing or new branch
         run: |
           git checkout -B ${{ steps.check_pr.outputs.branch }}
-          git add *.json
-          git commit -m "Update validated files from issue #${{ github.event.issue.number }}" || echo "No changes to commit"
+          git add static/data/systems/${{ steps.extract_info.outputs.system_name }}
+          git commit -m "Update validated files for '${{ steps.extract_info.outputs.system_name }}' from issue #${{ github.event.issue.number }}" || echo "No changes to commit"
           git push --set-upstream origin ${{ steps.check_pr.outputs.branch }}
 
       - name: Create Pull Request (if not exists)
