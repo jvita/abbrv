@@ -134,51 +134,33 @@ function displayDownloadableSystems(availableSystems) {
     modal.show();
 }
 
-// Function to load the selected system's data
 async function loadSystemData(systemName) {
+    const basePath = `./static/data/systems/${systemName}`;
+    const requiredFiles = ['glyphs.json', 'modes.json', 'rules.json', 'phrases.json'];
+    const systemData = {};
+
     try {
-        // Fetch the ZIP file from the server
-        const response = await fetch(`./static/data/systems/${systemName}.zip`);
-        const blob = await response.blob();
-
-        // Create a new instance of JSZip
-        const zip = await JSZip.loadAsync(blob);
-
-        // Initialize an empty object to store the system data
-        const systemData = {};
-
-        // Iterate over each file in the ZIP
-        for (const filename of Object.keys(zip.files)) {
-            const file = zip.files[filename];
-            const fileContent = await file.async('text');
-            const parsedData = JSON.parse(fileContent);
-
-            // Store data based on the filename
-            if (filename.includes('glyphs')) {
-                systemData['glyphs'] = parsedData;
-            } else if (filename.includes('phrases')) {
-                systemData['phrases'] = parsedData;
-            } else if (filename.includes('modes')) {
-                systemData['modes'] = parsedData;
-            } else if (filename.includes('rules')) {
-                systemData['rules'] = parsedData;
+        for (const filename of requiredFiles) {
+            const response = await fetch(`${basePath}/${filename}`);
+            if (!response.ok) {
+                throw new Error(`Failed to load ${filename}`);
             }
+            const content = await response.json();
+            const key = filename.replace('.json', '');
+            systemData[key] = content;
         }
 
-        // Store the system data
         systems[systemName] = systemData;
-
         selectedSystem = systemName;
         localStorage.setItem('selectedSystem', selectedSystem);
+        localStorage.setItem('systems', JSON.stringify(systems));
 
-        const systemsJson = JSON.stringify(systems);
-        localStorage.setItem('systems', systemsJson);
-
-        location.reload(); // This will reload the current page
+        location.reload();
     } catch (error) {
         console.error('Error loading system data:', error);
     }
 }
+
 
 // Import System
 document.getElementById('importSystem').addEventListener('click', function() {
