@@ -17,27 +17,27 @@ jobs:
         with:
           script: |
             const instructions = `
-### 🧾 How to Submit Your System
+            ### 🧾 How to Submit Your System
 
-To submit your system to the repository, add a new comment with the command:
+            To submit your system to the repository, add a new comment with the command:
 
-\`\`\`
-/submit <url_of_your_gist>
-\`\`\`
+            \`\`\`
+            /submit <url_of_your_gist>
+            \`\`\`
 
-Where \`<url_of_your_gist>\` is a link to the Gist containing your system files.
+            Where \`<url_of_your_gist>\` is a link to the Gist containing your system files.
 
-The Gist should contain the following files:
+            The Gist should contain the following files:
 
-- \`glyphs.json\`
-- \`modes.json\`
-- \`rules.json\`
-- \`phrases.json\`
+            - \`glyphs.json\`
+            - \`modes.json\`
+            - \`rules.json\`
+            - \`phrases.json\`
 
-This will run a validation check on the system files and, if successful, open a PR to submit the system for review.
+            This will run a validation check on the system files and, if successful, open a PR to submit the system for review.
 
-You can re-submit the system by re-running the \`/submit <url_of_your_gist>\` command with the same or a new Gist link.
-`;
+            You can re-submit the system by re-running the \`/submit <url_of_your_gist>\` command with the same or a new Gist link.
+            `;
 
             await github.rest.issues.createComment({
               issue_number: context.issue.number,
