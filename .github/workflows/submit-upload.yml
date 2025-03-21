@@ -1,40 +1,30 @@
+name: Submit Upload
+
 on:
-  issues:
-    types: [opened, edited]
   issue_comment:
-    types: [created, edited]
+    types: [created]
 
 jobs:
-  validate-gist:
-    runs-on: ubuntu-latest
+  submit-upload:
     if: |
-      (github.event_name == 'issues' && contains(github.event.issue.labels.*.name, 'system upload')) ||
-      (github.event_name == 'issue_comment' && contains(github.event.issue.labels.*.name, 'system upload'))
+      github.event.issue.pull_request == null &&
+      contains(github.event.comment.body, '/submit-upload')
+    runs-on: ubuntu-latest
     steps:
-      - name: Checkout repo
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Print context info
-        run: |
-          echo "Event: ${{ github.event_name }}"
-          echo "Issue title: ${{ github.event.issue.title }}"
-          echo "Issue body:"
-          echo "${{ github.event.issue.body }}"
-          echo "Comment body:"
-          echo "${{ github.event.comment.body }}"
-
-      - name: Extract Gist link from issue or comment
+      - name: Extract Gist link from comment
         id: extract_gist
         uses: actions/github-script@v7
         with:
           script: |
-            const isComment = context.eventName === 'issue_comment';
-            const body = isComment ? context.payload.comment.body : context.payload.issue.body;
+            const body = context.payload.comment.body;
             const regex = /(https:\/\/gist\.github\.com\/[^\s)]+)/g;
             const match = regex.exec(body);
 
             if (!match) {
-              core.setFailed("❌ No GitHub Gist link found.");
+              core.setFailed("❌ No GitHub Gist link found in the comment.");
             } else {
               const url = match[1];
               console.log(`Found Gist URL: ${url}`);
@@ -86,32 +76,17 @@ jobs:
         env:
           GIST_URL: ${{ steps.extract_gist.outputs.gist_url }}
 
-      - name: List downloaded files
-        run: ls -lh *.json
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.x'
-
-      - name: Run validation script
-        id: validate
+      - name: Configure Git
         run: |
-          python .github/scripts/validate_json.py . > validation_output.txt
-          echo "Validation finished"
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-      - name: Comment on issue with validation result
-        uses: actions/github-script@v7
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v6
         with:
-          script: |
-            const fs = require('fs');
-            const output = fs.readFileSync('validation_output.txt', 'utf8');
-            const issue_number = context.payload.issue ? context.payload.issue.number : context.payload.issue.number;
-            const comment = `### ✅ Validation Results\n\n\`\`\`\n${output}\n\`\`\`\n\nIf you'd like to add these files to the repository, please comment:\n\n\`/submit-upload\``;
-
-            github.rest.issues.createComment({
-              issue_number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: comment
-            });
+          commit-message: "Add validated files from issue #${{ github.event.issue.number }}"
+          title: "Add files from issue #${{ github.event.issue.number }}"
+          body: |
+            This PR was automatically generated from files submitted in issue #${{ github.event.issue.number }}.
+          branch: add-files-from-issue-${{ github.event.issue.number }}
+          base: main
