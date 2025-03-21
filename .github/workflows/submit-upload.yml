@@ -37,19 +37,18 @@ jobs:
               core.setOutput("gist_url", match[1]);
             }
 
-            const issue = context.payload.issue;
-            const text = JSON.stringify(issue);
+            const issueBody = context.payload.issue.body;
 
-            function extract(id) {
-              const re = new RegExp(`"${id}"\\s*:\\s*\\"([^\\"]+)\\"`);
-              const match = text.match(re);
-              if (!match) throw new Error(`❌ Field '${id}' not found in issue.`);
+            function extractField(fieldName) {
+              const regex = new RegExp(`${fieldName}:\\s*(.+)`, 'i');
+              const match = issueBody.match(regex);
+              if (!match) throw new Error(`❌ Field '${fieldName}' not found in issue body.`);
               return match[1].trim();
             }
 
-            const systemName = extract("system-name").toLowerCase().replace(/[^a-z0-9-_]/g, '-');
-            const yourName = extract("your-name");
-            const systemDescription = extract("system-description");
+            const systemName = extractField("system-name").toLowerCase().replace(/[^a-z0-9-_]/g, '-');
+            const yourName = extractField("your-name");
+            const systemDescription = extractField("system-description");
 
             core.setOutput("system_name", systemName);
             core.setOutput("your_name", yourName);
@@ -125,6 +124,7 @@ jobs:
         id: validate
         run: |
           python .github/scripts/validate_json.py "static/data/systems/${{ steps.extract_info.outputs.system_name }}" > validation_output.txt
+          echo "exit_code=$?" >> "$GITHUB_OUTPUT"
 
       - name: Comment on issue with validation result
         uses: actions/github-script@v7
@@ -133,7 +133,13 @@ jobs:
             const fs = require('fs');
             const output = fs.readFileSync('validation_output.txt', 'utf8');
             const issue_number = context.payload.issue.number;
-            const comment = `### ✅ Validation Results\n\n\`\`\`\n${output}\n\`\`\``;
+            const statusEmoji = "${{ steps.validate.outputs.exit_code }}" === "0" ? "✅" : "❌";
+            const comment = `### ${statusEmoji} Validation Results\n\n\
+\
+\
+\`\`\`
+${output}
+\`\`\``;
 
             github.rest.issues.createComment({
               issue_number,
