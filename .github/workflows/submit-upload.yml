@@ -96,15 +96,7 @@ jobs:
                   f.write(file_resp.text)
               print(f"✅ Saved {name} to {target_dir}")
 
-          # Create README.md
-          with open(os.path.join(target_dir, "README.md"), "w", encoding="utf-8") as f:
-              f.write(f"""# {os.path.basename(target_dir).replace('-', ' ').title()}
-
-**Uploaded by:** {your_name}
-
-**Description:** {system_description}
-""")
-              print(f"✅ Created README.md in {target_dir}")
+          
 
           # Create meta.json
           metadata = {
