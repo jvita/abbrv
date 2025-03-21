@@ -20,13 +20,13 @@ jobs:
         with:
           script: |
             const labels = context.payload.issue.labels.map(label => label.name);
-            console.log("Labels: ", labels);
+            console.log("Labels on issue:", labels);
             core.setOutput('has_label', labels.includes('system upload'));
 
       - name: Exit if label not found
         if: steps.label_check.outputs.has_label != 'true'
         run: |
-          echo "No 'system upload' label."
+          echo "No 'system upload' label on issue. Exiting."
           exit 0
 
       - name: Extract attachment links from comment
@@ -55,17 +55,15 @@ jobs:
               }
             }
 
-      - name: Download files with Python
-        run: |
-          echo "Writing fetch script..."
-          cat << 'EOF' > fetch_and_save.py
-          import requests
-          import os
+      - name: Install Python dependencies
+        run: pip install requests
 
-          headers = {
-              "Authorization": f"Bearer {os.environ.get('GITHUB_TOKEN')}",
-              "Accept": "application/octet-stream"
-          }
+      - name: Download files (follow redirect manually)
+        run: |
+          echo "Writing redirect-aware fetch script..."
+          cat << 'EOF' > fetch_and_save.py
+          import os
+          import requests
 
           file_urls = {
               "glyphs.json": os.environ.get("GLYPHS_URL"),
@@ -74,18 +72,31 @@ jobs:
               "phrases.json": os.environ.get("PHRASES_URL"),
           }
 
-          for filename, url in file_urls.items():
-              if not url:
+          for filename, initial_url in file_urls.items():
+              if not initial_url:
                   print(f"Missing URL for {filename}")
                   continue
-              print(f"Downloading {filename} from {url}")
-              response = requests.get(url, headers=headers, allow_redirects=True)
-              if response.ok:
-                  with open(filename, "wb") as f:
-                      f.write(response.content)
-                  print(f"Saved {filename}")
-              else:
-                  print(f"Failed to download {filename}: {response.status_code} {response.text}")
+
+              print(f"Resolving redirect for: {initial_url}")
+              try:
+                  head_resp = requests.get(initial_url, allow_redirects=False)
+                  redirect_url = head_resp.headers.get("Location")
+
+                  if not redirect_url:
+                      print(f"❌ Could not resolve redirect for {filename}")
+                      continue
+
+                  print(f"🔁 Redirected to: {redirect_url}")
+
+                  resp = requests.get(redirect_url)
+                  if resp.ok:
+                      with open(filename, "wb") as f:
+                          f.write(resp.content)
+                      print(f"✅ Saved {filename}")
+                  else:
+                      print(f"❌ Failed to download {filename}: {resp.status_code}")
+              except Exception as e:
+                  print(f"❌ Exception downloading {filename}: {e}")
           EOF
 
           python fetch_and_save.py
@@ -94,10 +105,9 @@ jobs:
           MODES_URL: ${{ steps.extract_urls.outputs.modes }}
           RULES_URL: ${{ steps.extract_urls.outputs.rules }}
           PHRASES_URL: ${{ steps.extract_urls.outputs.phrases }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: List downloaded files
-        run: ls -lh *.json || echo "Files missing!"
+        run: ls -lh *.json || echo "Some files are missing!"
 
       - name: Checkout repo
         uses: actions/checkout@v4
@@ -106,9 +116,6 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.x'
-
-      - name: Install dependencies
-        run: pip install -r .github/scripts/requirements.txt || true
 
       - name: Run validation script
         run: python .github/scripts/validate_json.py glyphs.json modes.json rules.json phrases.json
