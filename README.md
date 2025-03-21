@@ -1,5 +1,5 @@
 # abbrv
-a framework for designing and using shorthand fonts.
+A framework for designing and using shorthand fonts.
 
 # Getting started
 The website is hosted at https://jvita.github.io/abbrv
@@ -15,6 +15,6 @@ This repository is entirely open-source, so feel free to create your own fork, a
 All contributions are welcome, no matter your skill level as a programmer!
 
 # Questions/comments?
-> Please be courteous to all of the developers. We're doing this voluntarily in our free time. Because of this, development may be slow and/or sporadic at times.
+> Please be courteous to all of the developers. We're doing this voluntarily in our free time. Because of this, development may be slow, sporadic, and completely subject to our whims.
 
 If you encounter a bug or have a feature request, please [open an issue](https://github.com/jvita/abbrv/issues/new) or contact [u/jerrshv](https://www.reddit.com/user/jerrshv/) on Reddit.
