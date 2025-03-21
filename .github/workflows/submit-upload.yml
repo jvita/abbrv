@@ -133,8 +133,7 @@ jobs:
             const fs = require('fs');
             const output = fs.readFileSync('validation_output.txt', 'utf8');
             const issue_number = context.payload.issue.number;
-            const exitCode = process.env.VALIDATION_EXIT_CODE;
-            const statusEmoji = exitCode === '0' ? '✅' : '❌';
+            const statusEmoji = '${{ steps.validate.outputs.exit_code }}' === '0' ? '✅' : '❌';
             const commentBody = [
               `### ${statusEmoji} Validation Results`,
               '',
@@ -149,8 +148,6 @@ jobs:
               repo: context.repo.repo,
               body: commentBody
             });
-        env:
-          VALIDATION_EXIT_CODE: ${{ steps.validate.outputs.exit_code }}
 
       - name: Check for existing PR from this issue
         id: check_pr
@@ -212,11 +209,11 @@ jobs:
         with:
           script: |
             const issue_number = context.payload.issue.number;
-            const prUrl = steps.check_pr.outputs.exists === 'true'
-              ? steps.check_pr.outputs.url
-              : steps.create_pr.outputs['pull-request-url'];
+            const prUrl = '${{ steps.check_pr.outputs.exists }}' === 'true'
+              ? '${{ steps.check_pr.outputs.url }}'
+              : '${{ steps.create_pr.outputs.pull-request-url }}';
 
-            const message = steps.check_pr.outputs.exists === 'true'
+            const message = '${{ steps.check_pr.outputs.exists }}' === 'true'
               ? `🔄 Updated existing pull request: ${prUrl}`
               : `✅ Created new pull request: ${prUrl}`;
 
