@@ -1,113 +1,92 @@
-name: Validate System Upload Files
+name: Validate System Upload (ZIP)
 
 on:
   issue_comment:
     types: [created]
 
 jobs:
-  validate-files:
+  validate-zip:
     runs-on: ubuntu-latest
     if: github.event.issue.pull_request == null
     steps:
-      - name: Print raw comment body
+      - name: Print comment body
         run: |
-          echo "Raw comment body:"
+          echo "Comment body:"
           echo "${{ github.event.comment.body }}"
 
-      - name: Check if issue has 'system upload' label
+      - name: Check for 'system upload' label
         id: label_check
         uses: actions/github-script@v7
         with:
           script: |
             const labels = context.payload.issue.labels.map(label => label.name);
-            console.log("Labels on issue:", labels);
+            console.log("Issue labels:", labels);
             core.setOutput('has_label', labels.includes('system upload'));
 
       - name: Exit if label not found
         if: steps.label_check.outputs.has_label != 'true'
         run: |
-          echo "No 'system upload' label on issue. Exiting."
+          echo "No 'system upload' label. Skipping."
           exit 0
 
-      - name: Extract attachment links from comment
-        id: extract_urls
+      - name: Extract .zip attachment link from comment
+        id: extract_zip
         uses: actions/github-script@v7
         with:
           script: |
             const body = context.payload.comment.body;
-            const regex = /\[([^\]]+\.json)\]\((https:\/\/github\.com\/user-attachments\/[^\s)]+)\)/g;
-            let match;
-            const fileMap = {};
+            const regex = /\[([^\]]+\.zip)\]\((https:\/\/github\.com\/user-attachments\/[^\s)]+)\)/g;
+            const match = regex.exec(body);
 
-            while ((match = regex.exec(body)) !== null) {
+            if (!match) {
+              core.setFailed("❌ No .zip file link found in comment.");
+            } else {
               const filename = match[1];
               const url = match[2];
-              console.log(`Found file: ${filename} -> ${url}`);
-              fileMap[filename] = url;
-            }
-
-            const expectedFiles = ['glyphs.json', 'modes.json', 'rules.json', 'phrases.json'];
-            for (const name of expectedFiles) {
-              if (!fileMap[name]) {
-                core.setFailed(`Missing expected file: ${name}`);
-              } else {
-                core.setOutput(name.replace('.json', ''), fileMap[name]);
-              }
+              console.log(`Found zip: ${filename} -> ${url}`);
+              core.setOutput("filename", filename);
+              core.setOutput("url", url);
             }
 
       - name: Install Python dependencies
         run: pip install requests
 
-      - name: Download files (follow redirect manually)
+      - name: Download and unzip attachment
         run: |
-          echo "Writing redirect-aware fetch script..."
-          cat << 'EOF' > fetch_and_save.py
+          echo "Downloading zip file: ${{ steps.extract_zip.outputs.filename }}"
+          cat << 'EOF' > download_zip.py
           import os
           import requests
 
-          file_urls = {
-              "glyphs.json": os.environ.get("GLYPHS_URL"),
-              "modes.json": os.environ.get("MODES_URL"),
-              "rules.json": os.environ.get("RULES_URL"),
-              "phrases.json": os.environ.get("PHRASES_URL"),
-          }
+          url = os.environ["ZIP_URL"]
+          filename = os.environ["ZIP_FILENAME"]
 
-          for filename, initial_url in file_urls.items():
-              if not initial_url:
-                  print(f"Missing URL for {filename}")
-                  continue
+          print(f"Fetching redirect for {url}")
+          head = requests.get(url, allow_redirects=False)
+          redirect_url = head.headers.get("Location")
 
-              print(f"Resolving redirect for: {initial_url}")
-              try:
-                  head_resp = requests.get(initial_url, allow_redirects=False)
-                  redirect_url = head_resp.headers.get("Location")
+          if not redirect_url:
+              raise Exception("❌ Could not resolve redirect URL.")
 
-                  if not redirect_url:
-                      print(f"❌ Could not resolve redirect for {filename}")
-                      continue
-
-                  print(f"🔁 Redirected to: {redirect_url}")
-
-                  resp = requests.get(redirect_url)
-                  if resp.ok:
-                      with open(filename, "wb") as f:
-                          f.write(resp.content)
-                      print(f"✅ Saved {filename}")
-                  else:
-                      print(f"❌ Failed to download {filename}: {resp.status_code}")
-              except Exception as e:
-                  print(f"❌ Exception downloading {filename}: {e}")
+          print(f"Redirected to: {redirect_url}")
+          r = requests.get(redirect_url)
+          if r.ok:
+              with open(filename, "wb") as f:
+                  f.write(r.content)
+              print(f"✅ Downloaded {filename}")
+          else:
+              raise Exception(f"❌ Failed to download: {r.status_code}")
           EOF
 
-          python fetch_and_save.py
-        env:
-          GLYPHS_URL: ${{ steps.extract_urls.outputs.glyphs }}
-          MODES_URL: ${{ steps.extract_urls.outputs.modes }}
-          RULES_URL: ${{ steps.extract_urls.outputs.rules }}
-          PHRASES_URL: ${{ steps.extract_urls.outputs.phrases }}
+          python download_zip.py
+          unzip -o "${{ steps.extract_zip.outputs.filename }}"
 
-      - name: List downloaded files
-        run: ls -lh *.json || echo "Some files are missing!"
+        env:
+          ZIP_URL: ${{ steps.extract_zip.outputs.url }}
+          ZIP_FILENAME: ${{ steps.extract_zip.outputs.filename }}
+
+      - name: List extracted files
+        run: ls -lh *.json || echo "⚠️ No .json files found!"
 
       - name: Checkout repo
         uses: actions/checkout@v4
@@ -118,4 +97,6 @@ jobs:
           python-version: '3.x'
 
       - name: Run validation script
-        run: python .github/scripts/validate_json.py glyphs.json modes.json rules.json phrases.json
+        run: |
+          echo "Running validation script..."
+          python .github/scripts/validate_json.py glyphs.json modes.json rules.json phrases.json

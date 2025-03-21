@@ -34,10 +34,19 @@ body:
     validations:
       required: true
 
-  - type: textarea
-    id: files
+  - type: input
+    id: gist-link
     attributes:
-      label: "System files"
-      description: "Use the 'add file' option to add [glyphs, rules, modes, phrases].json files."
+      label: "Link to GitHub Gist"
+      description: "Create a Gist with the four JSON files and paste the link here."
     validations:
       required: true
+
+
+  # - type: textarea
+  #   id: files
+  #   attributes:
+  #     label: "System files"
+  #     description: "Use the 'add file' option to add [glyphs, rules, modes, phrases].json files."
+  #   validations:
+  #     required: true
