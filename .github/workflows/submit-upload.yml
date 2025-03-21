@@ -1,51 +1,34 @@
-name: Submit Upload
+name: Validate and Submit Upload
 
 on:
   issue_comment:
-    types: [created]
+    types: [created, edited]
 
 jobs:
-  submit-upload:
+  validate-and-submit:
     if: |
       github.event.issue.pull_request == null &&
-      contains(github.event.comment.body, '/submit-upload')
+      contains(github.event.comment.body, '/submit')
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Extract Gist link from most recent comment containing a Gist
+      - name: Extract Gist link from comment
         id: extract_gist
         uses: actions/github-script@v7
         with:
           script: |
-            const issue_number = context.payload.issue.number;
-            const comments = await github.paginate(
-              github.rest.issues.listComments,
-              {
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number,
-                per_page: 100
-              }
-            );
-
+            const body = context.payload.comment.body;
             const regex = /(https:\/\/gist\.github\.com\/[^\s)]+)/g;
-            let latestGistLink = null;
+            const match = regex.exec(body);
 
-            for (let i = comments.length - 1; i >= 0; i--) {
-              const match = regex.exec(comments[i].body);
-              if (match) {
-                latestGistLink = match[1];
-                break;
-              }
-            }
-
-            if (!latestGistLink) {
-              core.setFailed("❌ No GitHub Gist link found in any comment.");
+            if (!match) {
+              core.setFailed("❌ No GitHub Gist link found in the comment.");
             } else {
-              console.log(`Found Gist URL: ${latestGistLink}`);
-              core.setOutput("gist_url", latestGistLink);
+              const url = match[1];
+              console.log(`Found Gist URL: ${url}`);
+              core.setOutput("gist_url", url);
             }
 
       - name: Install Python requests
@@ -93,17 +76,110 @@ jobs:
         env:
           GIST_URL: ${{ steps.extract_gist.outputs.gist_url }}
 
+      - name: List downloaded files
+        run: ls -lh *.json
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Run validation script
+        id: validate
+        continue-on-error: true
+        run: |
+          python .github/scripts/validate_json.py . > validation_output.txt
+          echo "Validation finished with exit code $?"
+
+      - name: Comment on issue with validation result
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const output = fs.readFileSync('validation_output.txt', 'utf8');
+            const issue_number = context.payload.issue.number;
+            const comment = `### ✅ Validation Results\n\n\`\`\`\n${output}\n\`\`\``;
+
+            github.rest.issues.createComment({
+              issue_number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+
+      - name: Skip PR if validation failed
+        if: steps.validate.outcome != 'success'
+        run: echo "❌ Validation failed. Skipping pull request creation."
+
+      - name: Check for existing PR from this issue
+        id: check_pr
+        if: steps.validate.outcome == 'success'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: pulls } = await github.rest.pulls.list({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              per_page: 100
+            });
+
+            const issueNumber = context.payload.issue.number;
+            const match = `add-files-from-issue-${issueNumber}`;
+            const existing = pulls.find(pr => pr.head.ref.includes(match));
+
+            if (existing) {
+              core.setOutput('exists', 'true');
+              core.setOutput('branch', existing.head.ref);
+              core.setOutput('url', existing.html_url);
+              console.log(`PR already exists: ${existing.html_url}`);
+            } else {
+              const branchName = match + '-' + process.env.GITHUB_RUN_ID;
+              core.setOutput('exists', 'false');
+              core.setOutput('branch', branchName);
+            }
+
       - name: Configure Git
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-      - name: Create Pull Request
+      - name: Commit files to existing or new branch
+        run: |
+          git checkout -B ${{ steps.check_pr.outputs.branch }}
+          git add *.json
+          git commit -m "Update validated files from issue #${{ github.event.issue.number }}" || echo "No changes to commit"
+          git push --set-upstream origin ${{ steps.check_pr.outputs.branch }}
+
+      - name: Create Pull Request (if not exists)
+        id: create_pr
+        if: steps.check_pr.outputs.exists == 'false'
         uses: peter-evans/create-pull-request@v6
         with:
           commit-message: "Add validated files from issue #${{ github.event.issue.number }}"
           title: "Add files from issue #${{ github.event.issue.number }}"
           body: |
             This PR was automatically generated from files submitted in issue #${{ github.event.issue.number }}.
-          branch: add-files-from-issue-${{ github.event.issue.number }}-${{ github.run_id }}
-          base: main
+          branch: ${{ steps.check_pr.outputs.branch }}
+          base: master
+
+      - name: Comment with PR link
+        if: steps.validate.outcome == 'success'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issue_number = context.payload.issue.number;
+            const url = steps.check_pr.outputs.exists === 'true'
+              ? steps.check_pr.outputs.url
+              : steps.create_pr.outputs.pull-request-url;
+
+            const message = steps.check_pr.outputs.exists === 'true'
+              ? `🔄 Updated existing pull request: ${url}`
+              : `✅ Created new pull request: ${url}`;
+
+            github.rest.issues.createComment({
+              issue_number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: message
+            });
