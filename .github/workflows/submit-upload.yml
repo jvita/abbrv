@@ -180,26 +180,46 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-      - name: Commit files to existing or new branch
+      - name: Commit files to existing or new branch and create PR
         if: success()
-        run: |
-          git checkout -B "${{ steps.check_pr.outputs.branch }}"
-          git restore --staged .
-          git add "static/data/systems/${{ steps.extract_info.outputs.system_name }}/*.json"
-          git commit -m "Update validated files for '${{ steps.extract_info.outputs.system_name }}' from issue #${{ github.event.issue.number }}" || echo "No changes to commit"
-          git push --force --set-upstream origin "${{ steps.check_pr.outputs.branch }}"
-
-      - name: Create Pull Request (if not exists)
-        id: create_pr
-        if: steps.check_pr.outputs.exists == 'false'
-        uses: peter-evans/create-pull-request@v6
+        uses: actions/github-script@v7
         with:
-          commit-message: "Add validated files from issue #${{ github.event.issue.number }}"
-          title: "Add files from issue #${{ github.event.issue.number }}"
-          body: |
-            This PR was automatically generated from files submitted in issue #${{ github.event.issue.number }}.
-          branch: ${{ steps.check_pr.outputs.branch }}
-          base: master
+          script: |
+            const { execSync } = require('child_process');
+
+            const branch = process.env.BRANCH;
+            const systemPath = `static/data/systems/${process.env.SYSTEM_NAME}`;
+            const commitMsg = `Update validated files for '${process.env.SYSTEM_NAME}' from issue #${process.env.ISSUE_NUMBER}`;
+
+            execSync(`git checkout -B "${branch}"`);
+            execSync(`git restore --staged .`);
+            execSync(`git add ${systemPath}/*.json`);
+            try {
+              execSync(`git commit -m "${commitMsg}"`);
+            } catch (e) {
+              console.log('No changes to commit');
+            }
+            execSync(`git push --force --set-upstream origin "${branch}"`);
+
+            if (process.env.PR_EXISTS === 'false') {
+              const { data: pr } = await github.rest.pulls.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: `Add files from issue #${process.env.ISSUE_NUMBER}`,
+                head: branch,
+                base: 'master',
+                body: `This PR was automatically generated from files submitted in issue #${process.env.ISSUE_NUMBER}.`
+              });
+              core.setOutput('pr_url', pr.html_url);
+            } else {
+              core.setOutput('pr_url', process.env.EXISTING_PR_URL);
+            }
+        env:
+          BRANCH: ${{ steps.check_pr.outputs.branch }}
+          SYSTEM_NAME: ${{ steps.extract_info.outputs.system_name }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          PR_EXISTS: ${{ steps.check_pr.outputs.exists }}
+          EXISTING_PR_URL: ${{ steps.check_pr.outputs.url }}
 
       - name: Comment with PR link
         if: success()
@@ -209,7 +229,7 @@ jobs:
             const issue_number = context.payload.issue.number;
             const prUrl = '${{ steps.check_pr.outputs.exists }}' === 'true'
               ? '${{ steps.check_pr.outputs.url }}'
-              : '${{ steps.create_pr.outputs.pull-request-url }}';
+              : '${{ steps.commit_files.outputs.pr_url }}';
 
             const message = '${{ steps.check_pr.outputs.exists }}' === 'true'
               ? `🔄 Updated existing pull request: ${prUrl}`
