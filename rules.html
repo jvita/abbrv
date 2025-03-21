@@ -59,6 +59,47 @@
                 </li>
             </ul>
         </div>
+        <!-- Modal for Uploading Files -->
+        <div class="modal fade" id="uploadModal" tabindex="-1" aria-labelledby="uploadModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="uploadModalLabel">Upload your system</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p>
+                            System upload is currently only supported through Github.
+                            This is to allow us to run automated validation checks to ensure that your uploaded files are safe and correctly formatted, and to provide ease-of-use commands to facilitate merging into the master branch.
+                        </p>
+
+
+                        <p>To upload a new system, please follow these steps: </p>
+                        <ul>
+                            <li><a href="https://gist.github.com/" target="_blank">Create a new GitHub Gist</a></li>
+                            <ul>
+                                <li>Drag-and-drop your <code>[glyphs, modes, rules, phrases].json</code> files.</li>
+                                <li>Make sure they're uploaded as four separate files.</li>
+                            </ul>
+                            <li><a href="https://github.com/jvita/abbrv/issues/new?template=submit_upload.yml" target="_blank">Open a new issue</a> on the <b>abbrv</b> repo</li>
+                            <ul>
+                                <li>GitHub will post a comment with additional instructions.</li>
+                            </ul>
+                            <li>Add a comment to the issue with the command: <code>/submit [url_of_your_gist]</code></li>
+                            <ul>
+                                <li>This will automatically validate the files from your gist and open a new PR for merging your results.</li>
+                            </ul>
+                        </ul>
+
+                        <p>If you do not have a Github account, contact <a href="https://www.reddit.com/user/jerrshv/">u/jerrshv</a> on Reddit for assistance.</p>
+                        
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
         <!-- Modal for downloading systems -->
         <div class="modal fade" id="downloadSystemsModal" tabindex="-1" aria-labelledby="downloadSystemsModalLabel" aria-hidden="true">
             <div class="modal-dialog">
