@@ -1,53 +1,93 @@
-name: Validate Gist Upload
+name: Validate System Upload Files
 
 on:
-  issues:
-    types: [opened]
+  issue_comment:
+    types: [created]
 
 jobs:
-  validate-upload:
+  validate-files:
     runs-on: ubuntu-latest
-    if: |
-      contains(github.event.issue.body, 'https://gist.github.com/')
-
+    if: github.event.issue.pull_request == null  # ensure it's an issue, not a PR
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v2
-
-      - name: Extract Gist URL from Issue
+      - name: Print raw comment body
         run: |
-          ISSUE_BODY="${{ github.event.issue.body }}"
-          GIST_URL=$(echo "$ISSUE_BODY" | grep -oP 'https://gist.github.com/\S+')
+          echo "Raw comment body:"
+          echo "${{ github.event.comment.body }}"
 
-          if [[ -z "$GIST_URL" ]]; then
-            echo "❌ No valid Gist URL found in the issue."
-            exit 1
-          fi
+      - name: Check if issue has 'system upload' label
+        id: label_check
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issue_number = context.payload.issue.number;
+            const labels = context.payload.issue.labels.map(label => label.name);
+            console.log("Labels on issue #" + issue_number + ": " + labels.join(', '));
+            core.setOutput('has_label', labels.includes('system upload'));
 
-          echo "Extracted Gist URL: $GIST_URL"
-          echo "GIST_URL=$GIST_URL" >> $GITHUB_ENV
-
-      - name: Fetch JSON file from Gist
+      - name: Exit if label not found
+        if: steps.label_check.outputs.has_label != 'true'
         run: |
-          RAW_URL=$(curl -sL "$GIST_URL" | grep -oP 'https://gist.githubusercontent.com/[^"]+raw[^"]+' | head -n 1)
+          echo "Issue does not have 'system upload' label. Exiting."
+          exit 0
 
-          if [[ -z "$RAW_URL" ]]; then
-            echo "❌ Could not find raw JSON file in the Gist."
-            exit 1
-          fi
+      - name: Extract file URLs from comment
+        id: extract_urls
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const body = context.payload.comment.body;
+            const regex = /https:\/\/user-images\.githubusercontent\.com\/[^\s)"]+/g;
+            const urls = body.match(regex) || [];
+            console.log("Found URLs:", urls);
 
-          echo "Downloading JSON file from: $RAW_URL"
-          curl -L -o json_files/uploaded.json "$RAW_URL"
+            const expectedFiles = ['glyphs.json', 'modes.json', 'rules.json', 'phrases.json'];
+            const fileMap = {};
 
-      - name: Validate JSON File
+            for (const name of expectedFiles) {
+              const match = urls.find(url => url.includes(name));
+              if (match) {
+                console.log(`Matched ${name}: ${match}`);
+                fileMap[name] = match;
+              } else {
+                console.warn(`Missing file: ${name}`);
+                core.setFailed(`Missing file: ${name}`);
+              }
+            }
+
+            for (const [key, url] of Object.entries(fileMap)) {
+              core.setOutput(key.replace('.json', ''), url);
+            }
+
+      - name: Download files
         run: |
-          python3 .github/scripts/validate_json.py json_files/uploaded.json
+          echo "Downloading files..."
+          echo "glyphs.json URL: ${{ steps.extract_urls.outputs.glyphs }}"
+          echo "modes.json URL:  ${{ steps.extract_urls.outputs.modes }}"
+          echo "rules.json URL:  ${{ steps.extract_urls.outputs.rules }}"
+          echo "phrases.json URL: ${{ steps.extract_urls.outputs.phrases }}"
 
-      - name: Post result to GitHub Issue
+          curl -L -o glyphs.json "${{ steps.extract_urls.outputs.glyphs }}"
+          curl -L -o modes.json "${{ steps.extract_urls.outputs.modes }}"
+          curl -L -o rules.json "${{ steps.extract_urls.outputs.rules }}"
+          curl -L -o phrases.json "${{ steps.extract_urls.outputs.phrases }}"
+
+      - name: List downloaded files
+        run: ls -lh *.json || echo "Some files might be missing!"
+
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Install dependencies
         run: |
-          ISSUE_NUMBER="${{ github.event.issue.number }}"
-          REPO="${{ github.repository }}"
-          COMMENT_BODY="✅ JSON validation successful!"
-          curl -X POST -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-            -d "{\"body\": \"$COMMENT_BODY\"}" \
-            "https://api.github.com/repos/$REPO/issues/$ISSUE_NUMBER/comments"
+          echo "Installing validation script dependencies..."
+          pip install -r .github/scripts/requirements.txt || echo "No requirements file found."
+
+      - name: Run validation script
+        run: |
+          echo "Running validation script..."
+          python .github/scripts/validate_json.py
