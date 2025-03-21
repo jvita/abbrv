@@ -133,7 +133,8 @@ jobs:
             const fs = require('fs');
             const output = fs.readFileSync('validation_output.txt', 'utf8');
             const issue_number = context.payload.issue.number;
-            const statusEmoji = "${{ steps.validate.outputs.exit_code }}" === "0" ? "✅" : "❌";
+            const exitCode = process.env.VALIDATION_EXIT_CODE;
+            const statusEmoji = exitCode === '0' ? '✅' : '❌';
             const commentBody = [
               `### ${statusEmoji} Validation Results`,
               '',
@@ -148,6 +149,8 @@ jobs:
               repo: context.repo.repo,
               body: commentBody
             });
+        env:
+          VALIDATION_EXIT_CODE: ${{ steps.validate.outputs.exit_code }}
 
       - name: Check for existing PR from this issue
         id: check_pr

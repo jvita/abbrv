@@ -1,6 +1,6 @@
 name: "Upload new system"
 description: "Upload a system exported by abbrv."
-title: "[SYSTEM-UPLOAD] - <system name>"
+title: "[UPLOAD] - <system name>"
 labels: ["system upload"]
 body:
   - type: input
