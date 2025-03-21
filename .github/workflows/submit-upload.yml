@@ -39,16 +39,16 @@ jobs:
 
             const issueBody = context.payload.issue.body;
 
-            function extractField(fieldName) {
-              const regex = new RegExp(`${fieldName}:\\s*(.+)`, 'i');
-              const match = issueBody.match(regex);
-              if (!match) throw new Error(`❌ Field '${fieldName}' not found in issue body.`);
+            function extractSection(header) {
+              const pattern = new RegExp(`###\\s+${header}\\s+([^#]+)`, 'i');
+              const match = issueBody.match(pattern);
+              if (!match) throw new Error(`❌ Section '${header}' not found in issue body.`);
               return match[1].trim();
             }
 
-            const systemName = extractField("system-name").toLowerCase().replace(/[^a-z0-9-_]/g, '-');
-            const yourName = extractField("your-name");
-            const systemDescription = extractField("system-description");
+            const yourName = extractSection("Your name");
+            const systemName = extractSection("System name").toLowerCase().replace(/[^a-z0-9-_]/g, '-');
+            const systemDescription = extractSection("System description");
 
             core.setOutput("system_name", systemName);
             core.setOutput("your_name", yourName);
