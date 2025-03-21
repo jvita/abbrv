@@ -186,7 +186,7 @@ jobs:
           git checkout -B "${{ steps.check_pr.outputs.branch }}"
           git add -f "static/data/systems/${{ steps.extract_info.outputs.system_name }}/*.json"
           git commit -m "Update validated files for '${{ steps.extract_info.outputs.system_name }}' from issue #${{ github.event.issue.number }}" || echo "No changes to commit"
-          git push --set-upstream origin "${{ steps.check_pr.outputs.branch }}"
+          git push --force --set-upstream origin "${{ steps.check_pr.outputs.branch }}"
 
       - name: Create Pull Request (if not exists)
         id: create_pr
