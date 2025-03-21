@@ -184,7 +184,8 @@ jobs:
         if: success()
         run: |
           git checkout -B "${{ steps.check_pr.outputs.branch }}"
-          git add -f "static/data/systems/${{ steps.extract_info.outputs.system_name }}/*.json"
+          git restore --staged .
+          git add "static/data/systems/${{ steps.extract_info.outputs.system_name }}/*.json"
           git commit -m "Update validated files for '${{ steps.extract_info.outputs.system_name }}' from issue #${{ github.event.issue.number }}" || echo "No changes to commit"
           git push --force --set-upstream origin "${{ steps.check_pr.outputs.branch }}"
 
