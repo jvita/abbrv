@@ -134,15 +134,19 @@ jobs:
             const output = fs.readFileSync('validation_output.txt', 'utf8');
             const issue_number = context.payload.issue.number;
             const statusEmoji = "${{ steps.validate.outputs.exit_code }}" === "0" ? "✅" : "❌";
-            const comment = `### ${statusEmoji} Validation Results\n\n\`\`\`
-${output}
-\`\`\``;
+            const commentBody = [
+              `### ${statusEmoji} Validation Results`,
+              '',
+              '```',
+              output.trim(),
+              '```'
+            ].join('\n');
 
             github.rest.issues.createComment({
               issue_number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: comment
+              body: commentBody
             });
 
       - name: Check for existing PR from this issue
