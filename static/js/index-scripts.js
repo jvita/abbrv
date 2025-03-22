@@ -134,6 +134,67 @@ async function saveSystemToServer(systemName, systemData) {
 //     modal.show();
 // }
 
+function newSystem() {
+    console.log('newSystem')
+
+    // Prompt user for the system name
+    const inputName = prompt("Name for new system:");
+    if (!inputName) return; // Exit if user cancels or enters nothing
+
+    // Initialize new system object
+    const newSystemData = {
+        modes: {},
+        glyphs: {},
+        rules: [],
+        phrases: {}
+    };
+
+    // Set selectedSystem and add to systems
+    selectedSystem = inputName;
+    systems[selectedSystem] = newSystemData;
+
+    // Store in localStorage
+    localStorage.setItem('selectedSystem', selectedSystem);
+    localStorage.setItem('systems', JSON.stringify(systems));
+
+    // Update navbar or UI
+    navbarElement.textContent = `system: ${selectedSystem ? selectedSystem : 'select'}`;
+
+    // Reload the page
+    location.reload();
+}
+
+document.getElementById('newSystem').addEventListener('click', newSystem)
+
+function deleteSystem() {
+    if (!selectedSystem) {
+        alert("No system is currently selected.");
+        return;
+    }
+
+    const confirmDelete = confirm(`Are you sure you want to delete the system "${selectedSystem}"? This cannot be undone.`);
+    if (!confirmDelete) return;
+
+    // Delete the selected system
+    delete systems[selectedSystem];
+
+    // Clear selectedSystem
+    selectedSystem = null;
+
+    // Update localStorage
+    localStorage.setItem('systems', JSON.stringify(systems));
+    localStorage.removeItem('selectedSystem');
+
+    // Update UI
+    navbarElement.textContent = 'system: select';
+
+    // Optionally reload the page
+    location.reload();
+}
+
+document.getElementById('deleteSystem').addEventListener('click', deleteSystem);
+
+
 async function loadSystemData(systemName) {
     const basePath = `./static/data/systems/${systemName}`;
     const requiredFiles = ['glyphs.json', 'modes.json', 'rules.json', 'phrases.json'];
@@ -201,25 +262,28 @@ function addSystemsToDropdown() {
         // const downloadableList = document.getElementById('downloadableList');
 
         // Loop through the systems and create list items
-        data.systems.forEach(systemKey => {
-            const listItem = document.createElement('li');
-            listItem.classList.add('list-group-item', 'list-group-item-action');
-            // listItem.innerText = system;
-            listItem.innerHTML = `<a class="dropdown-item" href="#">${systemKey}</a>`; // Use the key as the link text
+        // data.systems.forEach(systemKey => {
+        // Create a Set to avoid duplicates from merging both sources
+        const allSystemKeys = new Set([
+            ...(data.systems || []),
+            ...Object.keys(systems || {})
+        ]);
 
-            // Add a click event listener to the anchor element
-            listItem.querySelector('a').addEventListener('click', async function (event) {
+        // Loop through the combined set of system keys
+        allSystemKeys.forEach(systemKey => {
+                const listItem = document.createElement('li');
+                listItem.classList.add('list-group-item', 'list-group-item-action');
+                // listItem.innerText = system;
+                listItem.innerHTML = `<a class="dropdown-item" href="#">${systemKey}</a>`; // Use the key as the link text
 
-            // // Add click event listener to each item
-            // listItem.addEventListener('click', function () {
+                // Add a click event listener to the anchor element
+                listItem.querySelector('a').addEventListener('click', async function (event) {
+
+                // Add click event listener to each item
                 if (!(systemKey in systems)) {
                     // Load the selected system's data
                     await loadSystemData(systemKey);
                 }
-
-                // event.preventDefault(); // Prevent default anchor behavior
-                // selectedSystem = systemKey; // Use the key as the selected system
-                // localStorage.setItem('selectedSystem', selectedSystem);
 
                 selectedSystem = systemKey;
                 localStorage.setItem('selectedSystem', selectedSystem);
@@ -234,31 +298,6 @@ function addSystemsToDropdown() {
         });
     })
     .catch(error => console.error('Error loading JSON:', error));
-
-    // // Loop through the dictionary keys
-    // for (const systemKey in systems) {
-    //     if (systems.hasOwnProperty(systemKey)) {
-    //         const listItem = document.createElement('li'); // Create a list item
-    //         listItem.innerHTML = `<a class="dropdown-item" href="#">${systemKey}</a>`; // Use the key as the link text
-
-    //         // Add a click event listener to the anchor element
-    //         listItem.querySelector('a').addEventListener('click', function (event) {
-    //             event.preventDefault(); // Prevent default anchor behavior
-
-    //             // Set the currently selected system
-    //             selectedSystem = systemKey; // Use the key as the selected system
-
-    //             // Store the selected system in local storage or a global variable
-    //             localStorage.setItem('selectedSystem', selectedSystem);
-    //             navbarElement.textContent = `system: ${selectedSystem ? selectedSystem : 'select'}`;
-
-    //             // Refresh the page
-    //             location.reload(); // This will reload the current page
-    //         });
-
-    //         systemsListContainer.appendChild(listItem); // Append the item to the systems list
-    //     }
-    // }
 }
 
 async function loadSystemsAndUpdateDropdown() {
@@ -267,12 +306,6 @@ async function loadSystemsAndUpdateDropdown() {
     const divider = document.getElementById("systemsDivider");
 
     divider.style.display = "block"
-    // if (Object.keys(systems).length > 0) {
-    //     divider.style.display = "block"; // Show divider if systems exist
-    // } else {
-    //     divider.style.display = "none"; // Hide divider if no systems
-    // }
-
 }
 
 // Call the fetch function on page load

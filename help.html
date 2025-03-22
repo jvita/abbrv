@@ -62,7 +62,8 @@
                     <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
                         <div id="systemsList"></div>
                         <li><hr class="dropdown-divider" id="systemsDivider" style="display: none;"></li> <!-- Divider -->
-                        <!-- <li><a class="dropdown-item" href="#" id="downloadSystem">Download</a></li> -->
+                        <li><a class="dropdown-item" href="#" id="newSystem">New</a></li>
+                        <li><a class="dropdown-item" href="#" id="deleteSystem">Delete</a></li>
                         <li><a class="dropdown-item" href="#" id="importSystem">Import</a></li>
                         <li><a class="dropdown-item" href="#" id="exportSystem">Export</a></li>
                         <li><a class="dropdown-item" href="#" id="openUploadModal" data-bs-toggle="modal" data-bs-target="#uploadModal">Upload</a></li>
@@ -103,7 +104,7 @@
                         </ul>
 
                         <p>If you do not have a Github account, contact <a href="https://www.reddit.com/user/jerrshv/">u/jerrshv</a> on Reddit for assistance.</p>
-                        
+
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -181,15 +182,17 @@
     <h3 id="basics">Basics</h3>
     <br>
 
-    Before doing anything, you must first select the system that you want to use:
+    Before doing anything, you must first select the system that you want to use (or select New to create a new one):
 
     <div style="text-align: center; padding: 20px;">
         <img src="static/data/images/system_selector.png" alt="The system selector dropdown menu." />
         <figcaption style="margin-top: 10px;">
             The system selector dropdown menu. Choose a system to begin writing in it on the <a href="#writer">write page</a> or editing it on the <a href="#drafter">draft page</a>. If no system is selected, any edits you make will be for a new system, which you can then export to store locally on your computer. The currently available systems are listed first, followed by the buttons:
             <br>
-            <!-- <b>Download</b>: download an existing system from the server.
-            <br> -->
+            <b>New</b>: start designing a new system.
+            <br>
+            <b>Delete</b>: delete the currently-selected system.
+            <br>
             <b>Import</b>: import an existing system from your local files.
             <br>
             <b>Export</b>: export your current system to a local file.
