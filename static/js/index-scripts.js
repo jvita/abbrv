@@ -135,7 +135,6 @@ async function saveSystemToServer(systemName, systemData) {
 // }
 
 function newSystem() {
-    console.log('newSystem')
 
     // Prompt user for the system name
     const inputName = prompt("Name for new system:");
