@@ -13,7 +13,7 @@ const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
     return new bootstrap.Tooltip(tooltipTriggerEl);
 });
 
-document.getElementById('downloadSystem').addEventListener('click', handleDownloadSystems);
+// document.getElementById('downloadSystem').addEventListener('click', handleDownloadSystems);
 
 function saveSystems() {
     // TODO: this is inefficient; should only update current system
@@ -86,53 +86,53 @@ async function saveSystemToServer(systemName, systemData) {
     }
 }
 
-// Function to handle downloading systems
-function handleDownloadSystems() {
-    event.preventDefault(); // Prevent default anchor behavior
+// // Function to handle downloading systems
+// function handleDownloadSystems() {
+//     // event.preventDefault(); // Prevent default anchor behavior
 
-    // Fetch the JSON file
-    fetch('./static/data/systems/available_systems.json')
-    .then(response => {
-        if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`);
-        }
-        return response.json();
-    })
-    .then(data => {
-        displayDownloadableSystems(data.systems);
-    })
-    .catch(error => console.error('Error loading JSON:', error));
-}
+//     // Fetch the JSON file
+//     fetch('./static/data/systems/available_systems.json')
+//     .then(response => {
+//         if (!response.ok) {
+//         throw new Error(`HTTP error! Status: ${response.status}`);
+//         }
+//         return response.json();
+//     })
+//     .then(data => {
+//         displayDownloadableSystems(data.systems);
+//     })
+//     .catch(error => console.error('Error loading JSON:', error));
+// }
 
-// Function to display the list of downloadable systems in the modal
-function displayDownloadableSystems(availableSystems) {
-    const downloadableList = document.getElementById('downloadableList');
+// // Function to display the list of downloadable systems in the modal
+// function displayDownloadableSystems(availableSystems) {
+//     const downloadableList = document.getElementById('downloadableList');
 
-    // Clear any existing items
-    downloadableList.innerHTML = '';
+//     // Clear any existing items
+//     downloadableList.innerHTML = '';
 
-    // Loop through the systems and create list items
-    availableSystems.forEach(system => {
-        const listItem = document.createElement('li');
-        listItem.classList.add('list-group-item', 'list-group-item-action');
-        listItem.innerText = system;
+//     // Loop through the systems and create list items
+//     availableSystems.forEach(system => {
+//         const listItem = document.createElement('li');
+//         listItem.classList.add('list-group-item', 'list-group-item-action');
+//         listItem.innerText = system;
 
-        // Add click event listener to each item
-        listItem.addEventListener('click', function () {
-            // Load the selected system's data
-            loadSystemData(system);
-            // Close the modal after selection
-            const modal = bootstrap.Modal.getInstance(document.getElementById('downloadSystemsModal'));
-            modal.hide();
-        });
+//         // Add click event listener to each item
+//         listItem.addEventListener('click', function () {
+//             // Load the selected system's data
+//             loadSystemData(system);
+//             // Close the modal after selection
+//             const modal = bootstrap.Modal.getInstance(document.getElementById('downloadSystemsModal'));
+//             modal.hide();
+//         });
 
-        downloadableList.appendChild(listItem)
-    });
+//         downloadableList.appendChild(listItem)
+//     });
 
-    // Show the modal
-    const modal = new bootstrap.Modal(document.getElementById('downloadSystemsModal'));
-    modal.show();
-}
+//     // Show the modal
+//     const modal = new bootstrap.Modal(document.getElementById('downloadSystemsModal'));
+//     modal.show();
+// }
 
 async function loadSystemData(systemName) {
     const basePath = `./static/data/systems/${systemName}`;
@@ -151,11 +151,8 @@ async function loadSystemData(systemName) {
         }
 
         systems[systemName] = systemData;
-        selectedSystem = systemName;
-        localStorage.setItem('selectedSystem', selectedSystem);
-        localStorage.setItem('systems', JSON.stringify(systems));
 
-        location.reload();
+        // location.reload();
     } catch (error) {
         console.error('Error loading system data:', error);
     }
@@ -186,38 +183,82 @@ document.getElementById('exportSystem').addEventListener('click', async function
 function addSystemsToDropdown() {
     // Get the systems list container
     const systemsListContainer = document.getElementById('systemsList');
+    const navbarElement = document.getElementById('navbarDropdown');
 
     // Clear any existing items
     systemsListContainer.innerHTML = '';
 
-    const navbarElement = document.getElementById('navbarDropdown');
+    // Fetch the JSON file
+    fetch('./static/data/systems/available_systems.json')
+    .then(response => {
+        if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        // displayDownloadableSystems(data.systems);
+        // const downloadableList = document.getElementById('downloadableList');
 
-    // Loop through the dictionary keys
-    for (const systemKey in systems) {
-        if (systems.hasOwnProperty(systemKey)) {
-            const listItem = document.createElement('li'); // Create a list item
+        // Loop through the systems and create list items
+        data.systems.forEach(systemKey => {
+            const listItem = document.createElement('li');
+            listItem.classList.add('list-group-item', 'list-group-item-action');
+            // listItem.innerText = system;
             listItem.innerHTML = `<a class="dropdown-item" href="#">${systemKey}</a>`; // Use the key as the link text
 
             // Add a click event listener to the anchor element
-            listItem.querySelector('a').addEventListener('click', function (event) {
-                event.preventDefault(); // Prevent default anchor behavior
+            listItem.querySelector('a').addEventListener('click', async function (event) {
 
-                // Set the currently selected system
-                selectedSystem = systemKey; // Use the key as the selected system
+            // // Add click event listener to each item
+            // listItem.addEventListener('click', function () {
+                if (!(systemKey in systems)) {
+                    // Load the selected system's data
+                    await loadSystemData(systemKey);
+                }
 
-                // Store the selected system in local storage or a global variable
+                // event.preventDefault(); // Prevent default anchor behavior
+                // selectedSystem = systemKey; // Use the key as the selected system
+                // localStorage.setItem('selectedSystem', selectedSystem);
+
+                selectedSystem = systemKey;
                 localStorage.setItem('selectedSystem', selectedSystem);
-
-                localStorage.setItem('selectedSystem', selectedSystem);
+                localStorage.setItem('systems', JSON.stringify(systems));
                 navbarElement.textContent = `system: ${selectedSystem ? selectedSystem : 'select'}`;
 
-                // Refresh the page
                 location.reload(); // This will reload the current page
             });
 
-            systemsListContainer.appendChild(listItem); // Append the item to the systems list
-        }
-    }
+            // downloadableList.appendChild(listItem)
+            systemsListContainer.appendChild(listItem);
+        });
+    })
+    .catch(error => console.error('Error loading JSON:', error));
+
+    // // Loop through the dictionary keys
+    // for (const systemKey in systems) {
+    //     if (systems.hasOwnProperty(systemKey)) {
+    //         const listItem = document.createElement('li'); // Create a list item
+    //         listItem.innerHTML = `<a class="dropdown-item" href="#">${systemKey}</a>`; // Use the key as the link text
+
+    //         // Add a click event listener to the anchor element
+    //         listItem.querySelector('a').addEventListener('click', function (event) {
+    //             event.preventDefault(); // Prevent default anchor behavior
+
+    //             // Set the currently selected system
+    //             selectedSystem = systemKey; // Use the key as the selected system
+
+    //             // Store the selected system in local storage or a global variable
+    //             localStorage.setItem('selectedSystem', selectedSystem);
+    //             navbarElement.textContent = `system: ${selectedSystem ? selectedSystem : 'select'}`;
+
+    //             // Refresh the page
+    //             location.reload(); // This will reload the current page
+    //         });
+
+    //         systemsListContainer.appendChild(listItem); // Append the item to the systems list
+    //     }
+    // }
 }
 
 async function loadSystemsAndUpdateDropdown() {
@@ -225,11 +266,12 @@ async function loadSystemsAndUpdateDropdown() {
 
     const divider = document.getElementById("systemsDivider");
 
-    if (Object.keys(systems).length > 0) {
-        divider.style.display = "block"; // Show divider if systems exist
-    } else {
-        divider.style.display = "none"; // Hide divider if no systems
-    }
+    divider.style.display = "block"
+    // if (Object.keys(systems).length > 0) {
+    //     divider.style.display = "block"; // Show divider if systems exist
+    // } else {
+    //     divider.style.display = "none"; // Hide divider if no systems
+    // }
 
 }
 
