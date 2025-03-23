@@ -165,8 +165,6 @@ function updatePointsField() {
 
 function plotSpline(points, color = colorInk, callback = null) {
 
-    console.log(points)
-
     if (points.length > 1) {
         // Generate the cubic spline in JavaScript
         const t = points.map((_, i) => i / (points.length - 1));

@@ -221,19 +221,56 @@ async function loadSystemData(systemName) {
 
 // Import System
 document.getElementById('importSystem').addEventListener('click', function() {
-    // Logic to handle file upload
     const fileInput = document.createElement('input');
     fileInput.type = 'file';
     fileInput.accept = '.zip';
+
     fileInput.onchange = function(event) {
         const file = event.target.files[0];
-        if (file) {
-            // Logic to extract and handle the zip file
-            console.log("Importing file:", file.name);
-        }
+        if (!file) return;
+
+        const systemName = file.name.replace(/\.zip$/i, '');
+
+        const reader = new FileReader();
+        reader.onload = async function(e) {
+            try {
+                const zip = await JSZip.loadAsync(e.target.result);
+
+                // Helper to load and parse JSON from a file inside the zip
+                const loadJson = async (filename) => {
+                    const fileObj = zip.file(filename);
+                    if (!fileObj) return filename === 'rules.json' ? [] : {};
+                    const content = await fileObj.async('string');
+                    return JSON.parse(content);
+                };
+
+                const [glyphs, modes, rules, phrases] = await Promise.all([
+                    loadJson('glyphs.json'),
+                    loadJson('modes.json'),
+                    loadJson('rules.json'),
+                    loadJson('phrases.json')
+                ]);
+
+                systems[systemName] = { glyphs, modes, rules, phrases };
+                selectedSystem = systemName;
+
+                localStorage.setItem('systems', JSON.stringify(systems));
+                localStorage.setItem('selectedSystem', selectedSystem);
+
+                location.reload();
+
+            } catch (err) {
+                console.error("Failed to import zip file:", err);
+                alert("Error importing system. Please check that the zip contains valid JSON files.");
+            }
+        };
+
+        reader.readAsArrayBuffer(file);
     };
+
     fileInput.click();
 });
+
 
 // Example usage in the export button event listener
 document.getElementById('exportSystem').addEventListener('click', async function() {
