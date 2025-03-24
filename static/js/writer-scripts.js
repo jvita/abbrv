@@ -652,6 +652,10 @@ $(document).ready(function() {
             throw new Error('multiWordTokens must be an array or an object with keys as tokens.');
         }
 
+        if (multiWordTokens.length == 0) {
+            return { text: text, multiWordMatches: matches };
+        }
+
         const escapedTokens = multiWordTokens.map((token) => token.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
         const sortedTokens = escapedTokens.sort((a, b) => b.length - a.length);
         const multiWordPattern = new RegExp(`\\b(${sortedTokens.join('|')})\\b`, 'g');
