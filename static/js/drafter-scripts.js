@@ -107,6 +107,8 @@ function drawGrid() {
 }
 
 function drawPoints(points = null, color = colorSelected) {
+    console.log(drawPoints)
+
     splineCtx.fillStyle = color; // Color for knot points
     if (!points) {
         selectedPoints.forEach(([x, y]) => {
@@ -129,8 +131,7 @@ function updatePointsField() {
     // Paint frozen stuff first; this is only ever a single spline
     if (frozenPoints) {
         frozenPoints.forEach((points) => {
-            const shiftedPoints = points.map(([x, y]) => [(x + gridSize / 2) / gridSize, (y + gridSize / 2) / gridSize]);
-            plotSpline(shiftedPoints, colorDisabled, null);
+            plotSpline(points, colorDisabled, null);
             drawPoints(points, colorDisabled); // Enforce drawing NOW so subsequent drawings will appear above it
         })
     }
@@ -140,24 +141,15 @@ function updatePointsField() {
 
     // Shift all splines prior to the last one
     selectedPoints.forEach((points, splineIndex) => {
-        let normalizedPoints;
-
-        if (splineIndex < selectedPoints.length - 1) {
-            // Shift all splines except the last one so that the second-to-last ends at the origin
-            normalizedPoints = points.map(([x, y]) => [(x + gridSize / 2) / gridSize, (y + gridSize / 2) / gridSize]);
-        } else {
-            // Keep the last spline unshifted
-            normalizedPoints = selectedPoints[splineIndex].map(([x, y]) => [(x + gridSize / 2) / gridSize, (y + gridSize / 2) / gridSize]);
-        }
-
-        if (normalizedPoints.length > 1){
-            plotSpline(normalizedPoints, colorInk, () => {
+        if (points.length > 1){
+            plotSpline(points, colorInk, () => {
                 // Only draw points for the last spline
                 if (splineIndex === selectedPoints.length - 1) {
-                    drawPoints(selectedPoints[splineIndex]);
+                    // drawPoints(selectedPoints[splineIndex]);
+                    drawPoints(points);
                 }
             });
-        } else {
+        } else {  // only a single point, so no need to draw a spline
             drawPoints(points, (splineIndex === selectedPoints.length-1) ? colorSelected : colorInk)
         }
     });
@@ -232,9 +224,15 @@ function plotSpline(points, color = colorInk, callback = null) {
         splineCtx.strokeStyle = color;
         splineCtx.lineCap = 'round';
 
+        console.log(points)
+        console.log(xDense)
+        console.log(yDense)
+
         xDense.forEach((x, index) => {
-            const plotX = x * splineCanvas.width
-            const plotY = (1 - yDense[index]) * splineCanvas.height
+            // convert to canvas units. remember that y is inverted for plotting
+            const plotX = x * cellSize + centerOffset
+            const plotY = centerOffset - yDense[index] * cellSize
+            console.log(plotX, plotY)
             if (index === 0) {
                 splineCtx.moveTo(plotX, plotY);
             } else {
@@ -291,8 +289,6 @@ gridCanvas.addEventListener('contextmenu', (event) => {
     const gridX = Math.round(x / cellSize);
     const gridY = Math.round(y / cellSize);
 
-    const isCtrlPressed = event.ctrlKey;
-
     const pointIndex = selectedPoints[selectedPoints.length-1].findLastIndex(([px, py]) => Math.round(px) === gridX && Math.round(py) === gridY);
     // Ctrl+click: Remove the point if it exists
     if (pointIndex !== -1) {
@@ -327,7 +323,7 @@ function handleGlyphSelect(glyph, glyphPoints = null, append = false) {
         // glyphSplineData is assumed to be relative to the origin (0, 0).
         // since the center of the grid is (0.5, 0.5), glyphSplineData has to be shifted when plotting
         const shiftedNewPoints = newPoints.map(spline =>
-            spline.map(([x, y]) => [((x+0.5) * gridSize  - gridSize / 2), ((y+0.5) * gridSize - gridSize / 2)])
+            spline.map(([x, y]) => [x * gridSize, y * gridSize])
             );
 
         if (!append) {
@@ -513,7 +509,7 @@ saveButton.addEventListener('click', () => {
 
         // points have to be rescaled to [0, 1], then shifted by [0.5, 0.5]
         const newPoints = selectedPoints.map(spline =>
-                spline.map(([x, y]) => [(x + gridSize / 2.) / gridSize - 0.5, (y + gridSize / 2.) / gridSize - 0.5])
+                spline.map(([x, y]) => [x / gridSize, y / gridSize])
                 )
 
         glyphSplineData[newName] = newPoints
@@ -559,7 +555,7 @@ confirmSaveMode.addEventListener('click', () => {
         if (selectedPoints.length) {
 
             const newPoints = selectedPoints.map(spline =>
-                    spline.map(([x, y]) => [(x + gridSize / 2) / gridSize - 0.5, (y + gridSize / 2) / gridSize - 0.5])
+                    spline.map(([x, y]) => [x / gridSize, y / gridSize])
                     )
             modeSplineData[modeName.value.trim()] = {points: newPoints, pattern: modePattern.value.trim()}
             saveSystems()
@@ -590,7 +586,7 @@ savePhrase.addEventListener('click', () => {
     if (selectedPoints.length) {
 
         const newPoints = selectedPoints.map(spline =>
-                spline.map(([x, y]) => [(x + gridSize / 2) / gridSize - 0.5, (y + gridSize / 2) / gridSize - 0.5])
+                spline.map(([x, y]) => [x / gridSize, y / gridSize])
                 )
         phraseSplineData[characterField.value.trim()] = newPoints
         saveSystems()
