@@ -46,13 +46,79 @@ const gridSize = 152;
 const cellSize = 20;
 const centerOffset = Math.floor(gridSize / 2) * cellSize;
 
-function drawGrid() {
-    gridCtx.clearRect(0, 0, gridCanvas.width, gridCanvas.height);
+let zoomLevel = 1;
+const zoomStep = 0.1;
+const minZoom = 750.0 / 3040.0
+const maxZoom = 1;
 
-    // Draw the lighter grid lines
+const zoomWrapper = document.getElementById('zoomWrapper');
+
+function applyZoom() {
+    updateZoomWrapperSize();
+    updatePointsField();
+    centerGridView();
+    clampScrollToCanvas();
+
+    const container = document.querySelector('.grid-container');
+    const wrapper = document.getElementById('zoomWrapper');
+
+    console.log("Scroll container size:", container.clientWidth, container.clientHeight);
+    console.log("Wrapper size:", wrapper.offsetWidth, wrapper.offsetHeight);
+    console.log("Max scrollLeft should be:", wrapper.offsetWidth - container.clientWidth);
+
+}
+
+function updateZoomWrapperSize() {
+    const zoomWrapper = document.getElementById('zoomWrapper');
+    const baseWidth = gridCanvas.width;
+    const baseHeight = gridCanvas.height;
+
+    const scaledWidth = baseWidth * zoomLevel;
+    const scaledHeight = baseHeight * zoomLevel;
+
+    // Resize wrapper only, NOT the canvas itself
+    zoomWrapper.style.width = `${scaledWidth}px`;
+    zoomWrapper.style.height = `${scaledHeight}px`;
+
+    // // ❌ DO NOT scale canvas DOM size — keep it matching internal resolution
+    // [gridCanvas, splineCanvas].forEach(canvas => {
+    //     canvas.style.width = `${baseWidth}px`;  // Match internal resolution
+    //     canvas.style.height = `${baseHeight}px`;
+    // });
+}
+
+function clampScrollToCanvas() {
+    const container = document.querySelector('.grid-container');
+    const wrapper = document.getElementById('zoomWrapper');
+
+    const maxScrollLeft = Math.max(0, wrapper.offsetWidth - container.clientWidth);
+    const maxScrollTop = Math.max(0, wrapper.offsetHeight - container.clientHeight);
+
+    container.scrollLeft = Math.max(0, Math.min(container.scrollLeft, maxScrollLeft));
+    container.scrollTop = Math.max(0, Math.min(container.scrollTop, maxScrollTop));
+}
+
+
+// Mouse wheel for zooming
+document.querySelector('.grid-container').addEventListener('wheel', function (e) {
+    if (e.ctrlKey || e.metaKey) {
+        e.preventDefault();
+        if (e.deltaY < 0) {
+            // Zoom in
+            zoomLevel = Math.min(zoomLevel + zoomStep, maxZoom);
+        } else {
+            // Zoom out
+            zoomLevel = Math.max(zoomLevel - zoomStep, minZoom);
+        }
+        applyZoom();
+    }
+});
+
+function drawGrid() {
+    // Now draw everything in the zoomed context
     gridCtx.beginPath();
-    gridCtx.strokeStyle = 'rgba(0, 0, 0, 0.1)'; // Very light gray
-    gridCtx.lineWidth = 1; // Thin line width
+    gridCtx.strokeStyle = 'rgba(0, 0, 0, 0.1)';
+    gridCtx.lineWidth = 1;
     for (let i = 0; i <= gridSize; i++) {
         gridCtx.moveTo(i * cellSize, 0);
         gridCtx.lineTo(i * cellSize, gridCanvas.height);
@@ -63,68 +129,61 @@ function drawGrid() {
 
     // Draw the darker center lines
     gridCtx.beginPath();
-    gridCtx.strokeStyle = '#000'; // Dark color for center lines
-    gridCtx.lineWidth = 1; // Thinner line width for center lines
+    gridCtx.strokeStyle = '#000';
+    gridCtx.lineWidth = 1;
     const centerX = centerOffset;
     const centerY = centerOffset;
 
-    // Vertical center line
     gridCtx.moveTo(centerX, 0);
     gridCtx.lineTo(centerX, gridCanvas.height);
-
-    // Horizontal center line
     gridCtx.moveTo(0, centerY);
     gridCtx.lineTo(gridCanvas.width, centerY);
-
     gridCtx.stroke();
 
-    // Draw the dark center squares
+    // Draw thicker lines at 120 px intervals
     gridCtx.beginPath();
-    gridCtx.strokeStyle = '#000';
-    gridCtx.lineWidth = 1;
-
-    // Draw horizontal lines at intervals of 240, starting at 80 up to 2980
-    gridCtx.beginPath();  // Start a new path for the horizontal lines
     for (let y = 80; y <= 2980; y += 120) {
-        gridCtx.moveTo(0, y);     // Start point of the line at (0, y)
-        gridCtx.lineTo(3040, y);  // End point of the line at (3040, y)
+        gridCtx.moveTo(0, y);
+        gridCtx.lineTo(3040, y);
     }
-    gridCtx.stroke();  // Apply the stroke to draw all lines
+    gridCtx.stroke();
 
-    // Draw vertical lines at intervals of 240, starting at 80 up to 2980
-    gridCtx.beginPath();  // Start a new path for the horizontal lines
+    gridCtx.beginPath();
     for (let x = 80; x <= 2980; x += 120) {
-        gridCtx.moveTo(x, 0);     // Start point of the line at (0, y)
-        gridCtx.lineTo(x, 3040);  // End point of the line at (3040, y)
+        gridCtx.moveTo(x, 0);
+        gridCtx.lineTo(x, 3040);
     }
-    gridCtx.stroke();  // Apply the stroke to draw all lines
+    gridCtx.stroke();
 
-    // Draw a faint grey circle at (1520, 1520) with a radius of 20
-    gridCtx.moveTo(1520, 1520);     // Start point of the line at (0, y)
-    gridCtx.arc(1520, 1520, 20, 0, 2 * Math.PI);  // Circle at (1520, 1520)
+    // Draw circle
+    gridCtx.beginPath();
+    gridCtx.arc(1520, 1520, 20, 0, 2 * Math.PI);
     gridCtx.lineWidth = 2;
     gridCtx.stroke();
 }
 
 function drawPoints(points = null, color = colorSelected) {
-    console.log(drawPoints)
+    splineCtx.fillStyle = color;
 
-    splineCtx.fillStyle = color; // Color for knot points
-    if (!points) {
-        selectedPoints.forEach(([x, y]) => {
-            splineCtx.beginPath();
-            splineCtx.arc(centerOffset + x * cellSize, centerOffset - y * cellSize, 6, 0, Math.PI * 2);
-            splineCtx.fill();
-        });
-    } else {
-        points.forEach(([x, y]) => {
-            splineCtx.beginPath();
-            splineCtx.arc(centerOffset + x * cellSize, centerOffset - y * cellSize, 6, 0, Math.PI * 2);
-            splineCtx.fill();
-        });
-    }
+    const sourcePoints = points || selectedPoints;
+
+    sourcePoints.forEach(([x, y]) => {
+        splineCtx.beginPath();
+        splineCtx.arc(centerOffset + x * cellSize, centerOffset - y * cellSize, 6, 0, Math.PI * 2);
+        splineCtx.fill();
+    });
 }
+
 function updatePointsField() {
+    // Handle zooming both canvases
+    gridCtx.setTransform(1, 0, 0, 1, 0, 0); // Reset transform
+    gridCtx.clearRect(0, 0, gridCanvas.width, gridCanvas.height);
+    gridCtx.setTransform(zoomLevel, 0, 0, zoomLevel, 0, 0);
+
+    splineCtx.setTransform(1, 0, 0, 1, 0, 0); // Reset transform
+    splineCtx.clearRect(0, 0, splineCanvas.width, splineCanvas.height);
+    splineCtx.setTransform(zoomLevel, 0, 0, zoomLevel, 0, 0); // Apply zoom
+
     drawGrid(); // Redraw the grid
     splineCtx.clearRect(0, 0, splineCanvas.width, splineCanvas.height); // Clear spline visualization
 
@@ -156,9 +215,8 @@ function updatePointsField() {
 }
 
 function plotSpline(points, color = colorInk, callback = null) {
-
     if (points.length > 1) {
-        // Generate the cubic spline in JavaScript
+        // Spline math as-is
         const t = points.map((_, i) => i / (points.length - 1));
 
         const interpolate = (t, values) => {
@@ -220,19 +278,13 @@ function plotSpline(points, color = colorInk, callback = null) {
         const yDense = splinePoints(yCoeffs, 20);
 
         splineCtx.beginPath();
-        splineCtx.lineWidth = 5; // Thicker line width for spline
+        splineCtx.lineWidth = 5;
         splineCtx.strokeStyle = color;
         splineCtx.lineCap = 'round';
 
-        console.log(points)
-        console.log(xDense)
-        console.log(yDense)
-
         xDense.forEach((x, index) => {
-            // convert to canvas units. remember that y is inverted for plotting
-            const plotX = x * cellSize + centerOffset
-            const plotY = centerOffset - yDense[index] * cellSize
-            console.log(plotX, plotY)
+            const plotX = x * cellSize + centerOffset;
+            const plotY = centerOffset - yDense[index] * cellSize;
             if (index === 0) {
                 splineCtx.moveTo(plotX, plotY);
             } else {
@@ -241,35 +293,32 @@ function plotSpline(points, color = colorInk, callback = null) {
         });
 
         splineCtx.stroke();
+    }
 
-        // Redraw the points
-        if (callback) {
-            callback();
-        }
-    }
-    // always draw the points, even if they'll get redrawn later
-    // to avoid no points being drawn if there's only 1
-    if (callback) {
-        callback();
-    }
+    if (callback) callback();
 }
 
 gridCanvas.addEventListener('click', (event) => {
-
     const rect = gridCanvas.getBoundingClientRect();
-    const x = event.clientX - rect.left - centerOffset;
-    const y = rect.top + centerOffset - event.clientY;
+
+    // Adjust for zoom: map from screen coords to canvas coords
+    const canvasX = (event.clientX - rect.left) / zoomLevel;
+    const canvasY = (event.clientY - rect.top) / zoomLevel;
+
+    // Now convert to grid coordinates
+    const x = canvasX - centerOffset;
+    const y = centerOffset - canvasY;
+
     const gridX = Math.round(x / cellSize);
     const gridY = Math.round(y / cellSize);
 
     const isCtrlPressed = event.ctrlKey;
 
-    if ((isCtrlPressed) || (selectedPoints.length === 0)) {  // start a new spline
+    if (isCtrlPressed || selectedPoints.length === 0) {
         selectedPoints.push([[gridX, gridY]]);
-        selectedGlyphs.push('')
-        numPerSelected.push(1)
+        selectedGlyphs.push('');
+        numPerSelected.push(1);
     } else {
-        // add point
         selectedPoints[selectedPoints.length - 1].push([gridX, gridY]);
     }
 
@@ -278,27 +327,38 @@ gridCanvas.addEventListener('click', (event) => {
 });
 
 gridCanvas.addEventListener('contextmenu', (event) => {
-    // For deleting points using right-click
-
-    // Deletes the point
-    event.preventDefault();  // don't open the usual right-click menu
+    event.preventDefault(); // Prevent the default right-click menu
 
     const rect = gridCanvas.getBoundingClientRect();
-    const x = event.clientX - rect.left - centerOffset;
-    const y = rect.top + centerOffset - event.clientY;
+
+    // Convert screen pixels to canvas coordinates with zoom correction
+    const canvasX = (event.clientX - rect.left) / zoomLevel;
+    const canvasY = (event.clientY - rect.top) / zoomLevel;
+
+    // Convert canvas coords to grid coords
+    const x = canvasX - centerOffset;
+    const y = centerOffset - canvasY;
+
     const gridX = Math.round(x / cellSize);
     const gridY = Math.round(y / cellSize);
 
-    const pointIndex = selectedPoints[selectedPoints.length-1].findLastIndex(([px, py]) => Math.round(px) === gridX && Math.round(py) === gridY);
-    // Ctrl+click: Remove the point if it exists
+    const currentSpline = selectedPoints[selectedPoints.length - 1];
+
+    const pointIndex = currentSpline.findLastIndex(
+        ([px, py]) => Math.round(px) === gridX && Math.round(py) === gridY
+    );
+
     if (pointIndex !== -1) {
-        selectedPoints[selectedPoints.length-1].splice(pointIndex, 1);
-        if (selectedPoints[selectedPoints.length-1].length === 0) {
-            selectedPoints.pop()
-            numPerSelected[numPerSelected.length - 1] -= 1
+        currentSpline.splice(pointIndex, 1);
+
+        if (currentSpline.length === 0) {
+            // Remove this spline entirely
+            selectedPoints.pop();
+            numPerSelected[numPerSelected.length - 1] -= 1;
+
             if (numPerSelected[numPerSelected.length - 1] === 0) {
-                numPerSelected.pop()
-                selectedGlyphs.pop()
+                numPerSelected.pop();
+                selectedGlyphs.pop();
             }
         }
     }
@@ -306,7 +366,6 @@ gridCanvas.addEventListener('contextmenu', (event) => {
     updatePointsField();
     refreshButtons();
 });
-
 
 function handleGlyphSelect(glyph, glyphPoints = null, append = false) {
     if (glyph === null) {
@@ -741,13 +800,18 @@ rebuildModesList();
 
 function centerGridView() {
     const gridContainer = document.querySelector('.grid-container');
+
     const containerWidth = gridContainer.clientWidth;
     const containerHeight = gridContainer.clientHeight;
-    const gridWidth = 3040;
-    const gridHeight = 3040;
 
-    gridContainer.scrollLeft = (gridWidth - containerWidth) / 2;
-    gridContainer.scrollTop = (gridHeight - containerHeight) / 2;
+    const gridWidth = gridCanvas.width * zoomLevel;
+    const gridHeight = gridCanvas.height * zoomLevel;
+
+    const centerX = (gridWidth - containerWidth) / 2;
+    const centerY = (gridHeight - containerHeight) / 2;
+
+    gridContainer.scrollLeft = centerX;
+    gridContainer.scrollTop = centerY;
 }
 
 document.addEventListener("DOMContentLoaded", function() {
