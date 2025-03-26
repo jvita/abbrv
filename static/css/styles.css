@@ -122,7 +122,6 @@ html, body {
     position: relative;
     width: 750px;
     height: 750px;
-    /* overflow: scroll; */
     overflow: auto;
     margin-left: 0px;      /* Optional spacing from side panel */
     background-color: #fff; /* Optional for visual clarity */
