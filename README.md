@@ -18,3 +18,5 @@ All contributions are welcome, no matter your skill level as a programmer!
 > Please be courteous to all of the developers. We're doing this voluntarily in our free time. Because of this, development may be slow, sporadic, and completely subject to our whims.
 
 If you encounter a bug or have a feature request, please [open an issue](https://github.com/jvita/abbrv/issues/new) or contact [u/jerrshv](https://www.reddit.com/user/jerrshv/) on Reddit.
+
+For general discussion/help, [join our discord server](https://discord.com/invite/sK8VH4WzYM)
