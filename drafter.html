@@ -211,8 +211,11 @@
             <input type="text" class="form-control" id="modeName" placeholder="Enter mode name">
             </div>
             <div class="mb-3">
-            <label for="modePattern" class="form-label">Pattern</label>
-            <input type="text" class="form-control" id="modePattern" placeholder="Enter mode pattern">
+                <label for="modePattern" class="form-label">Pattern</label>
+                <div class="text-muted" style="font-size: 0.875em; margin-top: -4px; margin-bottom: 6px;">
+                    Note: does not support negative look-behinds.
+                </div>
+                <input type="text" class="form-control" id="modePattern" placeholder="Enter mode pattern">
             </div>
         </div>
         <div class="modal-footer">
