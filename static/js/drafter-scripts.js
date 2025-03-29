@@ -223,110 +223,32 @@ function updatePointsField() {
 
     // Shift all splines prior to the last one
     selectedPoints.forEach((points, splineIndex) => {
-        if (points.length > 1){
-            plotSpline(points, colorInk, () => {
-                // Only draw points for the last spline
-                if (splineIndex === selectedPoints.length - 1) {
-                    // drawPoints(selectedPoints[splineIndex]);
-                    drawPoints(points);
-                }
-            });
-        } else {  // only a single point, so no need to draw a spline
-            drawPoints(points, (splineIndex === selectedPoints.length-1) ? colorSelected : colorInk)
-        }
-    });
-}
+            if (points.length > 1){
+                plotSpline(points, colorInk, () => {
+                    // Only draw points for the last spline
+                    if (splineIndex === selectedPoints.length - 1) {
+                        // drawPoints(selectedPoints[splineIndex]);
+                        drawPoints(points);
+                    }
+                });
+            } else {  // only a single point, so no need to draw a spline
+                drawPoints(points, (splineIndex === selectedPoints.length-1) ? colorSelected : colorInk)
+            }
+        });
+    }
 
 function plotSpline(points, color = colorInk, callback = null) {
     if (points.length > 1) {
 
-        function bezierInterpolate2D_Dense(points, numSamples = 200) {
-            const n = points.length;
-            if (n < 2) return [];
+        // const pointObjects = points.map(([x, y]) => ({ x, y }));
+        // const densePoints = bezierInterpolate2D_Dense(pointObjects);
+        const densePoints = bezierInterpolate2D_Dense(points);
 
-            // Step 1: Parameterize by arc length
-            const t = [0];
-            for (let i = 1; i < n; i++) {
-                const dx = points[i].x - points[i - 1].x;
-                const dy = points[i].y - points[i - 1].y;
-                const dist = Math.hypot(dx, dy);
-                t.push(t[i - 1] + dist);
-            }
-
-            const totalT = t[n - 1];
-            if (totalT === 0) {
-                // All points are the same
-                return Array(numSamples).fill({ ...points[0] });
-            }
-
-            // Step 2: Create dense parameter samples
-            const tDense = Array.from({ length: numSamples }, (_, i) => totalT * (i / (numSamples - 1)));
-
-            // Step 3: Build Bézier segments using Catmull-Rom-to-Bézier
-            const segments = [];
-            for (let i = 0; i < n - 1; i++) {
-                const p0 = points[Math.max(i - 1, 0)];
-                const p1 = points[i];
-                const p2 = points[i + 1];
-                const p3 = points[Math.min(i + 2, n - 1)];
-
-                const cp1 = {
-                    x: p1.x + (p2.x - p0.x) / 6,
-                    y: p1.y + (p2.y - p0.y) / 6,
-                };
-                const cp2 = {
-                    x: p2.x - (p3.x - p1.x) / 6,
-                    y: p2.y - (p3.y - p1.y) / 6,
-                };
-
-                segments.push({
-                    t1: t[i],
-                    t2: t[i + 1],
-                    p0: p1,
-                    cp1,
-                    cp2,
-                    p3: p2,
-                });
-            }
-
-            // Step 4: Evaluate Bézier curve at each dense t
-            return tDense.map((ti) => {
-                // Find which segment ti belongs to
-                let seg = segments.find(s => ti >= s.t1 && ti <= s.t2);
-                if (!seg) {
-                    // Clamp to first or last
-                    if (ti <= t[0]) return { ...points[0] };
-                    if (ti >= t[n - 1]) return { ...points[n - 1] };
-                    seg = segments[segments.length - 1];
-                }
-
-                const { t1, t2, p0, cp1, cp2, p3 } = seg;
-                const denom = t2 - t1;
-                const localT = denom === 0 ? 0 : (ti - t1) / denom;
-                const u = 1 - localT;
-
-                const x =
-                    u ** 3 * p0.x +
-                    3 * u ** 2 * localT * cp1.x +
-                    3 * u * localT ** 2 * cp2.x +
-                    localT ** 3 * p3.x;
-
-                const y =
-                    u ** 3 * p0.y +
-                    3 * u ** 2 * localT * cp1.y +
-                    3 * u * localT ** 2 * cp2.y +
-                    localT ** 3 * p3.y;
-
-                return { x, y };
-            });
-        }
-
-        const pointObjects = points.map(([x, y]) => ({ x, y }));
-        const densePoints = bezierInterpolate2D_Dense(pointObjects);
+        console.log('densePoints', densePoints)
 
         densePoints.forEach((pt, i) => {
-            const plotX = (pt.x * cellSize + centerOffset) * zoomLevel;
-            const plotY = (centerOffset - pt.y * cellSize) * zoomLevel;
+            const plotX = (pt[0] * cellSize + centerOffset) * zoomLevel;
+            const plotY = (centerOffset - pt[1] * cellSize) * zoomLevel;
 
             if (i === 0) {
                 splineCtx.beginPath();
