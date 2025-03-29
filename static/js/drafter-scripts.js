@@ -239,82 +239,108 @@ function updatePointsField() {
 
 function plotSpline(points, color = colorInk, callback = null) {
     if (points.length > 1) {
-        const t = points.map((_, i) => i / (points.length - 1));
 
-        const interpolate = (t, values) => {
-            const n = values.length;
-            const a = values.slice();
-            const b = new Array(n).fill(0);
-            const d = new Array(n).fill(0);
-            const h = new Array(n - 1).fill(0).map((_, i) => t[i + 1] - t[i]);
+        function bezierInterpolate2D_Dense(points, numSamples = 200) {
+            const n = points.length;
+            if (n < 2) return [];
 
-            const alpha = new Array(n - 1).fill(0).map((_, i) => {
-                if (i === 0) return 0;
-                return (3 / h[i] * (a[i + 1] - a[i]) - 3 / h[i - 1] * (a[i] - a[i - 1]));
-            });
-
-            const c = new Array(n).fill(0);
-            const l = new Array(n).fill(1);
-            const mu = new Array(n).fill(0);
-            const z = new Array(n).fill(0);
-
-            for (let i = 1; i < n - 1; i++) {
-                l[i] = 2 * (t[i + 1] - t[i - 1]) - h[i - 1] * mu[i - 1];
-                mu[i] = h[i] / l[i];
-                z[i] = (alpha[i] - h[i - 1] * z[i - 1]) / l[i];
+            // Step 1: Parameterize by arc length
+            const t = [0];
+            for (let i = 1; i < n; i++) {
+                const dx = points[i].x - points[i - 1].x;
+                const dy = points[i].y - points[i - 1].y;
+                const dist = Math.hypot(dx, dy);
+                t.push(t[i - 1] + dist);
             }
 
-            for (let j = n - 2; j >= 0; j--) {
-                c[j] = z[j] - mu[j] * c[j + 1];
-                b[j] = (a[j + 1] - a[j]) / h[j] - h[j] * (c[j + 1] + 2 * c[j]) / 3;
-                d[j] = (c[j + 1] - c[j]) / (3 * h[j]);
+            const totalT = t[n - 1];
+            if (totalT === 0) {
+                // All points are the same
+                return Array(numSamples).fill({ ...points[0] });
             }
 
-            return { a, b, c, d, t };
-        };
+            // Step 2: Create dense parameter samples
+            const tDense = Array.from({ length: numSamples }, (_, i) => totalT * (i / (numSamples - 1)));
 
-        const splinePoints = (coeffs, numPoints) => {
-            const { a, b, c, d, t } = coeffs;
-            const result = [];
+            // Step 3: Build Bézier segments using Catmull-Rom-to-Bézier
+            const segments = [];
+            for (let i = 0; i < n - 1; i++) {
+                const p0 = points[Math.max(i - 1, 0)];
+                const p1 = points[i];
+                const p2 = points[i + 1];
+                const p3 = points[Math.min(i + 2, n - 1)];
 
-            for (let i = 0; i < t.length - 1; i++) {
-                const step = (t[i + 1] - t[i]) / numPoints;
-                for (let j = 0; j <= numPoints; j++) {
-                    const x = t[i] + j * step;
-                    const dx = x - t[i];
-                    const value = a[i] + b[i] * dx + c[i] * dx ** 2 + d[i] * dx ** 3;
-                    result.push(value);
+                const cp1 = {
+                    x: p1.x + (p2.x - p0.x) / 6,
+                    y: p1.y + (p2.y - p0.y) / 6,
+                };
+                const cp2 = {
+                    x: p2.x - (p3.x - p1.x) / 6,
+                    y: p2.y - (p3.y - p1.y) / 6,
+                };
+
+                segments.push({
+                    t1: t[i],
+                    t2: t[i + 1],
+                    p0: p1,
+                    cp1,
+                    cp2,
+                    p3: p2,
+                });
+            }
+
+            // Step 4: Evaluate Bézier curve at each dense t
+            return tDense.map((ti) => {
+                // Find which segment ti belongs to
+                let seg = segments.find(s => ti >= s.t1 && ti <= s.t2);
+                if (!seg) {
+                    // Clamp to first or last
+                    if (ti <= t[0]) return { ...points[0] };
+                    if (ti >= t[n - 1]) return { ...points[n - 1] };
+                    seg = segments[segments.length - 1];
                 }
-            }
 
-            return result;
-        };
+                const { t1, t2, p0, cp1, cp2, p3 } = seg;
+                const denom = t2 - t1;
+                const localT = denom === 0 ? 0 : (ti - t1) / denom;
+                const u = 1 - localT;
 
-        const x = points.map(p => p[0]);
-        const y = points.map(p => p[1]);
+                const x =
+                    u ** 3 * p0.x +
+                    3 * u ** 2 * localT * cp1.x +
+                    3 * u * localT ** 2 * cp2.x +
+                    localT ** 3 * p3.x;
 
-        const xCoeffs = interpolate(t, x);
-        const yCoeffs = interpolate(t, y);
+                const y =
+                    u ** 3 * p0.y +
+                    3 * u ** 2 * localT * cp1.y +
+                    3 * u * localT ** 2 * cp2.y +
+                    localT ** 3 * p3.y;
 
-        const xDense = splinePoints(xCoeffs, 30);
-        const yDense = splinePoints(yCoeffs, 30);
+                return { x, y };
+            });
+        }
 
-        splineCtx.beginPath();
-        splineCtx.lineWidth = 5 * zoomLevel;
-        splineCtx.strokeStyle = color;
-        splineCtx.lineCap = 'round';
+        const pointObjects = points.map(([x, y]) => ({ x, y }));
+        const densePoints = bezierInterpolate2D_Dense(pointObjects);
 
-        xDense.forEach((x, index) => {
-            const plotX = (x * cellSize + centerOffset) * zoomLevel;
-            const plotY = (centerOffset - yDense[index] * cellSize) * zoomLevel;
-            if (index === 0) {
+        densePoints.forEach((pt, i) => {
+            const plotX = (pt.x * cellSize + centerOffset) * zoomLevel;
+            const plotY = (centerOffset - pt.y * cellSize) * zoomLevel;
+
+            if (i === 0) {
+                splineCtx.beginPath();
+                splineCtx.lineWidth = 5 * zoomLevel;
+                splineCtx.strokeStyle = color;
+                splineCtx.lineCap = 'round';
+
                 splineCtx.moveTo(plotX, plotY);
             } else {
                 splineCtx.lineTo(plotX, plotY);
             }
         });
-
         splineCtx.stroke();
+
     }
 
     if (callback) callback();
