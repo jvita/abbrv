@@ -268,9 +268,7 @@ $(document).ready(function() {
             lowestPoint = Math.min(lowestPoint, lowestPointCurrentLine + currentVerticalOffset)
 
             splinesToPlot.forEach(points => {
-                // multiply by 6 to handle numerical issues with small shapes
-                const adjustedPoints = points.map(([x, y]) => [x, y + currentVerticalOffset]);
-                plotSpline(adjustedPoints, showDots, showKnots);
+                plotSpline(points, showDots, showKnots, currentVerticalOffset);
             });
 
             linePositions.push(currentVerticalOffset);
@@ -283,42 +281,52 @@ $(document).ready(function() {
 
         finalizePlot(leftMostPoint, rightMostPoint, highestPoint, lowestPoint, lineSpacing, spaceBetweenWords);
     }
-
-    function plotSpline(points, showDots = true, showKnots = false) {
+    
+    function plotSpline(points, showDots = true, showKnots = false, verticalOffset = 0) {
         /**
-         * Plots individual splines.
-         * @param {Array} points - Array of points where each point is [x, y].
-         * @param {boolean} showDots - Whether to show dots (only if a single unique point exists).
-         * @param {boolean} showKnots - Whether to show knots.
+         * Plots individual splines, applying vertical offset only during rendering.
+         * 
+         * @param {Array<[number, number]>} points - Unmodified spline points
+         * @param {boolean} showDots - Whether to show single-point dots
+         * @param {boolean} showKnots - Whether to show knot markers
+         * @param {number} verticalOffset - Amount to vertically shift curve when drawing
          */
 
         const svgElement = document.getElementById('output');
 
         if (points.length === 1 && showDots) {
-            const key = `${points[0][0]},${points[0][1]}`;
-            // if ((!plottedPoints.has(key)) && (plottedPoints.size > 0)) {
+            const [x, y] = points[0];
+            const shiftedY = y + verticalOffset;
+            const key = `${x},${shiftedY}`;
             if (!plottedPoints.has(key)) {
                 const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-                circle.setAttribute('cx', points[0][0]);
-                circle.setAttribute('cy', points[0][1]);
+                circle.setAttribute('cx', x);
+                circle.setAttribute('cy', shiftedY);
                 circle.setAttribute('r', 0.01 * scalingFactor);
                 circle.setAttribute('fill', 'black');
                 svgElement.appendChild(circle);
                 plottedPoints.add(key);
             }
         } else {
+            const bezierSegments = computeBezierThroughPoints(points);
+
+            // Track used points (after shifting) to avoid plotting duplicates
             points.forEach(([px, py]) => {
-                const key = `${px},${py}`;
+                const key = `${px},${py + verticalOffset}`;
                 if (!plottedPoints.has(key)) {
                     plottedPoints.add(key);
                 }
             });
 
-            const { x, y } = interpolatePoints(points);
-            const pathData = x.map((xi, i) => `${i === 0 ? 'M' : 'L'} ${xi} ${y[i]}`).join(' ');
+            let pathData = '';
+            bezierSegments.forEach(({ p0, cp1, cp2, p1 }, i) => {
+                const moveTo = (pt) => `${pt[0]} ${pt[1] + verticalOffset}`;
+                if (i === 0) pathData += `M ${moveTo(p0)} `;
+                pathData += `C ${moveTo(cp1)}, ${moveTo(cp2)}, ${moveTo(p1)} `;
+            });
 
             const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-            path.setAttribute('d', pathData);
+            path.setAttribute('d', pathData.trim());
             path.setAttribute('stroke', 'black');
             path.setAttribute('stroke-width', 0.01 * scalingFactor);
             path.setAttribute('fill', 'none');
@@ -329,15 +337,15 @@ $(document).ready(function() {
         if (showKnots) {
             points.forEach(([px, py]) => {
                 const knot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-
                 knot.setAttribute('cx', px);
-                knot.setAttribute('cy', py);
+                knot.setAttribute('cy', py + verticalOffset);
                 knot.setAttribute('r', 0.01 * scalingFactor);
                 knot.setAttribute('fill', 'red');
                 svgElement.appendChild(knot);
             });
         }
     }
+
 
     function interpolatePoints(points, numPoints = 100) {
         /**

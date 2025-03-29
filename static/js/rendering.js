@@ -17,43 +17,142 @@ function computeArcLengthParam(points) {
     return t;
 }
 
+// /**
+//  * Converts a sequence of 2D points into a set of cubic Bézier segments using
+//  * Catmull-Rom spline logic to estimate smooth control points.
+//  *
+//  * Each segment is an object containing the Bézier control points and the
+//  * corresponding parameter interval [t1, t2].
+//  *
+//  * @param {Array<[number, number]>} points - Input points [x, y]
+//  * @param {Array<number>} t - Corresponding parameter values (e.g., from arc length)
+//  * @returns {Array<Object>} - Array of Bézier segment objects with p0, cp1, cp2, p3, t1, t2
+//  */
+// function catmullRomToBezier(points, t) {
+//     const segments = [];
+
+//     for (let i = 0; i < points.length - 1; i++) {
+//         const p0 = points[Math.max(i - 1, 0)];
+//         const p1 = points[i];
+//         const p2 = points[i + 1];
+//         const p3 = points[Math.min(i + 2, points.length - 1)];
+
+//         // Control points from Catmull-Rom to Bézier formula
+//         const cp1 = [
+//             p1[0] + (p2[0] - p0[0]) / 6,
+//             p1[1] + (p2[1] - p0[1]) / 6
+//         ];
+//         const cp2 = [
+//             p2[0] - (p3[0] - p1[0]) / 6,
+//             p2[1] - (p3[1] - p1[1]) / 6
+//         ];
+
+//         segments.push({
+//             t1: t[i],
+//             t2: t[i + 1],
+//             p0: p1,
+//             cp1,
+//             cp2,
+//             p3: p2
+//         });
+//     }
+
+//     return segments;
+// }
+
 /**
- * Converts a sequence of 2D points into a set of cubic Bézier segments using
- * Catmull-Rom spline logic to estimate smooth control points.
+ * Generates cubic Bézier segments that interpolate the given points
+ * with C¹ continuity (matching tangents).
  *
- * Each segment is an object containing the Bézier control points and the
- * corresponding parameter interval [t1, t2].
+ * Pure function: does not mutate `points` or return shared references.
  *
- * @param {Array<[number, number]>} points - Input points [x, y]
- * @param {Array<number>} t - Corresponding parameter values (e.g., from arc length)
- * @returns {Array<Object>} - Array of Bézier segment objects with p0, cp1, cp2, p3, t1, t2
+ * @param {Array<[number, number]>} points - Array of anchor points
+ * @returns {Array<{ p0, cp1, cp2, p1 }>} - Array of cubic Bézier segments
  */
-function catmullRomToBezier(points, t) {
-    const segments = [];
+function computeBezierThroughPoints(points) {
+    const n = points.length - 1;
+    if (n < 1) return [];
 
-    for (let i = 0; i < points.length - 1; i++) {
-        const p0 = points[Math.max(i - 1, 0)];
-        const p1 = points[i];
-        const p2 = points[i + 1];
-        const p3 = points[Math.min(i + 2, points.length - 1)];
-
-        // Control points from Catmull-Rom to Bézier formula
+    // ✅ Special case for exactly two points — create a straight cubic Bézier
+    if (n === 1) {
+        const [p0, p1] = points;
         const cp1 = [
-            p1[0] + (p2[0] - p0[0]) / 6,
-            p1[1] + (p2[1] - p0[1]) / 6
+            p0[0] + (p1[0] - p0[0]) / 3,
+            p0[1] + (p1[1] - p0[1]) / 3,
         ];
         const cp2 = [
-            p2[0] - (p3[0] - p1[0]) / 6,
-            p2[1] - (p3[1] - p1[1]) / 6
+            p0[0] + 2 * (p1[0] - p0[0]) / 3,
+            p0[1] + 2 * (p1[1] - p0[1]) / 3,
         ];
+        return [{ p0, cp1, cp2, p1 }];
+    }
+
+    const a = new Array(n).fill(0);
+    const b = new Array(n).fill(0);
+    const c = new Array(n).fill(0);
+    const rx = new Array(n).fill(0);
+    const ry = new Array(n).fill(0);
+
+    // Set up the tridiagonal system
+    for (let i = 0; i < n; i++) {
+        const [x0, y0] = points[i];
+        const [x1, y1] = points[i + 1];
+
+        if (i === 0) {
+            a[i] = 0;
+            b[i] = 2;
+            c[i] = 1;
+            rx[i] = x0 + 2 * x1;
+            ry[i] = y0 + 2 * y1;
+        } else if (i === n - 1) {
+            a[i] = 2;
+            b[i] = 7;
+            c[i] = 0;
+            rx[i] = 8 * x0 + x1;
+            ry[i] = 8 * y0 + y1;
+        } else {
+            a[i] = 1;
+            b[i] = 4;
+            c[i] = 1;
+            rx[i] = 4 * x0 + 2 * x1;
+            ry[i] = 4 * y0 + 2 * y1;
+        }
+    }
+
+    // Solve the tridiagonal system using Thomas algorithm
+    for (let i = 1; i < n; i++) {
+        const m = a[i] / b[i - 1];
+        b[i] -= m * c[i - 1];
+        rx[i] -= m * rx[i - 1];
+        ry[i] -= m * ry[i - 1];
+    }
+
+    const cp1x = new Array(n);
+    const cp1y = new Array(n);
+    cp1x[n - 1] = rx[n - 1] / b[n - 1];
+    cp1y[n - 1] = ry[n - 1] / b[n - 1];
+
+    for (let i = n - 2; i >= 0; i--) {
+        cp1x[i] = (rx[i] - c[i] * cp1x[i + 1]) / b[i];
+        cp1y[i] = (ry[i] - c[i] * cp1y[i + 1]) / b[i];
+    }
+
+    // Build segments with copies of input values
+    const segments = [];
+    for (let i = 0; i < n; i++) {
+        const [x0, y0] = points[i];
+        const [x1, y1] = points[i + 1];
+
+        const cp1 = [cp1x[i], cp1y[i]];
+        const cp2 = i < n - 1
+            ? [2 * x1 - cp1x[i + 1], 2 * y1 - cp1y[i + 1]]
+            : [(x1 + cp1x[i]) / 2, (y1 + cp1y[i]) / 2];
 
         segments.push({
-            t1: t[i],
-            t2: t[i + 1],
-            p0: p1,
+            p0: [x0, y0],
             cp1,
             cp2,
-            p3: p2
+            p1: [x1, y1]
         });
     }
 
@@ -139,7 +238,8 @@ function bezierInterpolate2D_Dense(points, numSamples = 200) {
     }
 
     const tDense = Array.from({ length: numSamples }, (_, i) => totalLength * i / (numSamples - 1));
-    const segments = catmullRomToBezier(points, t);
+    // const segments = catmullRomToBezier(points, t);
+    const segments = computeBezierThroughPoints(points);
     const densePoints = sampleBezierSegments(segments, tDense);
 
     return densePoints;

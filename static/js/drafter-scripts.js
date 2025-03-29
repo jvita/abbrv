@@ -56,20 +56,6 @@ const maxZoom = 1;
 
 const zoomWrapper = document.getElementById('zoomWrapper');
 
-// function applyZoom() {
-//     updateZoomWrapperSize();
-//     updatePointsField();
-//     centerGridView();
-//     clampScrollToCanvas();
-
-//     const wrapper = document.getElementById('zoomWrapper');
-
-//     console.log("Scroll container size:", container.clientWidth, container.clientHeight);
-//     console.log("Wrapper size:", wrapper.offsetWidth, wrapper.offsetHeight);
-//     console.log("Max scrollLeft should be:", wrapper.offsetWidth - container.clientWidth);
-
-// }
-
 function resizeCanvases() {
   const scaledWidth = baseWidth * zoomLevel;
   const scaledHeight = baseHeight * zoomLevel;
@@ -239,29 +225,63 @@ function updatePointsField() {
 
 function plotSpline(points, color = colorInk, callback = null) {
     if (points.length > 1) {
+        // Step 1: Compute smooth Bézier segments
+        const bezierSegments = computeBezierThroughPoints(points);
 
-        // const pointObjects = points.map(([x, y]) => ({ x, y }));
-        // const densePoints = bezierInterpolate2D_Dense(pointObjects);
-        const densePoints = bezierInterpolate2D_Dense(points);
+        // Step 2: Start path
+        splineCtx.beginPath();
+        splineCtx.lineWidth = 5 * zoomLevel;
+        splineCtx.strokeStyle = color;
+        splineCtx.lineCap = 'round';
 
-        console.log('densePoints', densePoints)
+        // Step 3: Move to start point
+        const [startX, startY] = bezierSegments[0].p0;
+        splineCtx.moveTo(
+            (startX * cellSize + centerOffset) * zoomLevel,
+            (centerOffset - startY * cellSize) * zoomLevel
+        );
 
-        densePoints.forEach((pt, i) => {
-            const plotX = (pt[0] * cellSize + centerOffset) * zoomLevel;
-            const plotY = (centerOffset - pt[1] * cellSize) * zoomLevel;
+        // Step 4: Draw Bézier segments
+        for (const { cp1, cp2, p1 } of bezierSegments) {
+            const [cp1x, cp1y] = cp1;
+            const [cp2x, cp2y] = cp2;
+            const [p1x, p1y] = p1;
 
-            if (i === 0) {
-                splineCtx.beginPath();
-                splineCtx.lineWidth = 5 * zoomLevel;
-                splineCtx.strokeStyle = color;
-                splineCtx.lineCap = 'round';
+            splineCtx.bezierCurveTo(
+                (cp1x * cellSize + centerOffset) * zoomLevel,
+                (centerOffset - cp1y * cellSize) * zoomLevel,
+                (cp2x * cellSize + centerOffset) * zoomLevel,
+                (centerOffset - cp2y * cellSize) * zoomLevel,
+                (p1x * cellSize + centerOffset) * zoomLevel,
+                (centerOffset - p1y * cellSize) * zoomLevel
+            );
+        }
 
-                splineCtx.moveTo(plotX, plotY);
-            } else {
-                splineCtx.lineTo(plotX, plotY);
-            }
-        });
+        // Step 5: Stroke the full curve
         splineCtx.stroke();
+
+        // // const pointObjects = points.map(([x, y]) => ({ x, y }));
+        // // const densePoints = bezierInterpolate2D_Dense(pointObjects);
+        // const densePoints = bezierInterpolate2D_Dense(points);
+
+        // console.log('densePoints', densePoints)
+
+        // densePoints.forEach((pt, i) => {
+        //     const plotX = (pt[0] * cellSize + centerOffset) * zoomLevel;
+        //     const plotY = (centerOffset - pt[1] * cellSize) * zoomLevel;
+
+        //     if (i === 0) {
+        //         splineCtx.beginPath();
+        //         splineCtx.lineWidth = 5 * zoomLevel;
+        //         splineCtx.strokeStyle = color;
+        //         splineCtx.lineCap = 'round';
+
+        //         splineCtx.moveTo(plotX, plotY);
+        //     } else {
+        //         splineCtx.lineTo(plotX, plotY);
+        //     }
+        // });
+        // splineCtx.stroke();
 
     }
 
