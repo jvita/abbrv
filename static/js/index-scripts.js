@@ -410,10 +410,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
     loadSystemsAndUpdateDropdown();
 
-    document.getElementById('exportZip').addEventListener('click', async function() {
-        await saveSystemToServer(selectedSystem, systems[selectedSystem])
-    });
-
     document.getElementById('newSystem').addEventListener('click', newSystem)
     document.getElementById('deleteSystem').addEventListener('click', deleteSystem);
     document.getElementById('importSystem').addEventListener('click', importSystem);
@@ -453,16 +449,34 @@ document.addEventListener('DOMContentLoaded', function () {
     // Event listeners for export options
     document.getElementById('exportOpenType').addEventListener('click', function(e) {
         e.preventDefault();
-        // Add your OpenType export logic here
-        console.log('Export as OpenType');
+        exportToOpenType(selectedSystem, systems[selectedSystem].glyphs);
+
     });
     
-    document.getElementById('exportZip').addEventListener('click', function(e) {
+    document.getElementById('exportZip').addEventListener('click', async function() {
         e.preventDefault();
-        // Add your Zip export logic here
-        console.log('Export as Zip');
+        await saveSystemToServer(selectedSystem, systems[selectedSystem])
     });
+
 });
+
+function exportToOpenType(systemName, glyphs) {
+    const processed = preprocessGlyphSplines(glyphs);
+    const jsonString = JSON.stringify(processed, null, 2);
+
+    const safeName = systemName.replace(/[^a-z0-9_-]/gi, '_').toLowerCase();
+    const filename = `bezier_glyphs_${safeName}.json`;
+
+    const blob = new Blob([jsonString], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+
+    URL.revokeObjectURL(url);
+}
 
 $(document).ready(function() {
     $('.navbar-toggler').click(function() {

@@ -17,49 +17,6 @@ function computeArcLengthParam(points) {
     return t;
 }
 
-// /**
-//  * Converts a sequence of 2D points into a set of cubic Bézier segments using
-//  * Catmull-Rom spline logic to estimate smooth control points.
-//  *
-//  * Each segment is an object containing the Bézier control points and the
-//  * corresponding parameter interval [t1, t2].
-//  *
-//  * @param {Array<[number, number]>} points - Input points [x, y]
-//  * @param {Array<number>} t - Corresponding parameter values (e.g., from arc length)
-//  * @returns {Array<Object>} - Array of Bézier segment objects with p0, cp1, cp2, p3, t1, t2
-//  */
-// function catmullRomToBezier(points, t) {
-//     const segments = [];
-
-//     for (let i = 0; i < points.length - 1; i++) {
-//         const p0 = points[Math.max(i - 1, 0)];
-//         const p1 = points[i];
-//         const p2 = points[i + 1];
-//         const p3 = points[Math.min(i + 2, points.length - 1)];
-
-//         // Control points from Catmull-Rom to Bézier formula
-//         const cp1 = [
-//             p1[0] + (p2[0] - p0[0]) / 6,
-//             p1[1] + (p2[1] - p0[1]) / 6
-//         ];
-//         const cp2 = [
-//             p2[0] - (p3[0] - p1[0]) / 6,
-//             p2[1] - (p3[1] - p1[1]) / 6
-//         ];
-
-//         segments.push({
-//             t1: t[i],
-//             t2: t[i + 1],
-//             p0: p1,
-//             cp1,
-//             cp2,
-//             p3: p2
-//         });
-//     }
-
-//     return segments;
-// }
-
 /**
  * Generates cubic Bézier segments that interpolate the given points
  * with C¹ continuity (matching tangents).
@@ -243,4 +200,21 @@ function bezierInterpolate2D_Dense(points, numSamples = 200) {
     const densePoints = sampleBezierSegments(segments, tDense);
 
     return densePoints;
+}
+
+/**
+ * Preprocesses the raw spline glyph data into cubic Bézier segments
+ * that can be exported to JSON and consumed by the font builder.
+ *
+ * @param {Object<string, Array<Array<[number, number]>>>} glyphs
+ * @returns {Object<string, Array<Array<{p0, cp1, cp2, p1}>>>}
+ */
+function preprocessGlyphSplines(glyphs) {
+    const processed = {};
+
+    for (const [glyphName, splines] of Object.entries(glyphs)) {
+        processed[glyphName] = splines.map(points => computeBezierThroughPoints(points));
+    }
+
+    return processed;
 }
