@@ -187,11 +187,9 @@ function updatePointsField() {
     // Handle zooming both canvases
     gridCtx.setTransform(1, 0, 0, 1, 0, 0); // Reset transform
     gridCtx.clearRect(0, 0, gridCanvas.width, gridCanvas.height);
-    // gridCtx.setTransform(zoomLevel, 0, 0, zoomLevel, 0, 0);
 
     splineCtx.setTransform(1, 0, 0, 1, 0, 0); // Reset transform
     splineCtx.clearRect(0, 0, splineCanvas.width, splineCanvas.height);
-    // splineCtx.setTransform(zoomLevel, 0, 0, zoomLevel, 0, 0); // Apply zoom
 
     drawGrid(); // Redraw the grid
     splineCtx.clearRect(0, 0, splineCanvas.width, splineCanvas.height); // Clear spline visualization
@@ -213,7 +211,6 @@ function updatePointsField() {
                 plotSpline(points, colorInk, () => {
                     // Only draw points for the last spline
                     if (splineIndex === selectedPoints.length - 1) {
-                        // drawPoints(selectedPoints[splineIndex]);
                         drawPoints(points);
                     }
                 });
@@ -259,30 +256,6 @@ function plotSpline(points, color = colorInk, callback = null) {
 
         // Step 5: Stroke the full curve
         splineCtx.stroke();
-
-        // // const pointObjects = points.map(([x, y]) => ({ x, y }));
-        // // const densePoints = bezierInterpolate2D_Dense(pointObjects);
-        // const densePoints = bezierInterpolate2D_Dense(points);
-
-        // console.log('densePoints', densePoints)
-
-        // densePoints.forEach((pt, i) => {
-        //     const plotX = (pt[0] * cellSize + centerOffset) * zoomLevel;
-        //     const plotY = (centerOffset - pt[1] * cellSize) * zoomLevel;
-
-        //     if (i === 0) {
-        //         splineCtx.beginPath();
-        //         splineCtx.lineWidth = 5 * zoomLevel;
-        //         splineCtx.strokeStyle = color;
-        //         splineCtx.lineCap = 'round';
-
-        //         splineCtx.moveTo(plotX, plotY);
-        //     } else {
-        //         splineCtx.lineTo(plotX, plotY);
-        //     }
-        // });
-        // splineCtx.stroke();
-
     }
 
     if (callback) callback();
