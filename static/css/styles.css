@@ -345,24 +345,6 @@ img {
     text-decoration: none;
 }
 
-/* .floating-button {
-    position: absolute;
-    bottom: 10px;
-    right: 10px;
-    z-index: 100;
-    background-color: #007bff;
-    color: white;
-    border: none;
-    border-radius: 50%;
-    padding: 12px;
-    cursor: pointer;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
-}
-
-.floating-button:hover {
-    background-color: #0056b3;
-} */
-
 .floating-button {
     position: absolute;
     bottom: 20px;
@@ -376,4 +358,57 @@ img {
     justify-content: center;
     font-size: 1.25rem;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* Animation container */
+.animation-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 50vh;
+    margin-top: 2rem;
+    overflow: hidden;
+    flex-direction: column
+}
+
+/* Text styling with Arial */
+.brand-text {
+    font-family: Arial, sans-serif;
+    font-size: 5rem;
+    font-weight: bold;
+    color: #333;
+    position: relative;
+    display: inline-block;
+}
+
+/* Animation for individual letters */
+.letter {
+    display: inline-block;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.3s ease;
+}
+
+/* Horizontal line beneath text that appears with animation */
+.underline {
+    position: absolute;
+    height: 3px;
+    background-color: #333;
+    bottom: 5px;
+    width: 0;
+    left: 0;
+    transition: width 2.0s ease;
+}
+
+/* New Text Block Styling */
+.text-block {
+    font-family: Arial, sans-serif;
+    font-size: 1.5rem;
+    font-weight: normal;
+    color: #333;
+    text-align: center;
+    margin-top: 2rem;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 1.0s ease;
 }

@@ -4,8 +4,8 @@ let systems = systemsJson ? JSON.parse(systemsJson) : {}
 const selectedSystemJson = localStorage.getItem('selectedSystem')
 let selectedSystem = selectedSystemJson ? selectedSystemJson : null
 
-const navbarElement = document.getElementById('navbarDropdown');
-navbarElement.textContent = `system: ${selectedSystem ? selectedSystem : 'select'}`;
+const navbarElement = document.getElementById('navbarDropdown');  // may be null at first
+// navbarElement.textContent = `system: ${selectedSystem ? selectedSystem : 'select'}`;
 
 // Initialize Bootstrap tooltips
 const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
@@ -86,54 +86,6 @@ async function saveSystemToServer(systemName, systemData) {
     }
 }
 
-// // Function to handle downloading systems
-// function handleDownloadSystems() {
-//     // event.preventDefault(); // Prevent default anchor behavior
-
-//     // Fetch the JSON file
-//     fetch('./static/data/systems/available_systems.json')
-//     .then(response => {
-//         if (!response.ok) {
-//         throw new Error(`HTTP error! Status: ${response.status}`);
-//         }
-//         return response.json();
-//     })
-//     .then(data => {
-//         displayDownloadableSystems(data.systems);
-//     })
-//     .catch(error => console.error('Error loading JSON:', error));
-// }
-
-// // Function to display the list of downloadable systems in the modal
-// function displayDownloadableSystems(availableSystems) {
-//     const downloadableList = document.getElementById('downloadableList');
-
-//     // Clear any existing items
-//     downloadableList.innerHTML = '';
-
-//     // Loop through the systems and create list items
-//     availableSystems.forEach(system => {
-//         const listItem = document.createElement('li');
-//         listItem.classList.add('list-group-item', 'list-group-item-action');
-//         listItem.innerText = system;
-
-//         // Add click event listener to each item
-//         listItem.addEventListener('click', function () {
-//             // Load the selected system's data
-//             loadSystemData(system);
-//             // Close the modal after selection
-//             const modal = bootstrap.Modal.getInstance(document.getElementById('downloadSystemsModal'));
-//             modal.hide();
-//         });
-
-//         downloadableList.appendChild(listItem)
-//     });
-
-//     // Show the modal
-//     const modal = new bootstrap.Modal(document.getElementById('downloadSystemsModal'));
-//     modal.show();
-// }
-
 function newSystem() {
 
     // Prompt user for the system name
@@ -163,7 +115,6 @@ function newSystem() {
     location.reload();
 }
 
-document.getElementById('newSystem').addEventListener('click', newSystem)
 
 function deleteSystem() {
     if (!selectedSystem) {
@@ -191,7 +142,6 @@ function deleteSystem() {
     location.reload();
 }
 
-document.getElementById('deleteSystem').addEventListener('click', deleteSystem);
 
 
 async function loadSystemData(systemName) {
@@ -218,9 +168,7 @@ async function loadSystemData(systemName) {
     }
 }
 
-
-// Import System
-document.getElementById('importSystem').addEventListener('click', function() {
+function importSystem() {
     const fileInput = document.createElement('input');
     fileInput.type = 'file';
     fileInput.accept = '.zip';
@@ -269,14 +217,9 @@ document.getElementById('importSystem').addEventListener('click', function() {
     };
 
     fileInput.click();
-});
-
+}
 
 // Example usage in the export button event listener
-document.getElementById('exportSystem').addEventListener('click', async function() {
-    await saveSystemToServer(selectedSystem, systems[selectedSystem])
-});
-
 function addSystemsToDropdown() {
     // Get the systems list container
     const systemsListContainer = document.getElementById('systemsList');
@@ -346,7 +289,179 @@ async function loadSystemsAndUpdateDropdown() {
 
 // Call the fetch function on page load
 document.addEventListener('DOMContentLoaded', function () {
+    const navbarHTML = `
+    <nav class="navbar navbar-expand-lg navbar-light" style="background-color:var(--background-color);">
+        <a class="navbar-brand" href="index.html">abbrv</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+            aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a class="nav-link" href="writer.html">write</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="drafter.html">draft</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="rules.html">rules</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="help.html">help</a>
+                </li>
+                <!-- Systems Dropdown -->
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button"
+                        data-bs-toggle="dropdown" aria-expanded="false">
+                        system: select
+                    </a>
+                    <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                        <div id="systemsList"></div>
+                        <li><hr class="dropdown-divider" id="systemsDivider"></li>
+                        <li><a class="dropdown-item" href="#" id="newSystem">New</a></li>
+                        <li><a class="dropdown-item" href="#" id="deleteSystem">Delete</a></li>
+                        <li><a class="dropdown-item" href="#" id="importSystem">Import</a></li>
+                        <!-- Modified: Export is now a dropdown -->
+                        <li class="dropdown-submenu">
+                            <a class="dropdown-item dropdown-toggle" href="#" id="exportDropdown">Export</a>
+                            <ul class="dropdown-menu" aria-labelledby="exportDropdown">
+                                <li><a class="dropdown-item" href="#" id="exportOpenType">OpenType</a></li>
+                                <li><a class="dropdown-item" href="#" id="exportZip">ZIP</a></li>
+                            </ul>
+                        </li>
+                        <li><a class="dropdown-item" href="#" id="openUploadModal" data-bs-toggle="modal"
+                            data-bs-target="#uploadModal">Upload</a></li>
+                    </ul>
+                </li>
+            </ul>
+            <!-- Don't need discord button for index.html since it's already in hero area -->
+        </div>
+        <!-- Modal for Uploading Files -->
+        <div class="modal fade" id="uploadModal" tabindex="-1" aria-labelledby="uploadModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="uploadModalLabel">Upload your system</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p>
+                            System upload is currently only supported through Github.
+                            This is to allow us to run automated validation checks to ensure that your uploaded files are safe and correctly formatted, and to provide ease-of-use commands to facilitate merging into the master branch.
+                        </p>
+
+
+                        <p>To upload a new system, please follow these steps: </p>
+                        <ul>
+                            <li><a href="https://gist.github.com/" target="_blank">Create a new GitHub Gist</a></li>
+                            <ul>
+                                <li>Drag-and-drop your <code>[glyphs, modes, rules, phrases].json</code> files.</li>
+                                <li>Make sure they're uploaded as four separate files.</li>
+                            </ul>
+                            <li><a href="https://github.com/jvita/abbrv/issues/new?template=submit_upload.yml" target="_blank">Open a new issue</a> on the <b>abbrv</b> repo</li>
+                            <ul>
+                                <li>GitHub will post a comment with additional instructions.</li>
+                            </ul>
+                            <li>Add a comment to the issue with the command: <code>/submit [url_of_your_gist]</code></li>
+                            <ul>
+                                <li>This will automatically validate the files from your gist and open a new PR for merging your results.</li>
+                            </ul>
+                        </ul>
+
+                        <p>If you do not have a Github account, contact <a href="https://www.reddit.com/user/jerrshv/">u/jerrshv</a> on Reddit for assistance.</p>
+
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Modal for downloading systems -->
+        <div class="modal fade" id="downloadSystemsModal" tabindex="-1" aria-labelledby="downloadSystemsModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="downloadSystemsModalLabel">Available systems</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <ul id="downloadableList" class="list-group">
+                        </ul>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+    `
+
+    const navbarContainer = document.getElementById('navbar-container');
+    if (navbarContainer) {
+        navbarContainer.innerHTML = navbarHTML;
+    }
+
+    const navbarElement = document.getElementById('navbarDropdown');
+    navbarElement.textContent = `system: ${selectedSystem ? selectedSystem : 'select'}`;
+
     loadSystemsAndUpdateDropdown();
+
+    document.getElementById('exportZip').addEventListener('click', async function() {
+        await saveSystemToServer(selectedSystem, systems[selectedSystem])
+    });
+
+    document.getElementById('newSystem').addEventListener('click', newSystem)
+    document.getElementById('deleteSystem').addEventListener('click', deleteSystem);
+    document.getElementById('importSystem').addEventListener('click', importSystem);
+
+    // Add CSS for the nested dropdown
+    const style = document.createElement('style');
+    style.textContent = `
+        .dropdown-submenu {
+            position: relative;
+        }
+        
+        .dropdown-submenu .dropdown-menu {
+            top: 0;
+            left: 100%;
+            margin-top: -1px;
+            display: none;
+        }
+        
+        .dropdown-submenu:hover > .dropdown-menu {
+            display: block;
+        }
+    `;
+    document.head.appendChild(style);
+    
+    // Add event listener for the Export dropdown
+    document.getElementById('exportDropdown').addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        const menu = this.nextElementSibling;
+        if (menu.style.display === 'block') {
+            menu.style.display = 'none';
+        } else {
+            menu.style.display = 'block';
+        }
+    });
+    
+    // Event listeners for export options
+    document.getElementById('exportOpenType').addEventListener('click', function(e) {
+        e.preventDefault();
+        // Add your OpenType export logic here
+        console.log('Export as OpenType');
+    });
+    
+    document.getElementById('exportZip').addEventListener('click', function(e) {
+        e.preventDefault();
+        // Add your Zip export logic here
+        console.log('Export as Zip');
+    });
 });
 
 $(document).ready(function() {
