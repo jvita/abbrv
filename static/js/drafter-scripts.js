@@ -44,7 +44,8 @@ let numPerSelected = [];
 let frozenPoints = [];
 let numSplinesPerGlyph = [];
 const gridSize = 152;
-const cellSize = 20;
+let cellSize = 20;
+let unitsPerEm = 1000;
 const centerOffset = Math.floor(gridSize / 2) * cellSize;
 
 let zoomLevel = 1;
@@ -55,20 +56,6 @@ const minZoom = Math.min(viewport.clientWidth / baseWidth, viewport.clientHeight
 const maxZoom = 1;
 
 const zoomWrapper = document.getElementById('zoomWrapper');
-
-// function applyZoom() {
-//     updateZoomWrapperSize();
-//     updatePointsField();
-//     centerGridView();
-//     clampScrollToCanvas();
-
-//     const wrapper = document.getElementById('zoomWrapper');
-
-//     console.log("Scroll container size:", container.clientWidth, container.clientHeight);
-//     console.log("Wrapper size:", wrapper.offsetWidth, wrapper.offsetHeight);
-//     console.log("Max scrollLeft should be:", wrapper.offsetWidth - container.clientWidth);
-
-// }
 
 function resizeCanvases() {
   const scaledWidth = baseWidth * zoomLevel;
@@ -128,53 +115,64 @@ updatePointsField();
 function drawGrid() {
     gridCtx.clearRect(0, 0, gridCanvas.width, gridCanvas.height);
 
-    // Light grid lines
-    gridCtx.beginPath();
-    gridCtx.strokeStyle = 'rgba(0, 0, 0, 0.1)';
-    gridCtx.lineWidth = 1;
-    for (let i = 0; i <= gridSize; i++) {
-        let x = i * cellSize * zoomLevel;
-        let y = i * cellSize * zoomLevel;
-
-        gridCtx.moveTo(x, 0);
-        gridCtx.lineTo(x, gridCanvas.height);
-        gridCtx.moveTo(0, y);
-        gridCtx.lineTo(gridCanvas.width, y);
-    }
-    gridCtx.stroke();
-
-    // Center lines
-    gridCtx.beginPath();
-    gridCtx.strokeStyle = '#000';
-    gridCtx.lineWidth = 1;
+    const canvasWidth = gridCanvas.width;
+    const canvasHeight = gridCanvas.height;
 
     const centerX = centerOffset * zoomLevel;
     const centerY = centerOffset * zoomLevel;
 
-    gridCtx.moveTo(centerX, 0);
-    gridCtx.lineTo(centerX, gridCanvas.height);
-    gridCtx.moveTo(0, centerY);
-    gridCtx.lineTo(gridCanvas.width, centerY);
-    gridCtx.stroke();
+    const cellStep = cellSize * zoomLevel;
+    const emStep = unitsPerEm * zoomLevel;
+    const maxOffsetX = Math.max(centerX, canvasWidth - centerX);
+    const maxOffsetY = Math.max(centerY, canvasHeight - centerY);
 
-    // Thicker lines at 120px intervals (scaled)
+    // Grid lines (merged light/dark for X and Y)
+    for (let axis of ['x', 'y']) {
+        const isX = axis === 'x';
+        const center = isX ? centerX : centerY;
+        const maxOffset = isX ? maxOffsetX : maxOffsetY;
+        const canvasLimit = isX ? canvasWidth : canvasHeight;
+
+        for (let d = 0; d <= maxOffset; d += cellStep) {
+            const pos1 = center + d;
+            const pos2 = center - d;
+
+            for (let pos of [pos1, pos2]) {
+                if (pos < 0 || pos > canvasLimit) continue;
+
+                const distanceFromCenter = Math.abs(pos - center);
+                const isDark = distanceFromCenter % emStep < 0.5 || emStep - (distanceFromCenter % emStep) < 0.5;
+
+                gridCtx.beginPath();
+                gridCtx.strokeStyle = isDark ? 'rgba(0, 0, 0, 0.7)' : 'rgba(0, 0, 0, 0.1)';
+                gridCtx.lineWidth = isDark? 2 : 1;
+
+                if (isX) {
+                    gridCtx.moveTo(pos, 0);
+                    gridCtx.lineTo(pos, canvasHeight);
+                } else {
+                    gridCtx.moveTo(0, pos);
+                    gridCtx.lineTo(canvasWidth, pos);
+                }
+
+                gridCtx.stroke();
+            }
+        }
+    }
+
+    // Center cross lines
     gridCtx.beginPath();
+    gridCtx.strokeStyle = '#000';
     gridCtx.lineWidth = 1;
-    for (let y = 80; y <= 2980; y += 120) {
-        let yScaled = y * zoomLevel;
-        gridCtx.moveTo(0, yScaled);
-        gridCtx.lineTo(3040 * zoomLevel, yScaled);
-    }
-    for (let x = 80; x <= 2980; x += 120) {
-        let xScaled = x * zoomLevel;
-        gridCtx.moveTo(xScaled, 0);
-        gridCtx.lineTo(xScaled, 3040 * zoomLevel);
-    }
+    gridCtx.moveTo(centerX, 0);
+    gridCtx.lineTo(centerX, canvasHeight);
+    gridCtx.moveTo(0, centerY);
+    gridCtx.lineTo(canvasWidth, centerY);
     gridCtx.stroke();
 
     // Circle at center
     gridCtx.beginPath();
-    gridCtx.arc(1520 * zoomLevel, 1520 * zoomLevel, 20 * zoomLevel, 0, 2 * Math.PI);
+    gridCtx.arc(centerX, centerY, 20 * zoomLevel, 0, 2 * Math.PI);
     gridCtx.lineWidth = 2;
     gridCtx.stroke();
 }
@@ -865,3 +863,94 @@ document.addEventListener("DOMContentLoaded", function() {
 // centerButton.addEventListener('click', centerGridView)
 
 characterField.focus();
+
+document.getElementById('saveSettingsButton').addEventListener('click', () => {
+    const newCellSize = parseInt(document.getElementById('cellSize').value, 10);
+    const newUnitsPerEm = parseInt(document.getElementById('unitsPerEm').value, 10);
+
+    if (newCellSize >= 10 && newCellSize <= 100 && newUnitsPerEm >= 1000 && newUnitsPerEm <= 2048) {
+        cellSize = newCellSize
+        unitsPerEm = newUnitsPerEm
+
+        // Close modal
+        const modal = bootstrap.Modal.getInstance(document.getElementById('settingsModal'));
+        modal.hide();
+
+        updatePointsField();
+    } else {
+        alert('Please enter values within the allowed ranges.');
+    }
+});
+
+function populateSettingsForm() {
+    document.getElementById('cellSize').value = cellSize;
+    document.getElementById('unitsPerEm').value = unitsPerEm;
+}
+
+document.getElementById('settingsModal').addEventListener('show.bs.modal', () => {
+    populateSettingsForm();
+});
+
+const cellSizeInput = document.getElementById('cellSize');
+const unitsPerEmInput = document.getElementById('unitsPerEm');
+
+let lastCellSize = parseInt(cellSizeInput.value, 10) || 40;
+let lastUnitsPerEm = parseInt(unitsPerEmInput.value, 10) || 1024;
+
+// Utility: Get valid divisors of any number within range
+function getValidDivisors(ofValue, min = 10, max = 100) {
+    const divisors = [];
+    for (let i = min; i <= Math.min(max, ofValue); i++) {
+        if (ofValue % i === 0) divisors.push(i);
+    }
+    return divisors;
+}
+
+function snapCellSize(mode = 'nearest') {
+    const unitsPerEm = parseInt(unitsPerEmInput.value, 10);
+    const current = parseInt(cellSizeInput.value, 10);
+    if (isNaN(unitsPerEm)) return;
+
+    const divisors = getValidDivisors(unitsPerEm, 10, 100).sort((a, b) => a - b);
+
+    if (divisors.length === 0) return;
+
+    let next;
+
+    if (mode === 'up') {
+        next = divisors.find(v => v > current) || divisors[divisors.length - 1];
+    } else if (mode === 'down') {
+        next = [...divisors].reverse().find(v => v < current) || divisors[0];
+    } else {
+        // Snap to nearest valid value
+        next = divisors.reduce((prev, curr) =>
+            Math.abs(curr - current) < Math.abs(prev - current) ? curr : prev, divisors[0]);
+    }
+
+    if (current !== next || unitsPerEm % current !== 0) {
+        cellSizeInput.value = next;
+        lastCellSize = next;
+    }
+}
+
+// Snap cellSize on user input (with up/down detection)
+cellSizeInput.addEventListener('input', () => {
+    const current = parseInt(cellSizeInput.value, 10);
+    const direction = current > lastCellSize ? 'up' : current < lastCellSize ? 'down' : 'nearest';
+    snapCellSize(direction);
+});
+
+// Snap to nearest on blur/commit
+cellSizeInput.addEventListener('change', () => snapCellSize('nearest'));
+
+unitsPerEmInput.addEventListener('input', () => {
+    setTimeout(() => {
+        lastUnitsPerEm = parseInt(unitsPerEmInput.value, 10);
+        snapCellSize('nearest');
+    }, 0);
+});
+
+unitsPerEmInput.addEventListener('change', () => {
+    lastUnitsPerEm = parseInt(unitsPerEmInput.value, 10);
+    snapCellSize('nearest');
+});

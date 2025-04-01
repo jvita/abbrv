@@ -311,24 +311,6 @@ img {
     width: auto;
 }
 
-.floating-button {
-    position: absolute;
-    bottom: 10px;
-    right: 10px;
-    z-index: 100;
-    background-color: #007bff;
-    color: white;
-    border: none;
-    border-radius: 50%;
-    padding: 12px;
-    cursor: pointer;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
-}
-
-.floating-button:hover {
-    background-color: #0056b3;
-}
-
 #discordButtonLink {
     display: inline-block;
     background-color: var(--disabled-color);
@@ -361,4 +343,37 @@ img {
     background-color: var(--accent-color);
     color: white;
     text-decoration: none;
+}
+
+/* .floating-button {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    z-index: 100;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    padding: 12px;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+.floating-button:hover {
+    background-color: #0056b3;
+} */
+
+.floating-button {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    z-index: 10;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }

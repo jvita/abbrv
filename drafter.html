@@ -196,6 +196,10 @@
             <canvas id="gridCanvas" width="3040" height="3040"></canvas>
             <!-- <button id="centerButton" type="button" class="btn btn-primary floating-button"><span class="material-icons">my_location</span></button> -->
         </div>
+        <!-- Floating Settings Button -->
+        <button id="settingsButton" type="button" class="btn btn-primary floating-button" data-bs-toggle="modal" data-bs-target="#settingsModal">
+            <i class="bi bi-gear"></i>
+        </button>
     </div>
     <!-- Pop-up menu for saving as a mode -->
     <div class="modal fade" id="saveModeModal" tabindex="-1" aria-labelledby="saveModeModalLabel" aria-hidden="true">
@@ -218,6 +222,39 @@
         <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
             <button type="button" id="confirmSaveMode" class="btn btn-primary">Save</button>
+        </div>
+        </div>
+    </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div class="modal fade" id="settingsModal" tabindex="-1" aria-labelledby="settingsModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+        <div class="modal-header">
+            <h5 class="modal-title" id="settingsModalLabel">Settings</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+
+        <div class="modal-body">
+            <form id="settingsForm">
+            <div class="mb-3">
+                <label for="cellSize" class="form-label">Cell Size</label>
+                <input type="number" class="form-control" id="cellSize" name="cellSize" min="10" max="100" step="1" required>
+                <div class="form-text">Range: 10–100</div>
+            </div>
+
+            <div class="mb-3">
+                <label for="unitsPerEm" class="form-label">Units Per Em</label>
+                <input type="number" class="form-control" id="unitsPerEm" name="unitsPerEm" min="1000" max="2048" step="1" required>
+                <div class="form-text">Range: 1000–2048</div>
+            </div>
+            </form>
+        </div>
+
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            <button type="button" class="btn btn-primary" id="saveSettingsButton">Save changes</button>
         </div>
         </div>
     </div>
