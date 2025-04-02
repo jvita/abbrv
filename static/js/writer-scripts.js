@@ -453,18 +453,33 @@ $(document).ready(function() {
     }
 
     function updatePlot() {
-        if (!selectedSystem) {
-            $('#output').html('<p>Please select a system first.</p>');
-        } else {
-            const form = document.getElementById('text-form');
-            const formData = new FormData(form);
-            const text = formData.get('text');
-            const activeRules = formData.getAll('rules');
-            const activeModes = formData.getAll('modes');
+        const svg = document.getElementById('output');
 
-            // Process the text and rules
-            processTextAndPlot(text, systems[selectedSystem], activeModes, activeRules, systems[selectedSystem].phrases)
+        if (!selectedSystem || !systems[selectedSystem]) {
+            svg.innerHTML = ''; // Clear previous contents
+            svg.setAttribute('viewBox', '0 0 100 20'); // Wider + better vertical centering
+            svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+
+            const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            text.setAttribute('x', '50');
+            text.setAttribute('y', '10');
+            text.setAttribute('text-anchor', 'middle');
+            text.setAttribute('dominant-baseline', 'middle');
+            text.setAttribute('fill', '#6c757d'); // Bootstrap's text-muted color
+            text.setAttribute('font-size', '3');  // Smaller size to fit better
+            text.setAttribute('font-family', 'sans-serif');
+            text.textContent = 'Please select a system first';
+            svg.appendChild(text);
+            return;
         }
+
+        const form = document.getElementById('text-form');
+        const formData = new FormData(form);
+        const text = formData.get('text');
+        const activeRules = formData.getAll('rules');
+        const activeModes = formData.getAll('modes');
+
+        processTextAndPlot(text, systems[selectedSystem], activeModes, activeRules, systems[selectedSystem].phrases);
     }
 
 
