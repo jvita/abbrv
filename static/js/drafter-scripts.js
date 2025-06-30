@@ -333,7 +333,7 @@ gridCanvas.addEventListener('click', (event) => {
     const gridX = Math.round(x / cellSize);
     const gridY = Math.round(y / cellSize);
 
-    const isCtrlPressed = event.ctrlKey;
+    const isCtrlPressed = event.ctrlKey || event.metaKey;
 
     if (isCtrlPressed || selectedPoints.length === 0) {
         selectedPoints.push([[gridX, gridY]]);
