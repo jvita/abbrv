@@ -1,0 +1,237 @@
+[
+    {
+        "regex": "z",
+        "replacement": "s",
+        "name": "z→s"
+    },
+    {
+        "regex": "z",
+        "replacement": "ts",
+        "name": "z→ts"
+    },
+    {
+        "regex": "sc?h",
+        "replacement": "ſ",
+        "name": "sh|sch→ſ"
+    },
+    {
+        "regex": "j",
+        "replacement": "dſ",
+        "name": "j→dſ"
+    },
+    {
+        "regex": "ck",
+        "replacement": "k",
+        "name": "ck→k"
+    },
+    {
+        "regex": "ch",
+        "replacement": "tſ",
+        "name": "ch→tſ"
+    },
+    {
+        "regex": "ch",
+        "replacement": "χ",
+        "name": "ch→χ"
+    },
+    {
+        "regex": "c([aou])",
+        "replacement": "k$1",
+        "name": "c[aou]→k[aou]"
+    },
+    {
+        "regex": "c([eiy])",
+        "replacement": "s$1",
+        "name": "c[eiy]→s[eiy]"
+    },
+    {
+        "regex": "c",
+        "replacement": "k",
+        "name": "c→k"
+    },
+    {
+        "regex": "th",
+        "replacement": "θ",
+        "name": "th→θ"
+    },
+    {
+        "regex": "x",
+        "replacement": "ks",
+        "name": "x→ks"
+    },
+    {
+        "regex": "ö",
+        "replacement": "e",
+        "name": "ö→e"
+    },
+    {
+        "regex": "ä",
+        "replacement": "a",
+        "name": "ä"
+    },
+    {
+        "regex": "ü",
+        "replacement": "i",
+        "name": "ü"
+    },
+    {
+        "regex": "qu",
+        "replacement": "kw",
+        "name": "qu→kw"
+    },
+    {
+        "regex": "wh",
+        "replacement": "w",
+        "name": "wh→w"
+    },
+    {
+        "regex": "q",
+        "replacement": "k",
+        "name": "q→k"
+    },
+    {
+        "regex": "ng",
+        "replacement": "η",
+        "name": "ng→η"
+    },
+    {
+        "regex": "ee",
+        "replacement": "i",
+        "name": "ee→i"
+    },
+    {
+        "regex": "oo",
+        "replacement": "u",
+        "name": "oo→u"
+    },
+    {
+        "regex": "(^|\\s)([uiaeoy])?l",
+        "replacement": "$1$2L",
+        "name": "L carries vowel"
+    },
+    {
+        "regex": "of(?=\\b)",
+        "replacement": "fo",
+        "name": "of→fo"
+    },
+    {
+        "regex": "fo ((a)|θ(e)|(i)t|yo(u))",
+        "replacement": "f$2$3$4$5",
+        "name": "of [a|the|it|you]→f[aeiu]"
+    },
+    {
+        "regex": "or(?=\\b)",
+        "replacement": "ro",
+        "name": "or→ro"
+    },
+    {
+        "regex": "ro\\s((a)|θ(e)|(i)t|yo(u))",
+        "replacement": "r$2$3$4$5",
+        "name": "or [a|the|it|you]"
+    },
+    {
+        "regex": "in ((a)|θ(e)|(i)t|yo(u))",
+        "replacement": "n$2$3$4$5",
+        "name": "in [a|the|it|you]"
+    },
+    {
+        "regex": "([bdgknpqstvwxzθ])([rρ])",
+        "replacement": "$1ρ",
+        "name": "CV[rρ]→CVρ"
+    },
+    {
+        "regex": "([bdgknpqstvwxzθ])([lλ])",
+        "replacement": "$1λ",
+        "name": "Name: CV[lλ]→CVλ"
+    },
+    {
+        "regex": "([sſwbmdθnghkpw])([rρlλ])?([uiaeoy])m",
+        "replacement": "$1$2$3n",
+        "name": "CV[rl]m→CV[rl]n"
+    },
+    {
+        "regex": "([sſwbmdθnghkpw])([rρlλ])?([uiaeoy])[dθ]",
+        "replacement": "$1$2$3t",
+        "name": "CV[rl][dθ]→CV[rl]t"
+    },
+    {
+        "regex": "([uiaeo])?([LRsſwgkηχ])",
+        "replacement": "$1↑$2",
+        "name": "Ascending Consonants"
+    },
+    {
+        "regex": "([uiaeo])?([tfvbmdθhbpyr])",
+        "replacement": "$1↓$2",
+        "name": "Descending Consonants"
+    },
+    {
+        "regex": "([uiaeo])?([nρlλ])",
+        "replacement": "$1•$2",
+        "name": "Steady Consonants"
+    },
+    {
+        "regex": "([↑↓•])([sſwtbmdθnfgηχhjkpqtvwxyz])([uiaeo])(([↑↓•])((r)|(l)))(([↑↓•])(t|n))",
+        "replacement": "$1$2$3$9",
+        "name": "Silent [rl]"
+    },
+    {
+        "regex": "([sſwbmdθngkpw])(([↑↓•])((ρ)|(λ)))([uiaeoy])(([↑↓•])(t|n))",
+        "replacement": "$7↔$1$10$4",
+        "name": "Wide Consonant with Liquid⇌Vowel"
+    },
+    {
+        "regex": "(^|\\s)([uiaeo])([↓])",
+        "replacement": "$1•$2↑⊂",
+        "name": "Ascending Hook for Descending"
+    },
+    {
+        "regex": "(^|\\s)([uiaeoy])([↑])",
+        "replacement": "$1•$2↓⊂",
+        "name": "Descending Hook for Ascending"
+    },
+    {
+        "regex": "(^|\\s)([uiaeoy])([•])",
+        "replacement": "$1↓$2↓⊂",
+        "name": "Right Hook for Steady"
+    },
+    {
+        "regex": "([sſwbmdθngkpw])([uiaeoy])(↓(t)|•(n))",
+        "replacement": "$2↔$1$4$5",
+        "name": "Wide Consonant⇌Vowel"
+    },
+    {
+        "regex": "(([∩⊂⊃∪])|•)n([↓↑•])[tdθ]",
+        "replacement": "$2↔nt",
+        "name": "n[tdθ]→↔nt"
+    },
+    {
+        "regex": "(([∩⊂⊃∪])|•)n([↓↑•])[nm]",
+        "replacement": "$2↔nn",
+        "name": "n[nm]→↔nn"
+    },
+    {
+        "regex": "(([↑↓•])([sſwtbmdθnηfgχhjkLlλpqRrρtvwxyz]))(([↑↓•])([sſwtbmdθnηfgχhjkLlλpqRrρtvwxyz]))(([↑↓•])([sſwtbmdθnηfgχhjkLlλpqRrρtvwxyz]))?(([↑↓•])([sſwtbmdθnηfgχhjkLlλpqRrρtvwxyz]))?([uiaeo])",
+        "replacement": "$2$13$3$6$9$12",
+        "name": "Consonants⇌Vowel"
+    },
+    {
+        "regex": "([↑↓•])([sſwtbmdθnηfgχhjkLlλpqRrρtvwxyz])([uiaeo])",
+        "replacement": "$1$3$2",
+        "name": "Consonant⇌Vowel"
+    },
+    {
+        "regex": "([a-zA-Zſθηχλρ])([uiaeo])([↑↓•])",
+        "replacement": "$1$3$2",
+        "name": "Vowel between"
+    },
+    {
+        "regex": "([↑↓•→←])([sſwtbmdθnfgηχhjkLlλpqRrρtvwxyz])",
+        "replacement": "$2",
+        "name": "Single consonant"
+    },
+    {
+        "regex": "(^|\\s)([uiaeo])(?=\\b)",
+        "replacement": "$1↓$2↓⊂",
+        "name": "Single vowel"
+    }
+]
