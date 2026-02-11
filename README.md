@@ -9,6 +9,13 @@ If you are only interested in using **abbrv** for designing a shorthand system, 
 
 Note that in order to submit your system to the public repository, you will need to [make a GitHub account](https://docs.github.com/en/get-started/start-your-journey/creating-an-account-on-github) if you don't already have one.
 
+## Generating PDFs
+To render text as shorthand to a PDF, use `generate_pdf.py`:
+```bash
+python generate_pdf.py static/data/systems/orthic input.txt output.pdf
+python generate_pdf.py static/data/systems/orthic input.txt output.pdf --beginner  # shows text labels
+```
+
 ## Contributing to the software
 This repository is entirely open-source, so feel free to create your own fork, add any desired features, then open a PR to merge your work.
 
