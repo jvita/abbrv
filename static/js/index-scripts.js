@@ -16,15 +16,21 @@ const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
 // document.getElementById('downloadSystem').addEventListener('click', handleDownloadSystems);
 
 function saveSystems() {
-    // TODO: this is inefficient; should only update current system
-    // TODO: there can be an issue when you make an edit in one page,
-    // then make another edit in a second page without refreshing first.
-    // this will overwrite the first set of changes
-    const systemsJson = JSON.stringify(systems);
-    localStorage.setItem('systems', systemsJson);
-
-    // saveSystemToServer(selectedSystem, systems[selectedSystem])
+    if (selectedSystem && systems[selectedSystem]) {
+        const stored = JSON.parse(localStorage.getItem('systems') || '{}');
+        stored[selectedSystem] = systems[selectedSystem];
+        localStorage.setItem('systems', JSON.stringify(stored));
+    } else {
+        localStorage.setItem('systems', JSON.stringify(systems));
+    }
 }
+
+window.addEventListener('storage', function(event) {
+    if (event.key === 'systems' && event.newValue) {
+        const updated = JSON.parse(event.newValue);
+        Object.assign(systems, updated);
+    }
+});
 
 async function saveSystemToServer(systemName, systemData) {
     const requiredKeys = ['glyphs', 'modes', 'rules', 'phrases'];
@@ -76,11 +82,8 @@ async function saveSystemToServer(systemName, systemData) {
             document.body.removeChild(link);
         }
 
-        console.log(`System saved as ${systemName}.zip`);
     } catch (err) {
-        if (err.name === 'AbortError') {
-            console.log('User canceled the save operation');
-        } else {
+        if (err.name !== 'AbortError') {
             console.error('Error during save:', err);
         }
     }
@@ -310,7 +313,11 @@ function addSystemsToDropdown() {
                 const listItem = document.createElement('li');
                 listItem.classList.add('list-group-item', 'list-group-item-action');
                 // listItem.innerText = system;
-                listItem.innerHTML = `<a class="dropdown-item" href="#">${systemKey}</a>`; // Use the key as the link text
+                const anchor = document.createElement('a');
+                anchor.className = 'dropdown-item';
+                anchor.href = '#';
+                anchor.textContent = systemKey;
+                listItem.appendChild(anchor);
 
                 // Add a click event listener to the anchor element
                 listItem.querySelector('a').addEventListener('click', async function (event) {

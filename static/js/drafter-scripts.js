@@ -28,7 +28,6 @@ const phrasesTitle = document.getElementById('phrasesTitle');
 const phrasesList = document.getElementById('phrasesList');
 const modesTitle = document.getElementById('modesTitle');
 const modesList = document.getElementById('modesList');
-// const centerButton = document.getElementById('centerButton');
 
 const rootStyles = getComputedStyle(document.documentElement);
 const colorInk = rootStyles.getPropertyValue('--ink-color').trim()
@@ -55,20 +54,6 @@ const minZoom = Math.min(viewport.clientWidth / baseWidth, viewport.clientHeight
 const maxZoom = 1;
 
 const zoomWrapper = document.getElementById('zoomWrapper');
-
-// function applyZoom() {
-//     updateZoomWrapperSize();
-//     updatePointsField();
-//     centerGridView();
-//     clampScrollToCanvas();
-
-//     const wrapper = document.getElementById('zoomWrapper');
-
-//     console.log("Scroll container size:", container.clientWidth, container.clientHeight);
-//     console.log("Wrapper size:", wrapper.offsetWidth, wrapper.offsetHeight);
-//     console.log("Max scrollLeft should be:", wrapper.offsetWidth - container.clientWidth);
-
-// }
 
 function resizeCanvases() {
   const scaledWidth = baseWidth * zoomLevel;
@@ -450,21 +435,6 @@ function refreshButtons() {
         }
     });
 
-    // update coloring of spline list
-    document.querySelectorAll('.char-list-item').forEach(item => {
-        item.classList.remove('selected');
-        item.classList.remove('joining');
-
-        if (selectedGlyphs.includes(item.textContent)) {
-            if (item.textContent === selectedGlyphs[selectedGlyphs.length - 1]) {
-                // most recently-selected glyph
-                item.classList.add('selected');
-            } else {
-                // preceding glyph
-                item.classList.add('joining');
-            }
-        }
-    });
 }
 
 function refreshSaveButton() {

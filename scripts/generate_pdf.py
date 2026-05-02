@@ -74,7 +74,7 @@ def find_multi_word_tokens(text: str, phrases: dict) -> tuple[str, list]:
     return new_text, matches
 
 
-def process_text(text: str, system: dict, active_rules: list[str] | None = None) -> tuple[str, list]:
+def process_text(text: str, system: dict, active_rules: list[str] | None = None, strict: bool = False) -> tuple[str, list]:
     """
     Process text through the transformation pipeline.
 
@@ -118,7 +118,11 @@ def process_text(text: str, system: dict, active_rules: list[str] | None = None)
             regex = re.compile(rule['regex'])
             text = regex.sub(rule['replacement'], text)
         except re.error as e:
-            print(f"Warning: Invalid regex in rule '{rule['name']}': {e}", file=sys.stderr)
+            msg = f"Invalid regex in rule '{rule['name']}': {e}"
+            if strict:
+                print(f"Error: {msg}", file=sys.stderr)
+                sys.exit(1)
+            print(f"Warning: {msg} (skipping)", file=sys.stderr)
 
     return text, multi_word_matches
 
@@ -604,6 +608,8 @@ Examples:
                        help='Show original text word under each shorthand word')
     parser.add_argument('--scale', type=float, default=0.33,
                        help='Size multiplier for glyphs (default: 0.33, use 1.0 for original large size)')
+    parser.add_argument('--strict', action='store_true',
+                       help='Exit with an error if any rule has an invalid regex instead of skipping it')
 
     args = parser.parse_args()
 
@@ -640,7 +646,7 @@ Examples:
         active_modes = [m.strip() for m in args.modes.split(',')]
 
     # Process text (now treats all input as continuous text)
-    processed_text, multi_word_matches = process_text(input_text, system, active_rules)
+    processed_text, multi_word_matches = process_text(input_text, system, active_rules, strict=args.strict)
 
     # Tokenize all words
     tokens, original_words = tokenize_with_phrases(

@@ -590,7 +590,7 @@ $(document).ready(function() {
 
         function findBestTokenization(start) {
             if (start === word.length) {
-                return { tokens: [], count: 0, longestToken: 0, regexList: [], modeCount: 0 };
+                return { tokens: [], count: 0, longestToken: 0, modeCount: 0 };
             }
 
             if (memo[start]) return memo[start];
@@ -612,7 +612,6 @@ $(document).ready(function() {
                         tokens: [value, ...remaining.tokens],
                         count: 1 + remaining.count,
                         longestToken: Math.max(matchLength, remaining.longestToken),
-                        regexList: [pattern.source, ...remaining.regexList],
                         modeCount: (isMode ? 1 : 0) + remaining.modeCount
                     };
 
@@ -622,13 +621,11 @@ $(document).ready(function() {
                 }
             }
 
-            memo[start] = bestTokenization || { tokens: [], count: 0, longestToken: 0, regexList: [], modeCount: 0 };
+            memo[start] = bestTokenization || { tokens: [], count: 0, longestToken: 0, modeCount: 0 };
             return memo[start];
         }
 
-        const result = findBestTokenization(0);
-        console.log('Final token regex patterns:', result.regexList);
-        return result.tokens;
+        return findBestTokenization(0).tokens;
     }
 
     function tokenizeWithMultiWords(textWithPlaceholders, system, activeModes, multiWordTokens, multiWordMatches) {

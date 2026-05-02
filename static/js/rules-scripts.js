@@ -12,9 +12,11 @@ function renderRules() {
 
         // Create a div for the rule content (left side)
         const ruleContent = document.createElement('div');
-        ruleContent.innerHTML = `
-            <strong>Name:</strong> ${rule.name} <br>
-        `;
+        const nameLabel = document.createElement('strong');
+        nameLabel.textContent = 'Name: ';
+        ruleContent.appendChild(nameLabel);
+        ruleContent.appendChild(document.createTextNode(rule.name));
+        ruleContent.appendChild(document.createElement('br'));
 
         // Create a span for the regex, ensuring it's safe
         const regexSpan = document.createElement('span');
@@ -30,7 +32,10 @@ function renderRules() {
 
         // Add a line break and the Replacement field
         const replacementSpan = document.createElement('div');
-        replacementSpan.innerHTML = `<strong>Replacement:</strong> ${rule.replacement}`;
+        const replacementLabel = document.createElement('strong');
+        replacementLabel.textContent = 'Replacement: ';
+        replacementSpan.appendChild(replacementLabel);
+        replacementSpan.appendChild(document.createTextNode(rule.replacement));
         ruleContent.appendChild(replacementSpan);
 
         // Create the move up button
