@@ -1,112 +1,117 @@
 [
-    {
-        "regex": "wr",
-        "replacement": "r",
-        "name": "wr -> r"
-    },
-    {
-        "regex": "z",
-        "replacement": "s",
-        "name": "z -> s"
-    },
-    {
-        "regex": "x",
-        "replacement": "s",
-        "name": "x -> s"
-    },
-    {
-        "regex": "(ing|ɪŋ)",
-        "replacement": "μ",
-        "name": "ing -> μ"
-    },
-    {
-        "regex": "(ng|ñ)",
-        "replacement": "ŋ",
-        "name": "ng -> ŋ"
-    },
-    {
-        "regex": "(nk|ŋk)",
-        "replacement": "η",
-        "name": "nk -> η"
-    },
-    {
-        "regex": "j",
-        "replacement": "ʧ",
-        "name": "j -> ʧ"
-    },
-    {
-        "regex": "ch",
-        "replacement": "ʧ",
-        "name": "ch -> ʧ"
-    },
-    {
-        "regex": "ch",
-        "replacement": "χ",
-        "name": "ch -> χ"
-    },
-    {
-        "regex": "dg",
-        "replacement": "ʧ",
-        "name": "dg -> ʧ"
-    },
-    {
-        "regex": "(tch|ʤ)",
-        "replacement": "ʧ",
-        "name": "ch|ʤ -> ʧ"
-    },
-    {
-        "regex": "(sh|sch)",
-        "replacement": "ʃ",
-        "name": "sh"
-    },
-    {
-        "regex": "(th|ð|ϑ|θ)",
-        "replacement": "θ",
-        "name": "th|ð|ϑ -> θ"
-    },
-    {
-        "regex": "(ɑ|a|æ|eɪ)",
-        "replacement": "a",
-        "name": "a"
-    },
-    {
-        "regex": "(ä|ɐ)",
-        "replacement": "",
-        "name": "ignored a-schwa"
-    },
-    {
-        "regex": "[eɛεiᵊ]",
-        "replacement": "e",
-        "name": "e"
-    },
-    {
-        "regex": "[əɤɪɜɨ]",
-        "replacement": "",
-        "name": "ignored ei-schwa"
-    },
-    {
-        "regex": "(ɒ|œ|ɔ|oʊ|o)",
-        "replacement": "o",
-        "name": "o"
-    },
-    {
-        "regex": "[ɞøɘɵʏ]",
-        "replacement": "",
-        "name": "ignored o"
-    },
-    {
-        "regex": "(ʊ|ʌ|eu|u)",
-        "replacement": "u",
-        "name": "u"
-    },
-    {
-        "regex": "[ʉɯ]",
-        "replacement": "",
-        "name": "ignored u"
-    },
-    {
-        "regex": "[ˈː:ˌ]",
-        "replacement": "",
-        "name": "ignored IPA signs"
-    }
+  {
+    "regex": "(.)\\1+",
+    "replacement": "$1",
+    "name": "Remove double letters"
+  },
+  {
+    "regex": "wr",
+    "replacement": "r",
+    "name": "wr -> r"
+  },
+  {
+    "regex": "z",
+    "replacement": "s",
+    "name": "z -> s"
+  },
+  {
+    "regex": "x",
+    "replacement": "s",
+    "name": "x -> s"
+  },
+  {
+    "regex": "(ing|ɪŋ)",
+    "replacement": "μ",
+    "name": "ing -> μ"
+  },
+  {
+    "regex": "(ng|ŋɡ|ñ)",
+    "replacement": "ŋ",
+    "name": "ng -> ŋ"
+  },
+  {
+    "regex": "(nk|ŋk)",
+    "replacement": "η",
+    "name": "nk -> η"
+  },
+  {
+    "regex": "j",
+    "replacement": "ʧ",
+    "name": "j -> ʧ"
+  },
+  {
+    "regex": "(dg|ʤ|d͡ʒ)",
+    "replacement": "ʧ",
+    "name": "dg|ʤ|d͡ʒ -> ʧ"
+  },
+  {
+    "regex": "(ch|tch|t͡ʃ)",
+    "replacement": "ʧ",
+    "name": "ch|tch|t͡ʃ -> ʧ"
+  },
+  {
+    "regex": "ch",
+    "replacement": "χ",
+    "name": "ch (german) -> χ"
+  },
+  {
+    "regex": "(sh|sch)",
+    "replacement": "ʃ",
+    "name": "sh"
+  },
+  {
+    "regex": "(th|ð|ϑ|θ)",
+    "replacement": "θ",
+    "name": "th|ð|ϑ -> θ"
+  },
+  {
+    "regex": "(ɑ|a|æ|eɪ)",
+    "replacement": "a",
+    "name": "a"
+  },
+  {
+    "regex": "(ä|ɐ)",
+    "replacement": "",
+    "name": "ignored a-schwa"
+  },
+  {
+    "regex": "[eɛεiᵊ]",
+    "replacement": "e",
+    "name": "e"
+  },
+  {
+    "regex": "[əɚɤɪɜɨ]",
+    "replacement": "",
+    "name": "ignored ei-schwa"
+  },
+  {
+    "regex": "(ɒ|œ|ɔ|oʊ|o)",
+    "replacement": "o",
+    "name": "o"
+  },
+  {
+    "regex": "[ɞøɘɵʏ]",
+    "replacement": "",
+    "name": "ignored o"
+  },
+  {
+    "regex": "(ʊ|ʌ|eu|u)",
+    "replacement": "u",
+    "name": "u"
+  },
+  {
+    "regex": "[ʉɯ]",
+    "replacement": "",
+    "name": "ignored u"
+  },
+  {
+    "regex": "[ˈː:ˌ]",
+    "replacement": "",
+    "name": "ignored IPA signs"
+  },
+  {
+    "regex": "ɹ",
+    "replacement": "r",
+    "name": "ɹ -> r"
+  }
 ]
