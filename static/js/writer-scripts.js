@@ -442,14 +442,36 @@ $(document).ready(function() {
 
     function finalizePlot(leftMostPoint, rightMostPoint, highestPoint, lowestPoint, lineSpacing, spaceBetweenWords) {
         const svg = document.getElementById('output');
-        svg.setAttribute('viewBox', `${leftMostPoint - 2 * spaceBetweenWords} -${Math.abs(lowestPoint - lineSpacing)} ${rightMostPoint + 4 * spaceBetweenWords} ${highestPoint - lowestPoint + 2 * lineSpacing}`); // Normalize viewBox
-        // svg.setAttribute('viewBox', `0 ${highestPoint - lineSpacing} ${rightMostPoint} ${Math.abs(highestPoint - lowestPoint) + 2 * lineSpacing}`); // Normalize viewBox
-        svg.setAttribute('preserveAspectRatio', 'xMidYMid meet'); // Scale uniformly
-        // Get the height of the SVG
-        const svgHeight = svg.getAttribute('height') || svg.viewBox.baseVal.height;
 
-        // Apply the transformation
-        svg.setAttribute('transform', `scale(1, -1) translate(0, -${svgHeight})`);
+        // 1. Calculate bounding box dimensions in mathematical coordinates
+        const paddingX = 2 * spaceBetweenWords;
+        const paddingY = lineSpacing;
+
+        const minX = leftMostPoint - paddingX;
+        const minY = lowestPoint - paddingY;
+        const width = (rightMostPoint - leftMostPoint) + (2 * paddingX);
+        const height = (highestPoint - lowestPoint) + (2 * paddingY);
+
+        // 2. Set viewbox on root SVG (standard positive dimensions)
+        svg.setAttribute('viewBox', `${minX} ${minY} ${width} ${height}`);
+        svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+        svg.removeAttribute('transform');
+
+        // 3. Wrap contents in a group if not already wrapped
+        let group = svg.querySelector('g#output-group');
+        if (!group) {
+            group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+            group.setAttribute('id', 'output-group');
+            while (svg.firstChild) {
+                group.appendChild(svg.firstChild);
+            }
+            svg.appendChild(group);
+        }
+
+        // 4. Perform the vertical flip mathematically around the minY/highestPoint axis
+        // scale(1, -1) negates Y coordinates; translate shifts it back into viewBox bounds
+        const translateY = -(highestPoint + paddingY + minY);
+        group.setAttribute('transform', `scale(1, -1) translate(0, ${translateY})`);
     }
 
     function updatePlot() {
