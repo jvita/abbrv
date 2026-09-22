@@ -1,117 +1,142 @@
 [
-  {
-    "regex": "(.)\\1+",
-    "replacement": "$1",
-    "name": "Remove double letters"
-  },
-  {
-    "regex": "wr",
-    "replacement": "r",
-    "name": "wr -> r"
-  },
-  {
-    "regex": "z",
-    "replacement": "s",
-    "name": "z -> s"
-  },
-  {
-    "regex": "x",
-    "replacement": "s",
-    "name": "x -> s"
-  },
-  {
-    "regex": "(ing|ɪŋ)",
-    "replacement": "μ",
-    "name": "ing -> μ"
-  },
-  {
-    "regex": "(ng|ŋɡ|ñ)",
-    "replacement": "ŋ",
-    "name": "ng -> ŋ"
-  },
-  {
-    "regex": "(nk|ŋk)",
-    "replacement": "η",
-    "name": "nk -> η"
-  },
-  {
-    "regex": "j",
-    "replacement": "ʧ",
-    "name": "j -> ʧ"
-  },
-  {
-    "regex": "(dg|ʤ|d͡ʒ)",
-    "replacement": "ʧ",
-    "name": "dg|ʤ|d͡ʒ -> ʧ"
-  },
-  {
-    "regex": "(ch|tch|t͡ʃ)",
-    "replacement": "ʧ",
-    "name": "ch|tch|t͡ʃ -> ʧ"
-  },
-  {
-    "regex": "ch",
-    "replacement": "χ",
-    "name": "ch (german) -> χ"
-  },
-  {
-    "regex": "(sh|sch)",
-    "replacement": "ʃ",
-    "name": "sh"
-  },
-  {
-    "regex": "(th|ð|ϑ|θ)",
-    "replacement": "θ",
-    "name": "th|ð|ϑ -> θ"
-  },
-  {
-    "regex": "(ɑ|a|æ|eɪ)",
-    "replacement": "a",
-    "name": "a"
-  },
-  {
-    "regex": "(ä|ɐ)",
-    "replacement": "",
-    "name": "ignored a-schwa"
-  },
-  {
-    "regex": "[eɛεiᵊ]",
-    "replacement": "e",
-    "name": "e"
-  },
-  {
-    "regex": "[əɚɤɪɜɨ]",
-    "replacement": "",
-    "name": "ignored ei-schwa"
-  },
-  {
-    "regex": "(ɒ|œ|ɔ|oʊ|o)",
-    "replacement": "o",
-    "name": "o"
-  },
-  {
-    "regex": "[ɞøɘɵʏ]",
-    "replacement": "",
-    "name": "ignored o"
-  },
-  {
-    "regex": "(ʊ|ʌ|eu|u)",
-    "replacement": "u",
-    "name": "u"
-  },
-  {
-    "regex": "[ʉɯ]",
-    "replacement": "",
-    "name": "ignored u"
-  },
-  {
-    "regex": "[ˈː:ˌ]",
-    "replacement": "",
-    "name": "ignored IPA signs"
-  },
-  {
-    "regex": "ɹ",
-    "replacement": "r",
-    "name": "ɹ -> r"
-  }
+    {
+        "regex": "(.)\\1+",
+        "replacement": "$1",
+        "name": "Remove double letters"
+    },
+    {
+        "regex": "wr",
+        "replacement": "r",
+        "name": "wr -> r"
+    },
+    {
+        "regex": "z",
+        "replacement": "s",
+        "name": "z -> s"
+    },
+    {
+        "regex": "x",
+        "replacement": "s",
+        "name": "x -> s"
+    },
+    {
+        "regex": "(ing|ɪŋ)",
+        "replacement": "μ",
+        "name": "ing -> μ"
+    },
+    {
+        "regex": "(ng|ŋɡ|ñ)",
+        "replacement": "ŋ",
+        "name": "ng -> ŋ"
+    },
+    {
+        "regex": "j",
+        "replacement": "ʧ",
+        "name": "j -> ʧ"
+    },
+    {
+        "regex": "(nk|ŋk)",
+        "replacement": "η",
+        "name": "nk -> η"
+    },
+    {
+        "regex": "(dg|ʤ|d͡ʒ)",
+        "replacement": "ʧ",
+        "name": "dg|ʤ|d͡ʒ -> ʧ"
+    },
+    {
+        "regex": "(ch|tch|t͡ʃ)",
+        "replacement": "ʧ",
+        "name": "ch|tch|t͡ʃ -> ʧ"
+    },
+    {
+        "regex": "ch",
+        "replacement": "χ",
+        "name": "ch (german) -> χ"
+    },
+    {
+        "regex": "(sh|sch)",
+        "replacement": "ʃ",
+        "name": "sh"
+    },
+    {
+        "regex": "(th|ð|ϑ|θ)",
+        "replacement": "θ",
+        "name": "th|ð|ϑ -> θ"
+    },
+    {
+        "regex": "(ä|ɐ)",
+        "replacement": "",
+        "name": "ignored a-schwa"
+    },
+    {
+        "regex": "aɪ",
+        "replacement": "ae",
+        "name": "aɪ -> ae"
+    },
+    {
+        "regex": "(ɑ|a|æ|eɪ)",
+        "replacement": "a",
+        "name": "a"
+    },
+    {
+        "regex": "(ɔɪ|oʊj)",
+        "replacement": "oi",
+        "name": "(ɔɪ|oʊj)"
+    },
+    {
+        "regex": "(əʊ|oʊ)",
+        "replacement": "o",
+        "name": "long o"
+    },
+    {
+        "regex": "[ɞøɘɵʏ]",
+        "replacement": "",
+        "name": "ignored o"
+    },
+    {
+        "regex": "(ɒ|œ|ɔ|oʊ|o)",
+        "replacement": "o",
+        "name": "o"
+    },
+    {
+        "regex": "(ju|jɔ|jʊ)",
+        "replacement": "u",
+        "name": "long u"
+    },
+    {
+        "regex": "[ʉɯ]",
+        "replacement": "",
+        "name": "ignored u"
+    },
+    {
+        "regex": "(ʊ|ʌ|eu|u)",
+        "replacement": "u",
+        "name": "u"
+    },
+    {
+        "regex": "[ɝɚ]",
+        "replacement": "r",
+        "name": "ɝ|ɚ -> r"
+    },
+    {
+        "regex": "ɹ",
+        "replacement": "r",
+        "name": "ɹ -> r"
+    },
+    {
+        "regex": "[əɤɪɜɨ]",
+        "replacement": "",
+        "name": "ignored e|i-schwa"
+    },
+    {
+        "regex": "[eɛεiᵊy]",
+        "replacement": "e",
+        "name": "e"
+    },
+    {
+        "regex": "[ˈː:ˌ]",
+        "replacement": "",
+        "name": "ignored IPA signs"
+    }
 ]
